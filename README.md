@@ -1,6 +1,9 @@
 # ANTsTutorial
 Guide to tutorial materials for ANTs/R
 
+
+## Overview
+
 The goal of this tutorial is to use ANTs and ANTsR to turn raw data
 into clean data.
 
@@ -26,7 +29,7 @@ Along the way, we will cover theoretical foundations as well as practical
 insights arising from our experience with processing biological images
 numbering from the tens to tens of thousands.
 
-## Software dependencies
+**Software dependencies**
 
 [ANTs](http://stnava.github.io/ANTs/)
 
