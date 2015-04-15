@@ -29,6 +29,22 @@ Along the way, we will cover theoretical foundations as well as practical
 insights arising from our experience with processing biological images
 numbering from the tens to tens of thousands.
 
+**Special sub-topics may include:**
+
+* Baby brain
+
+* Multivariate neighborhood segmentation models
+
+* Longitudinal processing
+
+* Multivariate everything ...
+
+* ASL processing
+
+* Patch-based analyses for cross-modality inference ...
+
+We will also entertain other requests.
+
 **Software dependencies**
 
 Core: [ANTs](http://stnava.github.io/ANTs/), [ANTsR](http://stnava.github.io/ANTsR/)
