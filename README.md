@@ -2,11 +2,11 @@
 Guide to tutorial materials for ANTs/R
 
 The goal of this tutorial is to use ANTs and ANTsR to turn raw data
-into clean data.  
+into clean data.
 
-We will
+We will focus on brain magnetic resonance images.  
 
-* Organized and inspect the raw data to understand its structure and identify potential problem cases.
+* Organize and inspect the raw data to understand its structure and identify potential problem cases.
 
 * Identify hypotheses and quantification targets.
 
