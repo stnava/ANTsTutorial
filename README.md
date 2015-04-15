@@ -6,7 +6,7 @@ into clean data.
 
 We will focus on pediatric brain magnetic resonance images available in the [PTBP](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555) and show how to:
 
-* Organize and inspect the raw data to understand its structure and identify potential problem cases.
+* Organize and inspect the raw data and identify potential problem cases.
 
 * Identify hypotheses and quantification targets, given our data.
 
