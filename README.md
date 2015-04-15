@@ -4,7 +4,7 @@ Guide to tutorial materials for ANTs/R
 The goal of this tutorial is to use ANTs and ANTsR to turn raw data
 into clean data.
 
-We will focus on brain magnetic resonance images and show how to: 
+We will focus on pediatric brain magnetic resonance images available in the [PTBP](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555) and show how to:
 
 * Organize and inspect the raw data to understand its structure and identify potential problem cases.
 
@@ -22,6 +22,22 @@ We will focus on brain magnetic resonance images and show how to:
 
 * Explore prediction algorithms based on imaging data.
 
-Along the way, we will cover theoretical foundations as well as practical 
-insights arising from our experience with processing biological images 
+Along the way, we will cover theoretical foundations as well as practical
+insights arising from our experience with processing biological images
 numbering from the tens to tens of thousands.
+
+## Software dependencies
+
+[ANTs](http://stnava.github.io/ANTs/)
+
+[ANTsR](http://stnava.github.io/ANTsR/)
+
+[Camino](http://cmic.cs.ucl.ac.uk/camino/index.php?n=Tutorials.DTI)
+
+[ITK-SNAP](http://www.itksnap.org/pmwiki/pmwiki.php)
+
+The above tools depend on [R](http://cran.r-project.org), [cmake](http://www.cmake.org) and [java](https://java.com/).
+
+Supported platforms include OSX and Linux variants.
+
+These may work on windows but we do not regularly test there.
