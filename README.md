@@ -31,13 +31,9 @@ numbering from the tens to tens of thousands.
 
 **Software dependencies**
 
-[ANTs](http://stnava.github.io/ANTs/)
+Core: [ANTs](http://stnava.github.io/ANTs/), [ANTsR](http://stnava.github.io/ANTsR/)
 
-[ANTsR](http://stnava.github.io/ANTsR/)
-
-[Camino](http://cmic.cs.ucl.ac.uk/camino/index.php?n=Tutorials.DTI)
-
-[ITK-SNAP](http://www.itksnap.org/pmwiki/pmwiki.php)
+Suggested: [Camino](http://cmic.cs.ucl.ac.uk/camino/index.php?n=Tutorials.DTI), [ITK-SNAP](http://www.itksnap.org/pmwiki/pmwiki.php)
 
 The above tools depend on [R](http://cran.r-project.org), [cmake](http://www.cmake.org) and [java](https://java.com/).
 
