@@ -18,7 +18,7 @@
 |:----------------:|-------------------------------------------|
 |  9:00 - 10:00    | Introduction, set-up, and ANTs overview (Nick)  |
 | 10:00 - 10:30    | Coffee and questions/discussion           |
-| 10:30 - 11:30    | Study data and ANTsR overview (Brian)     |
+| 10:30 - 11:30    | More ANTs overview (Nick)                 |
 | 11:30 - 12:00    | Current research (Brian or Nick)          |
 | 12:00 -  1:00    | Lunch and questions/discussion            |
 |  1:00 -  2:00    | Template preparation for study (Nick)     |
