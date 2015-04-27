@@ -1,0 +1,47 @@
+---
+title: <span style="color:red;">Building a house with<br />Advanced Normalization Tools (*ANTs*)</span>
+author: Brian B. Avants (<span style="color:blue;">PENN</span>) and <br />Nicholas J. Tustison (<span style="color:orange;">UVA</span>)
+bibliography: REFERENCES.bib
+logo:    logo.jpg
+output:
+  pdf_document:
+    toc: true
+    highlight: zenburn
+  beamer_presentation:
+    toc: true
+    fig_width: 7
+    fig_height: 6
+  html_document:
+    toc: true
+    theme: readable
+  revealjs_presentation:
+    pandoc_args: [ "--slide-level", "2" ]
+    incremental: true
+    widescreen: true
+    smaller: false
+    theme: night
+    transition: fade
+    highlight: zenburn
+    center: true
+    self_contained: false
+  ioslides_presentation:
+    css: atk.css
+    incremental: false
+    widescreen: true
+    smaller: false
+    fig_width: 5
+---
+
+```{r global options, include=FALSE}
+library(rmarkdown)
+library(knitr)
+figpath<-'figures/'
+opts_chunk$set(fig.width=9, fig.height=6, fig.path=figpath,
+               warning=FALSE, message=FALSE)
+```
+
+
+##
+
+This talk is online
+
