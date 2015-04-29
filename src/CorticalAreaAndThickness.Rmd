@@ -1,0 +1,44 @@
+---
+title: "CorticalAreaAndThickness"
+author: "Brian B. Avants et al."
+date: "April 29, 2015"
+output: pdf_document
+---
+
+
+```{r data,echo=FALSE}
+library(visreg)
+library(ANTsR)
+setwd("KapowskiChronicles/analytics2")
+dd=read.csv("labelresultsANTsI.csv")
+ee=read.csv("labelresultsANTsISurfaceArea.csv")
+ff=read.csv("labelresultsANTsIVolume.csv")
+```
+
+
+```{r viz,echo=FALSE}
+for ( k in 6:67)
+  {
+
+  vdf=data.frame(AGE=dd$AGE,SEX=dd$SEX,SITE=dd$SITE,VOLUME=dd$VOLUME, ff[,k])
+  colnames(vdf)[5]=paste("VOL",colnames(ff)[k],sep='')
+  myform=as.formula( paste( colnames(vdf)[5] ,
+                           " ~ I(AGE) + I(AGE^2) + SEX + SITE + VOLUME" ) )
+  mdlv=lm( myform , data=vdf )
+  visreg( mdlv, "AGE" )
+
+  tdf=data.frame(AGE=dd$AGE,SEX=dd$SEX,SITE=dd$SITE,VOLUME=dd$VOLUME, dd[,k])
+  colnames(tdf)[5]=paste("THK",colnames(dd)[k],sep='')
+  myform=as.formula( paste( colnames(tdf)[5] ,
+                           " ~ I(AGE) + I(AGE^2) + SEX + SITE + VOLUME" ) )
+  mdlt=lm( myform , data=tdf )
+  visreg( mdlt, "AGE" )
+
+  adf=data.frame(AGE=dd$AGE,SEX=dd$SEX,SITE=dd$SITE,VOLUME=dd$VOLUME, ee[,k])
+  colnames(adf)[5]=paste("ARA",colnames(dd)[k],sep='')
+  myform=as.formula( paste( colnames(adf)[5] ,
+                           " ~ I(AGE) + I(AGE^2) + SEX + SITE + VOLUME" ) )
+  mdla=lm( myform , data=adf )  
+  visreg( mdla, "AGE" )
+  }
+```
