@@ -1,0 +1,65 @@
+---
+title: 'The Pediatric Template of Brain Perfusion: Quick reproducible analysis'
+author: "Brian B. Avants et al."
+date: "May 7, 2015"
+output:
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: zenburn
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+---
+
+# Overview
+
+## Overview 
+The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
+
+- Free multiple modality MRI data with demographics and psychometrics
+- The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv) 
+- The full data is available at [figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555)
+- Here we use a slightly processed version of the data
+- Each image contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
+- There is also a template contained in the download.
+
+
+## Download the processed data
+\Huge
+
+- Download
+- <https://www.dropbox.com/s/u8bg5z5k6do56om/tutorial_data_pad.zip?dl=0>
+- Then unzip the file.
+
+# Quick Look 
+
+## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
+
+* Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/)
+* Install [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
+* Download the *ANTsR* tar.gz to `filename.tar.gz`
+* Install via: 
+```bash
+   R CMD INSTALL filename.tar.gz
+```
+* Test via ( in `R`) calling: 
+```r
+  library(ANTsR)
+```
+* Done!
+
+## Slide with R Code and Output
+
+```{r}
+summary(cars)
+```
+
+## Slide with Plot
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
