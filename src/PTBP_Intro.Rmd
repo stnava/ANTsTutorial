@@ -363,12 +363,19 @@ for ( i in 1:ncol(jlfmat) ) {
 newprobimgs=matrixToImages( jlfmat, mk )
 ```
 
-## Segment template with these priors
+## Segment new images with these modified priors
+
+We can use the template, itself, as an example.
+
+Obviously, we skip the registration step.
 
 ```{r tempseg}
 segnew <- atropos( d = 3, a = t1tem, m = '[0.05,1x1x1]',
    c = '[2,0]',  i = newprobimgs, x = mk )
 ```
+
+A more complete process is available in `antsAtroposN4.sh` which 
+is what we use for production.
 
 We might go further and force the posteriors to be zero 
 where the priors are zero ...
