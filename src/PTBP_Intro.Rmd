@@ -33,8 +33,9 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 \Large
 
 - Download
-- <https://www.dropbox.com/s/u8bg5z5k6do56om/tutorial_data_pad.zip?dl=0>
-- Then unzip the file.
+- <https://www.dropbox.com/s/u8bg5z5k6do56om/ants_tutorial_data.zip?dl=0>
+- Move this to your ANTsTutorial directory.
+- Unzip the file in the ANTsTutorial directory.
 
 ## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
 
@@ -211,6 +212,15 @@ We will use them to:
 * Finally, put all this together to create a reproducible analysis document for the PTBP.
 
 
+# Templates and joint label fusion
+
+## We built a template, now what?
+
+* Suppose a dataset that already contains segmentations.
+
+* Transform these segmentations to the template.
+
+* Perform a weighted voting to customize the segmentations for the template.
 
 ## Template priors with SyN-Quick
 
@@ -233,18 +243,63 @@ for ( x in which( havecompletesubject )[1:60] )
   }
 ```
 
+## Template, intensity images, segmentations $\rightarrow$ JLF
 
+* Joint label fusion is a multi-atlas segmentation method.
+
+* It performed well in several recent competitions ([SATA 2012, SATA 2013](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3837555/))
+
+* We use it regularly in our studies to build template priors and to label cortical or deep structures in the brain.
+
+## JLF theory: "Multi-Atlas Segmentation with Joint Label Fusion"
+
+A matrix $M_x$ is defined by the number of atlas segmentations one has.
+
+$M_x(i,j)$ measures joint atlas errors wrt a target segmentation at a voxel.
+
+Entries in $M_x$ relate to the likelihood two atlases make the same error.
+
+> The key difference between joint label fusion and other label fusion methods is that it explicitly considers correlations among atlases, i.e., the dependence matrix, into voting weight assignment to reduce bias in the atlas set.
+
+## JLF theory: "Multi-Atlas Segmentation with Joint Label Fusion"
+
+The expected label difference between the consensus solution obtained from weighted voting and the target segmentation is: $w_x^T M_x w_x$.
+
+Find atlas weights, $w_x$, for each of $A^i$ atlases, st
+$$ w_x^T ( M_x + \alpha \text{Id} ) w_x $$ 
+is minimized subject to $\sum_{i=1}^n w_x(i)=1$.
+
+## JLF theory: "Multi-Atlas Segmentation with Joint Label Fusion"
+
+Define 
+$$ K_m = \langle |~A^{i,m}_N - T^{m}_N~|, |~A^{j,m}_N - T^{m}_N~| \rangle $$
+then
+$$ M_x(i,j) =  ( \sum_m K_m )^\beta $$
+with $N$ representing a neighborhood calculation, $A^{i,m}$ representing the $i^\text{th}$ atlas and the $m^\text{th}$ modality. Lagrange multipliers yield:
+$$w_x=\frac{M_x^{-1} 1_n}{1_n^t M_x^{-1} 1_n}$$
+
+Finally, local patch search is used to improve the neighborhoods that correspond.
+
+## JLF Example
+
+Suppose that a pair of atlases $A_1$ and $A_2$ produce statistically independent label errors for a given target image. If $A_1$ produces a wrong label 50\% of the time and $A_2$ produces a wrong label 20\% of the time, we have
+$$
+M_x = \begin{bmatrix}
+    0.5       & 0.1 \\
+    0.1       & 0.2 
+\end{bmatrix}
+$$
+The optimal voting weights are then $w_x = [0.2, 0.8]^t.$
 
 ## Template [Joint Label/Intensity Fusion](http://journal.frontiersin.org/article/10.3389/fninf.2013.00027/abstract)
 
 ```{r jlftem, echo=TRUE, eval=FALSE, warning=FALSE }
 mk=getMask(t1tem)
-jlf=jointIntensityFusion3D( t1tem, mk, ilist, 
+jlf=jointIntensityFusion( t1tem, mk, ilist, 
   labelList=seglist, rad=rep(2,3), rSearch=2, 
   computeProbs=TRUE, includezero=TRUE)
 # write out results
-tf=tempfile()
-print(tf)
+if ( ! exists("tf") ) tf=tempfile() 
 antsImageWrite( jlf$segimg, paste(tf,'seg.nii.gz',sep='') )
 antsImageWrite( jlf$predimg, paste(tf,'pred.nii.gz',sep='') )
 for ( i in 1:length(jlf$probimgs) )
@@ -252,5 +307,88 @@ for ( i in 1:length(jlf$probimgs) )
                   paste(tf,'prob',i,'.nii.gz',sep='') )
 ```
 
+## Augment CSF probability
+
+```{r temper,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+if ( ! exists("jlf") ) {
+setwd("/Users/stnava/data/ANTsTutorial/")
+tf="data/JLF_out/jlfout_"
+kk=Sys.glob( paste(tf,"prob*nii.gz",sep='') )
+segfn=paste( tf,"seg.nii.gz", sep='') 
+jlf=list( segimg=antsImageRead(segfn),
+  probimgs=imageFileNames2ImageList( kk  ) )
+}
+```
+
+```{r kmeanstemplate1,eval=TRUE}
+if ( !exists("mk") ) mk=getMask(t1tem)
+ktem=kmeansSegmentation(t1tem,3,mk)
+jlcsf=jlf$probimgs[[1]][ mk==1 ]
+kmcsf=ktem$probabilityimages[[1]][ mk==1 ]
+csfmat=rbind( jlcsf, kmcsf )
+newcsfvec = apply( csfmat, MARGIN=2, FUN=max )
+newcsf=makeImage( mk, newcsfvec )
+```
+
+## Augment CSF probability
+
+```{r kmeanstemplate2,eval=TRUE}
+plot( jlf$probimgs[[1]],dorot=1,window.img=c(0,4), slices=8 )
+```
+
+## Augment CSF probability
+
+```{r kmeanstemplate3,eval=TRUE}
+plot( newcsf,dorot=1,window.img=c(0,4), slices=8 )
+```
+
+
+## Renormalize probabilities
+
+```{r renoprobs,eval=TRUE}
+csfind=1
+notcsfinds=2:length(jlf$probimgs)
+jlfmat=imageListToMatrix( jlf$probimgs, mk )
+prsums=colSums( jlfmat ) # i=26 for testing
+for ( i in 1:ncol(jlfmat) ) {
+  colvec=jlfmat[,i]
+  notcsfsum=sum( colvec[notcsfinds] )
+  csfval=newcsfvec[i]
+  colvec[csfind]=csfval # the fix is in!
+  if ( notcsfsum > 0 )
+    colvec[notcsfinds]=colvec[notcsfinds]/notcsfsum*(1.0-csfval)
+  else colvec[csfind]=1
+  jlfmat[,i]=colvec
+}
+newprobimgs=matrixToImages( jlfmat, mk )
+```
+
+## Segment template with these priors
+
+```{r tempseg}
+segnew <- atropos( d = 3, a = t1tem, m = '[0.05,1x1x1]',
+   c = '[2,0]',  i = newprobimgs, x = mk )
+```
+
+We might go further and force the posteriors to be zero 
+where the priors are zero ...
+
+## Template and segmentation
+
+```{r timg,echo=FALSE}
+plot( t1tem , dorot = 1 , slices=8 )
+```
+
+## Template and *Atropos* segmentation
+
+```{r timg2,echo=FALSE}
+plot( t1tem, segnew$segmentation , dorot = 1 , slices=8 )
+```
+
+## Template and *JLF* segmentation
+
+```{r timg3,echo=FALSE}
+plot( t1tem, jlf$segimg , dorot = 1 , slices=8 )
+```
 
 
