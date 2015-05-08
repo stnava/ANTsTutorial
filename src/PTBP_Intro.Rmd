@@ -1,12 +1,12 @@
 ---
-title: 'The Pediatric Template of Brain Perfusion: Quick reproducible analysis'
+title: 'The Pediatric Template of Brain Perfusion: Quick introduction'
 author: "Brian B. Avants et al."
 date: "May 7, 2015"
 output:
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
-    highlight: zenburn
+    highlight: tango
     incremental: yes
     theme: AnnArbor
     includes:
@@ -20,6 +20,7 @@ output:
 The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
 
 - Free multiple modality MRI data with demographics and psychometrics
+- Collected to aid as a reference for normal variability in structure and cerebral blood flow during adolescence
 - The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv) 
 - The full data is available at [figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555)
 - Here we use a slightly processed version of the data
@@ -41,7 +42,7 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 * Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/)
 * Install [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
 * Download the *ANTsR* tar.gz to `filename.tar.gz`
-* Install via: 
+* Install via command line (or *RStudio* `tools` $\rightarrow$ `install`): 
 ```bash
    R CMD INSTALL filename.tar.gz
 ```
@@ -51,10 +52,25 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 ```
 * Done!
 
-## Slide with R Code and Output
+## Get the demographics file
 
-```{r}
-summary(cars)
+```{r csv}
+csvlink="http://files.figshare.com/1699436/ptbp_summary_demographics.csv"
+tfn=tempfile(fileext='.csv')
+demog=download.file(csvlink,tfn)
+if ( demog == 0 ) demog=read.csv( tfn )
+```
+
+## Investigate the demographics
+
+```{r demog}
+str(demog[,1:10])
+```
+
+## Investigate the demographics
+
+```{r demog2}
+str(demog[,11:20])
 ```
 
 ## Slide with Plot
