@@ -191,3 +191,5 @@ We will use them to:
 * Investigate [Eigenanatomy](https://scholar.google.com/scholar?hl=en&q=Eigenanatomy&btnG=&as_sdt=1%2C5&as_sdtp=) and [SCCAN](https://scholar.google.com/scholar?q=sparse+canonical+correlation+avants&btnG=&hl=en&as_sdt=0%2C5) for relating demographic and psychometric measurements to the imaging and ...
 
 * relating imaging modalities to each other.
+
+* Finally, put all this together to create a reproducible analysis document for the PTBP.
