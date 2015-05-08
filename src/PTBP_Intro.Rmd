@@ -338,6 +338,10 @@ for ( i in 1:length(jlf$probimgs) )
 
 ## Augment CSF probability
 
+* Standard JLF doesnt capture CSF very well.  
+
+* Let's fix that.
+
 ```{r temper,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 if ( ! exists("jlf") ) {
 tf=paste(bd,"/data/JLF_out/jlfout_",sep='')
