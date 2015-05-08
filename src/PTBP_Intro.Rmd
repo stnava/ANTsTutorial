@@ -43,7 +43,7 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 ```bash
    R CMD INSTALL filename.tar.gz
 ```
-* Test via ( in `R`) calling: 
+* Test via ( in `R` ) calling: 
 ```r
   library(ANTsR)
 ```
