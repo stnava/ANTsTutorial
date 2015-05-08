@@ -1,5 +1,5 @@
 ---
-title: 'The Pediatric Template of Brain Perfusion: Quick introduction'
+title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTsR*'
 author: "Brian B. Avants et al."
 date: "May 7, 2015"
 output:
@@ -14,7 +14,29 @@ output:
     toc: yes
 --- 
 
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+# set this for your own compilation
+bd="/Users/stnava/data/ANTsTutorial/"
+```
+
 # Overview and resources
+
+## Overview 
+
+This is a compilable document with source code located here:
+
+[https://github.com/stnava/ANTsTutorial](https://github.com/stnava/ANTsTutorial)
+
+To get this source, do:
+
+```bash 
+git clone http://github.com/stnava/ANTsTutorial.git
+```
+It is expected that you will compile and run this from within 
+the cloned `ANTsTutorial` directory.  The document needs the [ants tutorial data](https://www.dropbox.com/s/5p0vlx8en9uzbge/ants_tutorial_data.zip?dl=0) 
+discussed below. It depends on *R*, *rmarkdown* and *ANTsR* primarily.
+
+Herein, [links are in this color](http://lmgtfy.com).
 
 ## Overview 
 
@@ -28,14 +50,22 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 - Each subject contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
 - There is also a template contained in the download.
 
-## Download the processed data
+## Download the ANTs tutorial data
 
 \Large
 
 - Download
-- <https://www.dropbox.com/s/u8bg5z5k6do56om/ants_tutorial_data.zip?dl=0>
+- <https://www.dropbox.com/s/5p0vlx8en9uzbge/ants_tutorial_data.zip?dl=1>
 - Move this to your ANTsTutorial directory.
 - Unzip the file in the ANTsTutorial directory.
+
+## The tutorial PTBP data
+
+- This is a subset of the full PTBP dataset.
+- This data has been affinely registered to the template and subsetted with a slab ROI.
+- Allows us to speed up examples but still show high-res results.
+- Each modality for each subject is in his/her T1 anatomical space.
+- An additional deformable mapping is needed to transform this subject space to template space or vice-versa.
 
 ## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
 
@@ -67,7 +97,6 @@ install.packages( c( pkgmin, pkgxtra ) )
 
 ```{r csv}
 library(ANTsR)
-bd="/Users/stnava/data/ANTsTutorial/"
 csvlink="http://files.figshare.com/1699436/ptbp_summary_demographics.csv"
 tfn=tempfile(fileext='.csv')
 demog = read.csv( paste( bd, "data/ptbp_summary_demographics.csv", sep='' ) )
@@ -311,8 +340,7 @@ for ( i in 1:length(jlf$probimgs) )
 
 ```{r temper,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 if ( ! exists("jlf") ) {
-setwd("/Users/stnava/data/ANTsTutorial/")
-tf="data/JLF_out/jlfout_"
+tf=paste(bd,"/data/JLF_out/jlfout_",sep='')
 kk=Sys.glob( paste(tf,"prob*nii.gz",sep='') )
 segfn=paste( tf,"seg.nii.gz", sep='') 
 jlf=list( segimg=antsImageRead(segfn),
@@ -347,16 +375,16 @@ plot( newcsf,dorot=1,window.img=c(0,4), slices=8 )
 
 ```{r renoprobs,eval=TRUE}
 csfind=1
-notcsfinds=2:length(jlf$probimgs)
+ncsf=2:length(jlf$probimgs)
 jlfmat=imageListToMatrix( jlf$probimgs, mk )
 prsums=colSums( jlfmat ) # i=26 for testing
 for ( i in 1:ncol(jlfmat) ) {
   colvec=jlfmat[,i]
-  notcsfsum=sum( colvec[notcsfinds] )
+  ncsfsum=sum( colvec[ncsf] )
   csfval=newcsfvec[i]
   colvec[csfind]=csfval # the fix is in!
-  if ( notcsfsum > 0 )
-    colvec[notcsfinds]=colvec[notcsfinds]/notcsfsum*(1.0-csfval)
+  if ( ncsfsum > 0 )
+    colvec[ncsf]=colvec[ncsf]/ncsfsum*(1.0-csfval)
   else colvec[csfind]=1
   jlfmat[,i]=colvec
 }
@@ -386,16 +414,26 @@ where the priors are zero ...
 plot( t1tem , dorot = 1 , slices=8 )
 ```
 
-## Template and *Atropos* segmentation
-
-```{r timg2,echo=FALSE}
-plot( t1tem, segnew$segmentation , dorot = 1 , slices=8 )
-```
-
 ## Template and *JLF* segmentation
 
 ```{r timg3,echo=FALSE}
 plot( t1tem, jlf$segimg , dorot = 1 , slices=8 )
 ```
 
+## Template and *Atropos* segmentation
 
+```{r timg2,echo=FALSE}
+plot( t1tem, segnew$segmentation , dorot = 1 , slices=8 )
+```
+
+## Summary 
+
+* Briefly reviewed PTBP and the modalities therein.
+
+* We showed a quick registration option.
+
+* We showed how to get the template "into shape" such that it can be used for processing new data.
+
+* JLF is key to this process.
+
+* We will discuss modality-specific processing and statistical testing procedures elsewhere.
