@@ -12,9 +12,9 @@ output:
     includes:
       in_header: mystyle.tex
     toc: yes
----
+--- 
 
-# Overview
+# Overview and resources
 
 ## Overview 
 The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
@@ -27,15 +27,12 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 - Each image contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
 - There is also a template contained in the download.
 
-
 ## Download the processed data
-\Huge
+\Large
 
 - Download
 - <https://www.dropbox.com/s/u8bg5z5k6do56om/tutorial_data_pad.zip?dl=0>
 - Then unzip the file.
-
-# Quick Look 
 
 ## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
 
@@ -52,6 +49,8 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 ```
 * Done!
 
+# Quick Look 
+
 ## Get the demographics file
 
 ```{r csv}
@@ -60,6 +59,7 @@ tfn=tempfile(fileext='.csv')
 demog=download.file(csvlink,tfn)
 if ( demog == 0 ) demog=read.csv( tfn )
 ```
+
 
 ## Investigate the demographics
 
@@ -73,9 +73,121 @@ str(demog[,1:10])
 str(demog[,11:20])
 ```
 
-## Slide with Plot
+# Review multiple modality images
 
-```{r, echo=FALSE}
-plot(cars)
+## Read the structural PTBP template image
+
+```{r readstruct, echo=TRUE}
+library(ANTsR)
+bd="/Users/stnava/data/ANTsTutorial/"
+t1fn = paste(bd,"./data/template/PTBP_T1_BrainCerebellum.nii.gz",sep='')
+t1tem = antsImageRead( t1fn )
 ```
 
+## Plot the structural PTBP template image
+
+```{r plotstruct, echo=FALSE, warning=FALSE}
+plot(t1tem,dorot=1,slices=8)
+```
+
+## Plot the CBF PTBP template image
+
+```{r plotcbf, echo=FALSE, warning=FALSE}
+cbftem = paste(bd,"./data/template/PTBP_CBF.nii.gz",sep='')
+cbftem = antsImageRead( cbftem )
+plot(cbftem,dorot=1,slices=8)
+```
+
+## Find subject image
+
+```{r substruct, echo=TRUE}
+subnum=11
+id=demog$SubID[subnum]
+dt=demog$ScanDate[subnum]
+exts=c( "mprage_t1.nii.gz" , 
+        "fa_anatomical.nii.gz", 
+        "MeanCBFWarpedToT1.nii.gz", 
+        "CorticalThickness.nii.gz", 
+        "BrainSegmentation.nii.gz", 
+        "AAL.nii.gz" )
+pre=paste( bd,"data/Subjects/",id,"/",dt,"/*",sep='')
+fns=Sys.glob( paste( pre, exts , sep='') )
+```
+
+## Review each modality
+```{r mod1, echo=FALSE}
+plot( antsImageRead( fns[1] ), dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod2, echo=FALSE}
+plot( antsImageRead( fns[2] ), dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod3, echo=FALSE}
+plot( antsImageRead( fns[3] ), dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod4, echo=FALSE}
+plot( antsImageRead( fns[4] ), dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod5, echo=FALSE}
+plot( antsImageRead( fns[5] ), dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod5b, echo=FALSE}
+cseg=antsImageRead( fns[5] ) %>% thresholdImage(2,2)
+plot( antsImageRead( fns[1] ), cseg, dorot=1, slices=8)
+```
+
+## Review each modality 
+```{r mod6, echo=FALSE}
+aal=antsImageRead( fns[6] )
+plot( antsImageRead( fns[1] ), aal, dorot=1, slices=8, 
+      window.overlay=c( 1, max(aal) ) )
+```
+
+## Review each modality 
+```{r mod1b, echo=FALSE}
+fa=antsImageRead( fns[2] ) %>% iMath("Canny")
+plot( antsImageRead( fns[1] ), fa, dorot=1, slices=8 )
+```
+
+## Count complete subject images
+
+```{r ctsubimages, echo=TRUE}
+havecompletesubject=rep(FALSE,nrow(demog))
+for ( x in 1:nrow(demog) )
+  {
+  id = demog$SubID[x]
+  dt = demog$ScanDate[x]
+  pre = paste( bd,"data/Subjects/",id,"/",dt,"/*",sep='')
+  fns = Sys.glob( paste( pre, exts , sep='') )
+  if ( length( fns ) == 6 ) havecompletesubject[x]=TRUE
+  }
+nsub=sum( havecompletesubject  )
+```
+
+## PTBP in our tutorial
+
+We have `r nsub` multiple modality subjects to process
+and to analyze.
+
+We will use them to:
+
+* Build a template
+
+* Construct template priors with [joint label fusion](http://www.ncbi.nlm.nih.gov/pubmed/22732662)
+
+* Normalize, segment, compute thickness
+
+* Map other modalities to structural reference
+
+* Investigate [Eigenanatomy](https://scholar.google.com/scholar?hl=en&q=Eigenanatomy&btnG=&as_sdt=1%2C5&as_sdtp=) and [SCCAN](https://scholar.google.com/scholar?q=sparse+canonical+correlation+avants&btnG=&hl=en&as_sdt=0%2C5) for relating demographic and psychometric measurements to the imaging and ...
+
+* relating imaging modalities to each other.
