@@ -24,7 +24,7 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 - The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv) 
 - The full data is available at [figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555)
 - Here we use a slightly processed version of the data
-- Each image contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
+- Each subject contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
 - There is also a template contained in the download.
 
 ## Download the processed data
