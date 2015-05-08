@@ -43,12 +43,11 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
   optionally [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
 * Install *ANTsR* dependencies
 ```r
-pkgmin=c("magrittr","Rcpp")
-install.packages( pkgmin )
+pkgmin=c("magrittr","Rcpp") # core dependencies
 pkgxtra=c("igraph","randomForest","misc3d","rgl",
   "mFilter","fastICA","fpc","knitr","rmarkdown",
   "pixmap","png","signal","visreg")
-install.packages( pkgxtra ) # enables nice extra functionality
+install.packages( c( pkgmin, pkgxtra ) ) 
 ```
 * Download the *ANTsR* tar.gz to `filename.tar.gz`
 * Install via command line (or *RStudio* `tools` $\rightarrow$ `install`): 
@@ -95,7 +94,9 @@ str(demog[,11:20])
 ## Read the structural PTBP template image
 
 ```{r readstruct, echo=TRUE}
-t1fn = paste(bd,"./data/template/PTBP_T1_BrainCerebellum.nii.gz",sep='')
+t1fn = paste(bd,
+  "./data/template/PTBP_T1_BrainCerebellum.nii.gz",
+  sep='')
 t1tem = antsImageRead( t1fn )
 ```
 
