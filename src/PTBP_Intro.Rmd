@@ -17,6 +17,7 @@ output:
 # Overview and resources
 
 ## Overview 
+
 The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
 
 - Free multiple modality MRI data with demographics and psychometrics
@@ -28,6 +29,7 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 - There is also a template contained in the download.
 
 ## Download the processed data
+
 \Large
 
 - Download
@@ -36,8 +38,18 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 
 ## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
 
-* Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/)
-* Install [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
+* Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or 
+  [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/), 
+  optionally [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
+* Install *ANTsR* dependencies
+```r
+pkgmin=c("magrittr","Rcpp")
+install.packages( pkgmin )
+pkgxtra=c("igraph","randomForest","misc3d","rgl",
+  "mFilter","fastICA","fpc","knitr","rmarkdown",
+  "pixmap","png","signal","visreg")
+install.packages( pkgxtra ) # enables nice extra functionality
+```
 * Download the *ANTsR* tar.gz to `filename.tar.gz`
 * Install via command line (or *RStudio* `tools` $\rightarrow$ `install`): 
 ```bash
@@ -54,12 +66,17 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 ## Get the demographics file
 
 ```{r csv}
+library(ANTsR)
+bd="/Users/stnava/data/ANTsTutorial/"
 csvlink="http://files.figshare.com/1699436/ptbp_summary_demographics.csv"
 tfn=tempfile(fileext='.csv')
-demog=download.file(csvlink,tfn)
-if ( demog == 0 ) demog=read.csv( tfn )
+demog = read.csv( paste( bd, "data/ptbp_summary_demographics.csv", sep='' ) )
+if ( ! exists("demog") )
+  {
+  demog=download.file(csvlink,tfn)
+  if ( demog == 0 ) demog=read.csv( tfn )
+  }
 ```
-
 
 ## Investigate the demographics
 
@@ -78,8 +95,6 @@ str(demog[,11:20])
 ## Read the structural PTBP template image
 
 ```{r readstruct, echo=TRUE}
-library(ANTsR)
-bd="/Users/stnava/data/ANTsTutorial/"
 t1fn = paste(bd,"./data/template/PTBP_T1_BrainCerebellum.nii.gz",sep='')
 t1tem = antsImageRead( t1fn )
 ```
@@ -193,3 +208,48 @@ We will use them to:
 * relating imaging modalities to each other.
 
 * Finally, put all this together to create a reproducible analysis document for the PTBP.
+
+
+
+## Template priors with SyN-Quick
+
+```{r maptem, echo=TRUE, eval=FALSE, warning=FALSE}
+# t1tem read before
+ilist=list()
+seglist=list()
+for ( x in which( havecompletesubject )[1:60] )
+  {
+  id = demog$SubID[x]
+  dt = demog$ScanDate[x]
+  pre = paste( bd,"data/Subjects/",id,"/",dt,"/*",sep='')
+  fns = Sys.glob( paste( pre, exts , sep='') )
+  t1 = antsImageRead( fns[1] )
+  mytx = antsRegistration( t1tem, t1, "SyN" )
+  seg = antsImageRead( fns[5] )
+  segw = antsApplyTransforms( t1tem, seg, mytx$fwd, interpolator="NearestNeighbor"  )
+  ilist = lappend( ilist, mytx$warpedmovout )
+  seglist = lappend( seglist, segw )
+  }
+```
+
+
+
+## Template [Joint Label/Intensity Fusion](http://journal.frontiersin.org/article/10.3389/fninf.2013.00027/abstract)
+
+```{r jlftem, echo=TRUE, eval=FALSE, warning=FALSE }
+mk=getMask(t1tem)
+jlf=jointIntensityFusion3D( t1tem, mk, ilist, 
+  labelList=seglist, rad=rep(2,3), rSearch=2, 
+  computeProbs=TRUE, includezero=TRUE)
+# write out results
+tf=tempfile()
+print(tf)
+antsImageWrite( jlf$segimg, paste(tf,'seg.nii.gz',sep='') )
+antsImageWrite( jlf$predimg, paste(tf,'pred.nii.gz',sep='') )
+for ( i in 1:length(jlf$probimgs) )
+  antsImageWrite( jlf$probimgs[[i]], 
+                  paste(tf,'prob',i,'.nii.gz',sep='') )
+```
+
+
+
