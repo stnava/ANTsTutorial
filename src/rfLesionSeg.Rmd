@@ -3,6 +3,9 @@ title: "Multi-resolution voxel-wise neighborhood random forest (MRV-NRF) lesion 
 author: "Brian B. Avants, Dorian Pustina, Nicholas J. Tustison"
 date: "February 22, 2015"
 output:
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -63,7 +66,7 @@ seg2[ ll2$lesion > 0.5 & seg2 > 0.5 ]<-4
 ## Generate test data
 
 Now let's apply this function to generate a test dataset.
-```{r testsub2}
+```{r testsub2,echo=FALSE}
 invisible( plot(ll2$limg) )
 ```
 
@@ -87,7 +90,7 @@ seg[ ll$lesion > 0.5 & seg > 0.5 ]<-4
 
 ## Make training data
 
-```{r runsim2}
+```{r runsim2,echo=FALSE}
 invisible( plot(ll$limg) )
 ```
 
@@ -110,7 +113,7 @@ seg1[ ll1$lesion > 0.5 & seg1 > 0.5 ]<-4
 
 ## Pseudo-ground truth
 
-```{r runsim2}
+```{r runsim3,echo=FALSE}
 invisible( plot( ll1$limg ) )
 ```
 
@@ -153,7 +156,7 @@ mmseg<-mrvnrfs.predict( rfm$rflist, list(list(ll2$limg)),
 ```
 
 ## Apply the model to new data
-```{r vizmodel}
+```{r vizmodel,echo=FALSE}
 invisible( plot(mmseg$seg, window.img=c(0,max(mmseg$seg) ) ) )
 ```
 
@@ -163,7 +166,7 @@ invisible( plot(mmseg$seg, window.img=c(0,max(mmseg$seg) ) ) )
 ## Show ground truth
 
 Here is the ground truth.
-```{r gtseg}
+```{r gtseg,echo=FALSE}
 invisible( plot( seg2, window.img=c(0,max(seg2) ) ) )
 ```
 
@@ -171,7 +174,7 @@ invisible( plot( seg2, window.img=c(0,max(seg2) ) ) )
 ## Lesion probability 
 
 Take a quick look at the lesion probability.
-```{r vizprob}
+```{r vizprob,echo=FALSE}
 invisible( plot( mmseg$probs[[1]][[ max(mmseg$seg)  ]] ) )
 ```
 
