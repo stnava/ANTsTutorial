@@ -3,6 +3,9 @@ title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTs
 author: "Brian B. Avants et al."
 date: "May 7, 2015"
 output:
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -395,6 +398,15 @@ for ( i in 1:ncol(jlfmat) ) {
 newprobimgs=matrixToImages( jlfmat, mk )
 ```
 
+
+## Renormalize probabilities: *ANTsR* function
+
+```{r renoprobs2,eval=TRUE}
+jlf$probimgs[[ 1 ]] = newcsf
+newprobimgs2 = renormalizeProbabilityImages( 
+  jlf$probimgs, mk, 1 )
+```
+
 ## Segment new images with these modified priors
 
 We can use the template, itself, as an example.
@@ -403,7 +415,7 @@ Obviously, we skip the registration step.
 
 ```{r tempseg}
 segnew <- atropos( d = 3, a = t1tem, m = '[0.05,1x1x1]',
-   c = '[2,0]',  i = newprobimgs, x = mk )
+   c = '[2,0]',  i = newprobimgs2, x = mk )
 ```
 
 A more complete process is available in `antsAtroposN4.sh` which 
@@ -429,6 +441,10 @@ plot( t1tem, jlf$segimg , dorot = 1 , slices=8 )
 ```{r timg2,echo=FALSE}
 plot( t1tem, segnew$segmentation , dorot = 1 , slices=8 )
 ```
+
+## Try the same thing on a subject (need registration)
+
+Let's do this as example later ...
 
 ## Summary 
 
