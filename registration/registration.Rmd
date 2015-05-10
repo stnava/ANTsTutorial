@@ -1,0 +1,462 @@
+# ANTs Tutorial:  Registration
+
+
+# But first,
+
+##
+
+__ANTs Command line__
+
+<BR><BR>
+```
+antsProgram ...
+  --function Name[parameter0,parameter1,...]
+  ...
+```
+
+##
+
+![](./registration/figures/commandLine.png)
+
+##
+
+``antsRegistration``
+<BR><BR>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ antsRegistration --help
+
+COMMAND:
+     antsRegistration
+          This program is a user-level registration application meant to utilize
+          ITKv4-only classes. The user can specify any number of "stages" where a stage
+          consists of a transform; an image metric; and iterations, shrink factors, and
+          smoothing sigmas for each level.Note that dimensionality, metric, transform,
+          output, convergence, shrink-factors and smoothing-sigmas parameters are
+          mandatory.
+
+OPTIONS:
+     --version
+          Get Version Information.
+
+     -d, --dimensionality 2/3
+          This option forces the image to be treated as a specified-dimensional image. If
+          not specified, we try to infer the dimensionality from the input image.
+
+     -o, --output outputTransformPrefix
+                  [outputTransformPrefix,<outputWarpedImage>,<outputInverseWarpedImage>]
+          Specify the output transform prefix (output format is .nii.gz ). Optionally, one
+          can choose to warp the moving image to the fixed space and, if the inverse
+          transform exists, one can also output the warped fixed image. Note that only the
+          images specified in the first metric call are warped. Use antsApplyTransforms to
+          warp other images using the resultant transform(s).
+
+     -j, --save-state saveSateAsTransform
+          Specify the output file for the current state of the registration. The state
+          file is written to an hdf5 composite file. It is specially usefull if we want to
+          save the current state of a SyN registration to the disk, so we can load and
+          restore that later to continue the next registration process directly started
+          from the last saved state. The output file of this flag is the same as the
+          write-composite-transform, unless the last transform is a SyN transform. In that
+          case, the inverse displacement field of the SyN transform is also added to the
+          output composite transform. Again notice that this file cannot be treated as a
+          transform, and restore-state option must be used to load the written file by
+          this flag.
+
+     -k, --restore-state restoreStateAsATransform
+          Specify the initial state of the registration which get immediately used to
+          directly initialize the registration process. The flag is mutually exclusive
+          with other intialization flags.If this flag is used, none of the
+          initial-moving-transform and initial-fixed-transform cannot be used.
+
+     -a, --write-composite-transform 1/(0)
+          Boolean specifying whether or not the composite transform (and its inverse, if
+          it exists) should be written to an hdf5 composite file. This is false by default
+          so that only the transform for each stage is written to file.
+          <VALUES>: 0
+
+     -p, --print-similarity-measure-interval <unsignedIntegerValue>
+          Prints out the CC similarity metric measure between the full-size input fixed
+          and the transformed moving images at each iteration a value of 0 (the default)
+          indicates that the full scale computation should not take placeany value greater
+          than 0 represents the interval of full scale metric computation.
+          <VALUES>: 0
+
+     -v, --write-interval-volumes <unsignedIntegerValue>
+          Writes out the output volume at each iteration. It helps to present the
+          registration process as a short movie a value of 0 (the default) indicates that
+          this option should not take placeany value greater than 0 represents the
+          interval between the iterations which outputs are written to the disk.
+          <VALUES>: 0
+
+     -z, --collapse-output-transforms (1)/0
+          Collapse output transforms. Specifically, enabling this option combines all
+          adjacent transforms wherepossible. All adjacent linear transforms are written to
+          disk in the forman itk affine transform (called xxxGenericAffine.mat).
+          Similarly, all adjacent displacement field transforms are combined when written
+          to disk (e.g. xxxWarp.nii.gz and xxxInverseWarp.nii.gz (if available)).Also, an
+          output composite transform including the collapsed transforms is written to the
+          disk (called outputCollapsed(Inverse)Composite).
+          <VALUES>: 1
+
+     -i, --initialize-transforms-per-stage (1)/0
+          Initialize linear transforms from the previous stage. By enabling this option,
+          the current linear stage transform is directly intialized from the previous
+          stage's linear transform; this allows multiple linear stages to be run where
+          each stage directly updates the estimated linear transform from the previous
+          stage. (e.g. Translation -> Rigid -> Affine).
+          <VALUES>: 0
+
+     -n, --interpolation Linear
+                         NearestNeighbor
+                         MultiLabel[<sigma=imageSpacing>,<alpha=4.0>]
+                         Gaussian[<sigma=imageSpacing>,<alpha=1.0>]
+                         BSpline[<order=3>]
+                         CosineWindowedSinc
+                         WelchWindowedSinc
+                         HammingWindowedSinc
+                         LanczosWindowedSinc
+          Several interpolation options are available in ITK. These have all been made
+          available. Currently the interpolator choice is only used to warp (and possibly
+          inverse warp) the final output image(s).
+
+     -g, --restrict-deformation PxQxR
+          This option allows the user to restrict the optimization of the displacement
+          field, translation, rigid or affine transform on a per-component basis. For
+          example, if one wants to limit the deformation or rotation of 3-D volume to the
+          first two dimensions, this is possible by specifying a weight vector of '1x1x0'
+          for a deformation field or '1x1x0x1x1x0' for a rigid
+          transformation.Low-dimensional restriction only works if there are no preceding
+          transformations.
+
+     -q, --initial-fixed-transform initialTransform
+                                   [initialTransform,<useInverse>]
+                                   [fixedImage,movingImage,initializationFeature]
+          Specify the initial fixed transform(s) which get immediately incorporated into
+          the composite transform. The order of the transforms is stack-esque in that the
+          last transform specified on the command line is the first to be applied. In
+          addition to initialization with ITK transforms, the user can perform an initial
+          translation alignment by specifying the fixed and moving images and selecting an
+          initialization feature. These features include using the geometric center of the
+          images (=0), the image intensities (=1), or the origin of the images (=2).
+
+     -r, --initial-moving-transform initialTransform
+                                    [initialTransform,<useInverse>]
+                                    [fixedImage,movingImage,initializationFeature]
+          Specify the initial moving transform(s) which get immediately incorporated into
+          the composite transform. The order of the transforms is stack-esque in that the
+          last transform specified on the command line is the first to be applied. In
+          addition to initialization with ITK transforms, the user can perform an initial
+          translation alignment by specifying the fixed and moving images and selecting an
+          initialization feature. These features include using the geometric center of the
+          images (=0), the image intensities (=1), or the origin of the images (=2).
+
+     -m, --metric CC[fixedImage,movingImage,metricWeight,radius,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  MI[fixedImage,movingImage,metricWeight,numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  Mattes[fixedImage,movingImage,metricWeight,numberOfBins,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  MeanSquares[fixedImage,movingImage,metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  Demons[fixedImage,movingImage,metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  GC[fixedImage,movingImage,metricWeight,radius=NA,<samplingStrategy={None,Regular,Random}>,<samplingPercentage=[0,1]>]
+                  ICP[fixedPointSet,movingPointSet,metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>]
+                  PSE[fixedPointSet,movingPointSet,metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>,<pointSetSigma=1>,<kNeighborhood=50>]
+                  JHCT[fixedPointSet,movingPointSet,metricWeight,<samplingPercentage=[0,1]>,<boundaryPointsOnly=0>,<pointSetSigma=1>,<kNeighborhood=50>,<alpha=1.1>,<useAnisotropicCovariances=1>]
+                  IGDM[fixedImage,movingImage,metricWeight,fixedMask,movingMask,<neighborhoodRadius=0x0>,<intensitySigma=0>,<distanceSigma=0>,<kNeighborhood=1>,<gradientSigma=1>]
+          These image metrics are available--- CC: ANTS neighborhood cross correlation,
+          MI: Mutual information, Demons: (Thirion), MeanSquares, and GC: Global
+          Correlation. The "metricWeight" variable is used to modulate the per stage
+          weighting of the metrics. The metrics can also employ a sampling strategy
+          defined by a sampling percentage. The sampling strategy defaults to 'None' (aka
+          a dense sampling of one sample per voxel), otherwise it defines a point set over
+          which to optimize the metric. The point set can be on a regular lattice or a
+          random lattice of points slightly perturbed to minimize aliasing artifacts.
+          samplingPercentage defines the fraction of points to select from the domain. In
+          addition, three point set metrics are available: Euclidean (ICP), Point-set
+          expectation (PSE), and Jensen-Havrda-Charvet-Tsallis (JHCT).
+
+     -t, --transform Rigid[gradientStep]
+                     Affine[gradientStep]
+                     CompositeAffine[gradientStep]
+                     Similarity[gradientStep]
+                     Translation[gradientStep]
+                     BSpline[gradientStep,meshSizeAtBaseLevel]
+                     GaussianDisplacementField[gradientStep,updateFieldVarianceInVoxelSpace,totalFieldVarianceInVoxelSpace]
+                     BSplineDisplacementField[gradientStep,updateFieldMeshSizeAtBaseLevel,totalFieldMeshSizeAtBaseLevel,<splineOrder=3>]
+                     TimeVaryingVelocityField[gradientStep,numberOfTimeIndices,updateFieldVarianceInVoxelSpace,updateFieldTimeVariance,totalFieldVarianceInVoxelSpace,totalFieldTimeVariance]
+                     TimeVaryingBSplineVelocityField[gradientStep,velocityFieldMeshSize,<numberOfTimePointSamples=4>,<splineOrder=3>]
+                     SyN[gradientStep,updateFieldVarianceInVoxelSpace,totalFieldVarianceInVoxelSpace]
+                     BSplineSyN[gradientStep,updateFieldMeshSizeAtBaseLevel,totalFieldMeshSizeAtBaseLevel,<splineOrder=3>]
+                     Exponential[gradientStep,updateFieldVarianceInVoxelSpace,velocityFieldVarianceInVoxelSpace,<numberOfIntegrationSteps>]
+                     BSplineExponential[gradientStep,updateFieldMeshSizeAtBaseLevel,velocityFieldMeshSizeAtBaseLevel,<numberOfIntegrationSteps>,<splineOrder=3>]
+          Several transform options are available. The gradientStep or learningRate
+          characterizes the gradient descent optimization and is scaled appropriately for
+          each transform using the shift scales estimator. Subsequent parameters are
+          transform-specific and can be determined from the usage. For the B-spline
+          transforms one can also specify the smoothing in terms of spline distance (i.e.
+          knot spacing).
+
+     -c, --convergence MxNxO
+                       [MxNxO,<convergenceThreshold=1e-6>,<convergenceWindowSize=10>]
+          Convergence is determined from the number of iterations per level and is
+          determined by fitting a line to the normalized energy profile of the last N
+          iterations (where N is specified by the window size) and determining the slope
+          which is then compared with the convergence threshold.
+
+     -s, --smoothing-sigmas MxNxO...
+          Specify the sigma of gaussian smoothing at each level. Units are given in terms
+          of voxels ('vox') or physical spacing ('mm'). Example usage is '4x2x1mm' and
+          '4x2x1vox' where no units implies voxel spacing.
+
+     -f, --shrink-factors MxNxO...
+          Specify the shrink factor for the virtual domain (typically the fixed image) at
+          each level.
+
+     -u, --use-histogram-matching
+          Histogram match the images before registration.
+
+     -l, --use-estimate-learning-rate-once
+          turn on the option that lets you estimate the learning rate step size only at
+          the beginning of each level. * useful as a second stage of fine-scale
+          registration.
+
+     -w, --winsorize-image-intensities [lowerQuantile,upperQuantile]
+          Winsorize data based on specified quantiles.
+
+     -x, --masks [fixedImageMask,movingImageMask]
+          Image masks to limit voxels considered by the metric.
+
+     --float
+          Use 'float' instead of 'double' for computations.
+          <VALUES>: 0
+
+     -v, --verbose (0)/1
+          Verbose output.
+
+     -h
+          Print the help menu (short version).
+
+     --help
+          Print the help menu. Will also print values used on the current command line
+          call.
+          <VALUES>: 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##
+
+_Some programs which use the ANTs command line_
+
+<BR><BR>
+```{r, results='asis', echo = FALSE}
+programs <- c( "ANTS", "antsRegistration", "antsApplyTransforms",
+                 "antsMotionCorr", "sccan",
+                 "Atropos", "N4BiasFieldCorrection", "KellyKapowski",
+                 "antsAI", "antsSurf", "CreateDTICohort", "CreateTiledMosaic"
+               )
+
+programsDF <- data.frame( Column1 = programs[1:floor( 0.5*length(programs) )], Column2 = programs[( 1+floor( 0.5*length(programs) ) ):length(programs)] )
+knitr::kable( programsDF )
+```
+
+##
+
+__Evolution of ANTs registration call__
+
+<BR>
+```ANTS``` $\longrightarrow  R_{rigid\,or\,affine} + R_{deformable}$
+<BR>
+<HR WIDTH="60%">
+<BR>
+```antsRegistration``` $\longrightarrow  R_{rigid} + R_{affine} + R_{syn} + \ldots$
+
+or any other permutation, e.g.,
+
+$\longrightarrow  R_{similarity} + R_{b-spline\,syn} + R_{translation} + R_{demons} + \ldots$
+
+##
+
+Each <span style="color:green;">_registration stage_</span> is characterized by:
+
+* transform, ```-t Rigid[0.1]```,
+
+* similarity metric(s) with data, ```-m MI[image1,image2,1,32,Random,0.25]```,
+
+* convergence criteria, ```-c [1000x500x200]```,
+
+* shrink factors, ```-f 6x4x2```, and
+
+* smoothing factors, ```-s 2x1x0vox```.
+
+##
+
+Other options include:
+
+* fixed and moving mask images,
+
+* initial translation option (align mass or image centers),
+
+* histogram matching, and
+
+* restrict deformation.
+
+##
+
+__A couple notes:__
+
+* The shrink factor is adaptive.
+
+* Default behavior is to "collapse" the transforms.
+
+* The transform file names include the order.
+
+* Still a work in progress.
+
+
+# Let's start out small and use wrapper scripts.
+
+##
+
+```antsRegistrationSyN{Quick}.sh```
+
+~~~~~~~~~~~~~~~~~~~~~~
+$ antsRegistrationSyN.sh -h 1
+
+Usage:
+
+antsRegistrationSyN.sh -d ImageDimension -f FixedImage -m MovingImage -o OutputPrefix
+
+Example Case:
+
+antsRegistrationSyN.sh -d 3 -f fixedImage.nii.gz -m movingImage.nii.gz -o output
+
+Compulsory arguments:
+
+     -d:  ImageDimension: 2 or 3 (for 2 or 3 dimensional registration of single volume)
+
+     -f:  Fixed image or source image or reference image
+
+     -m:  Moving image or target image
+
+     -o:  OutputPrefix: A prefix that is prepended to all output files.
+
+Optional arguments:
+
+     -n:  Number of threads (default = 1)
+
+     -t:  transform type (default = 's')
+        r: rigid
+        a: rigid + affine
+        s: rigid + affine + deformable syn
+        b: rigid + affine + deformable b-spline syn
+
+     -r:  radius for cross correlation metric used during SyN stage (default = 4)
+
+     -s:  spline distance for deformable B-spline SyN transform (default = 26)
+
+     -p:  precision type (default = 'd')
+        f: float
+        d: double
+
+     -j:  use histogram matching (default = 0)
+        0: false
+        1: true
+
+     NB:  Multiple image pairs can be specified for registration during the SyN stage.
+          Specify additional images using the '-m' and '-f' options.  Note that image
+          pair correspondence is given by the order specified on the command line.
+          Only the first fixed and moving image pair is used for the linear resgitration
+          stages.
+
+--------------------------------------------------------------------------------------
+Get the latest ANTs version at:
+--------------------------------------------------------------------------------------
+https://github.com/stnava/ANTs/
+
+--------------------------------------------------------------------------------------
+Read the ANTS documentation at:
+--------------------------------------------------------------------------------------
+http://stnava.github.io/ANTs/
+
+--------------------------------------------------------------------------------------
+ANTS was created by:
+--------------------------------------------------------------------------------------
+Brian B. Avants, Nick Tustison and Gang Song
+Penn Image Computing And Science Laboratory
+University of Pennsylvania
+
+Relevent references for this script include:
+   * http://www.ncbi.nlm.nih.gov/pubmed/20851191
+   * http://www.frontiersin.org/Journal/10.3389/fninf.2013.00039/abstract
+--------------------------------------------------------------------------------------
+script by Nick Tustison
+--------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~
+
+## _Let's try it !_
+
+<BR><BR>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ANTsTutorial/data/Subjects/PEDS007/20100709
+$ antsRegistrationSyN.sh -d 3 -o test -f PEDS007_20100709_mprage_t1.nii.gz -m ../../../template/PTBP_T1_Head.nii.gz
+...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+__The screen dump includes the ```antsRegistration``` call.__
+
+##
+
+_Before looking at the results, let's speed things up._
+
+<BR><BR>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ antsRegistrationSyN.sh -d 3 -n 4 -o test -f PEDS007_20100709_mprage_t1.nii.gz -m ../../../template/PTBP_T1_Head.nii.gz
+...
+$ itksnap -g PEDS007_20100709_mprage_t1.nii.gz -o testWarped.nii.gz &
+$ CreateWarpedGridImage 3 test1Warp.nii.gz test1WarpedGrid.nii.gz 1x0x1
+$ itksnap -g test1WarpedGrid.nii.gz &
+$ CreateJacobianDeterminantImage 3 test1Warp.nii.gz testLogJacobian.nii.gz 1 1
+$ itksnap -g testLogJacobian.nii.gz &
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+<!---
+##
+
+_Let's make a difficult case._
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ PermuteFlipImageOrientationAxes 3 PEDS007_20100709_mprage_t1.nii.gz PEDS007_20100709_mprage_t1_rotated.nii.gz 2 1 0
+$ CopyImageHeaderInformation PEDS007_20100709_mprage_t1_rotated.nii.gz PEDS007_20100709_mprage_t1.nii.gz PEDS007_20100709_mprage_t1_rotated.nii.gz 1 1 1
+$ antsApplyTransforms -d 3 -o testToRemove.nii.gz -i PEDS007_20100709_mprage_t1_rotated.nii.gz -r PEDS007_20100709_mprage_t1.nii.gz -t identity
+$ itksnap -g PEDS007_20100709_mprage_t1.nii.gz -o testToRemove.nii.gz &
+$ antsAI -d 3 -m MI[ ../../../template/PTBP_T1_Head.nii.gz , PEDS007_20100709_mprage_t1_rotated.nii.gz , 32, Regular, 0.25] -t Rigid[0.1] -p 1 -o initialTransform.txt
+$ antsApplyTransforms -d 3 -o test.nii.gz -i PEDS007_20100709_mprage_t1_rotated.nii.gz -r ../../../template/PTBP_T1_Head.nii.gz -t initialTransform.txt
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-->
+
+
+# Templates
+
+
+## Available ANTs scripts
+
+* ```buildtemplateparallel.sh```
+
+* ```antsMultivariateTemplateConstruction.sh```
+
+* ```antsMultivariateTemplateConstruction2.sh```
+
+## Let's download github example...
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ANTsTutorial/data/
+$ git clone https://github.com/ntustison/TemplateBuildingExample.git
+Cloning into 'TemplateBuildingExample'...
+remote: Counting objects: 152, done.
+remote: Total 152 (delta 0), reused 0 (delta 0), pack-reused 152
+Receiving objects: 100% (152/152), 3.15 MiB | 1.50 MiB/s, done.
+Resolving deltas: 100% (45/45), done.
+Checking connectivity... done.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
