@@ -32,6 +32,7 @@ library(visreg)
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 voi="Performance.IQ"
+voi="Verbal.IQ"
 multCorr='BH'
 smth=3.0
 ridger=1.e-6
@@ -43,9 +44,9 @@ wp=!is.na( rowMeans( thkmat ) )
 ilist=matrixToImages( thkmat[wp,], thkmask )
 for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 thkmat=imageListToMatrix( ilist, thkmask )
-mdl=lm( thkmat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp,] )
+myform=formula( paste( "thkmat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp,] )
 blmthk=bigLMStats( mdl , ridger )
 qv=p.adjust( blmthk$beta.pval[voi,], method=multCorr  )
 print( min( qv ) )
@@ -73,9 +74,9 @@ wp_fa[  which(wp_fa==TRUE)[c(42,44)] ]=FALSE # bad data
 ilist=matrixToImages( famat[wp_fa,], famask )
 for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 famat=imageListToMatrix( ilist, famask )
-mdl=lm( (famat)
-  ~ AgeAtScan * Sex + Handedness + 
-    Performance.IQ , data=demog[wp_fa,] )
+myform=formula( paste( "famat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp,] )
 blmfa=bigLMStats( mdl , ridger )
 qv=p.adjust( blmfa$beta.pval[voi,], method=multCorr  )
 print( min( qv ) )
@@ -96,15 +97,12 @@ wp_cbf=!is.na( rowMeans( cbfmat ) )
 ilist=matrixToImages( cbfmat[wp_cbf,], cbfmask )
 for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 cbfmat=imageListToMatrix( ilist, cbfmask )
-mdl=lm( cbfmat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp_cbf,] )
+myform=formula( paste( "cbfmat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp,] )
 blmcbf=bigLMStats( mdl , ridger )
 qv=p.adjust( blmcbf$beta.pval[ voi ,], method=multCorr  )
 print( min( qv ) )
 pvimg=makeImage( famask, 1.0-qv )
 antsImageWrite( pvimg, '/tmp/pvimg_cbf.nii.gz' )
 ```
-
-
-
