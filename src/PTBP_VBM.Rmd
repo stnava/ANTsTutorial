@@ -28,8 +28,8 @@ bd="/Users/stnava/data/ANTsTutorial/"
 
 ```{r dataio}
 library(ANTsR)
+library(visreg)
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
-famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 qth=0.05
 voi="Performance.IQ"
 mth='BH'
@@ -49,8 +49,9 @@ qv=p.adjust(   blm$beta.pval[voi,], method=mth )
 print( which( qv < qth ) )
 pvimg=makeImage( thkmask, 1.0-qv )
 antsImageWrite( pvimg, '/tmp/pvimg.nii.gz' )
+if ( FALSE ) {
 theanat=sparseDecom( thkmat, thkmask, nvecs=20,
-  sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
+   sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
 mdl=lm( data.matrix( theanat$projections )
   ~ AgeAtScan * Sex + I(AgeAtScan^2) + FullScaleIQ +
     Teen.Ladder.SES.score + BV, data=demog[wp,] )
@@ -61,6 +62,7 @@ eseg=eigSeg( mask=thkmask, theanat$eig, F  )
 eseg=maskImage( eseg, eseg,
   level=as.numeric( which( qv < qth ) ) )
 antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
+}
 ```
 
 
@@ -69,31 +71,67 @@ antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
 
 ```{r favox}
 fafn=paste(bd,"data/ptbp_vox_fa.mha",sep='')
+famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 famat=as.matrix( antsImageRead( fafn ) )
-wp=!is.na( rowMeans( famat ) )
+farowmeans=rowMeans( famat )
+wp = rep( FALSE, nrow( demog ) )
+for ( sub in unique( demog$SubID ) ) # get unique subjects
+  {
+  ww=which( demog$SubID == sub )
+  ww=ww[ !is.na( farowmeans[ww] )  & farowmeans[ww] > 0.2 ]
+  if ( length( ww ) > 0 ) wp[ ww[ 1 ] ] = TRUE
+  }
+wp[  which(wp==TRUE)[c(42,44)] ]=FALSE # bad data
 ilist=matrixToImages( famat[wp,], famask )
 for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 1.0 )
 famat=imageListToMatrix( ilist, famask )
-mdl=lm( famat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp,] )
+mdl=lm( (famat)
+  ~ AgeAtScan * Sex + Handedness + 
+    Performance.IQ , data=demog[wp,] )
 blm=bigLMStats( mdl , 1.e-8 )
-qv=p.adjust( blm$beta.pval["Performance.IQ",], method=mth )
+qv=p.adjust( blm$beta.pval["Performance.IQ",], method=mth  )
+min( qv )
 pvimg=thresholdImage( makeImage( famask, 1.0-qv ),
                       0.95, 1 )
 antsImageWrite( pvimg, '/tmp/pvimg_fa.nii.gz' )
+if ( FALSE ) {
+
 faeanat=sparseDecom( famat, famask, nvecs=20,
   sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
-mdl=lm( data.matrix( faeanat$projections )
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) + FullScaleIQ +
-    Teen.Ladder.SES.score + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-voi="Teen.Ladder.SES.score"
+eproj=imageListToMatrix( faeanat$eig , famask ) 
+eproj=( eproj/rowSums(eproj) )
+faproj = famat %*% t( eproj  ) 
+mdl=lm( faproj 
+  ~ AgeAtScan * Sex + I(AgeAtScan^2) + Performance.IQ +
+    Teen.Ladder.SES.score + BV , data=demog[wp,] )
+mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
+                 PIQ=demog[wp,]$Performance.IQ, 
+                 VIQ=demog[wp,]$Verbal.IQ, 
+                 Sex=demog[wp,]$Sex, BV=demog[wp,]$BV, 
+                 Cortex=demog[wp,]$Cortex, 
+                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+                 Income=demog[wp,]$Income,
+                 img=faproj )
+mdl1=lm( Income
+  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
+    BV , data=mydf )
+mdl2=lm( Income
+  ~ AgeAtScan * Sex + I(AgeAtScan^2) + 
+    img.1 + img.2 + img.3 + img.4 +
+    BV , data=mydf )
+anova( mdl1, mdl2)
+mdl=lm( faproj ~  
+    LadderCom + AgeAtScan * Sex + I(AgeAtScan^2) + BV + PIQ, 
+    data=mydf )  
+blm=bigLMStats( mdl , 1.e-6 )
+voi="LadderCom"
 qv=p.adjust(   blm$beta.pval[voi,], method='BH' )
 eseg=eigSeg( mask=famask, faeanat$eig, F  )
-eseg=maskImage( eseg, eseg,
+esegsig=maskImage( eseg, eseg,
   level=as.numeric( which( qv < qth ) ) )
-antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
+antsImageWrite( eseg , '/tmp/esegfaperf.nii.gz')
+}
 ```
 
 
@@ -113,20 +151,135 @@ mdl=lm( cbfmat
   ~ AgeAtScan * Sex + I(AgeAtScan^2) +
     Performance.IQ + BV, data=demog[wp,] )
 blm=bigLMStats( mdl , 1.e-8 )
-qv=p.adjust(   blm$beta.pval[voi,], method=mth )
-print( which( qv < qth ) )
-pvimg=makeImage( cbfmask, 1.0-qv )
+pvimg=makeImage( cbfmask, 1.0-blm$beta.pval[voi,] )
 antsImageWrite( pvimg, '/tmp/pvimg.nii.gz' )
-cbfeanat=sparseDecom( cbfmat, cbfmask, nvecs=5,
-  sparseness=0.05,cthresh=2500, mycoption=0, its=1 )
+if ( FALSE ) {
+cbfeanat=sparseDecom( cbfmat, cbfmask, nvecs=20,
+  sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
+ctx=antsrimpute( demog$Cortex )[wp]
 mdl=lm( data.matrix( cbfeanat$projections )
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) + Performance.IQ + Cortex +
-    Teen.Ladder.SES.score + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-voi="Verbal.IQ"
-qv=p.adjust(   blm$beta.pval[voi,], method='BH' )
+  ~ AgeAtScan * Sex + I(AgeAtScan^2) + Performance.IQ +
+    ctx + BV, data=demog[wp,] )
+blm=bigLMStats( mdl , 1.e-2)
+voi="Performance.IQ"
+qv=p.adjust(   blm$beta.pval[voi,], method='BH' ); min(qv)
 eseg=eigSeg( mask=cbfmask, cbfeanat$eig, F  )
 eseg=maskImage( eseg, eseg,
   level=as.numeric( which( qv < qth ) ) )
 antsImageWrite( eseg , '/tmp/esegcbf.nii.gz')
+}
+```
+
+
+
+
+## Generic version: Function
+
+```{r genericvox}
+voxandeanatstudy <- function( demog, imgmat, imgmask, 
+                              formulabase, formulatest,
+                              voi,
+                              exclusionThresh,
+                              baddata,
+                              outprefix, 
+                              nv ) 
+  {
+  imgrowmeans=rowMeans( imgmat )
+  wp = rep( FALSE, nrow( demog ) )
+  for ( sub in unique( demog$SubID ) ) # get unique subjects
+    {
+    ww=which( demog$SubID == sub )
+    ww=ww[ !is.na( imgrowmeans[ww] )  & 
+             imgrowmeans[ww] > exclusionThresh ]
+    if ( length( ww ) > 0 ) wp[ ww[ 1 ] ] = TRUE
+    }
+#  if ( ! all( is.na(baddata) ) ) # FIXME
+#   wp[  which(wp==TRUE)[ baddata ] ]=FALSE # bad data
+  ilist=matrixToImages( imgmat[wp,], imgmask )
+#  for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 2.0 )
+  mydf=data.frame( 
+                 Sex=demog[wp,]$Sex, 
+                 AgeAtScan=demog[wp,]$AgeAtScan,
+                 PIQ=demog[wp,]$Performance.IQ, 
+                 VIQ=demog[wp,]$Verbal.IQ, 
+                 BV=demog[wp,]$BV, 
+                 Cortex=demog[wp,]$Cortex, 
+                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+                 Income=demog[wp,]$Income )
+  for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
+  imgmat=imageListToMatrix( ilist, imgmask )
+  locform=formula( paste( "imgmat ~", formulabase ,"+", formulatest ) )
+  mdl=lm( locform, data=mydf )
+  voxlm=bigLMStats( mdl , 1.e-8 )
+  print(paste("begin low",outprefix) )
+  lowmat = lowrankRowMatrix( imgmat , 10 )
+  print(paste("begin eanat",outprefix) )
+  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv,
+    sparseness=0.05,cthresh=250000, mycoption=0, its=5 )
+  print(paste("end eanat",outprefix) )
+  eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
+  eproj=( eproj/rowSums(eproj) )
+  imgproj = imgmat %*% t( eproj  ) 
+  mydf=data.frame( mydf, imgproj )
+  print( names(mydf) )
+  formbase=formula( paste( "imgproj ~", formulabase ) )
+  formtest=formula( paste( "imgproj ~", formulabase ,"+", formulatest ) )
+  mdl1=lm( formbase, data=mydf )
+  mdl2=lm( formtest, data=mydf )
+  eanatlm=bigLMStats( mdl2 , 1.e-6 )
+  eseg=eigSeg( mask=imgmask, imgeanat$eig, F  )
+  ofn=paste( outprefix, '_eseg.nii.gz', sep='' )
+  antsImageWrite( eseg , ofn )
+  print( anova( mdl1, mdl2) )
+  return( list(mydf=mydf, 
+               voxlm=voxlm,
+               eanatlm=eanatlm,
+               eseg=eseg, 
+               imgproj=imgproj,
+               whichSubjects=wp ) )
+  }
+############################################
+formulathkbase=" PIQ + VIQ + Income "
+formulathktest=" AgeAtScan * Sex + I(AgeAtScan^2) + BV"
+thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
+thkfn=paste(bd,"data/ptbp_vox_thk.mha",sep='')
+thkmat=as.matrix( antsImageRead( thkfn ) )
+baddata=NA
+ethk=voxandeanatstudy( demog, thkmat, thkmask, 
+       formulathkbase, formulathktest, voi="VIQ",
+       exclusionThresh = 0.5, baddata=baddata,
+       outprefix='/tmp/ASS_THK', nv=20 )
+qv=p.adjust( ethk$eanatlm$beta.pval["VIQ",], method='BH' )
+min(qv)
+```
+
+
+## FA
+
+```{r fafun}
+fafn=paste(bd,"data/ptbp_vox_fa.mha",sep='')
+famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
+famat=as.matrix( antsImageRead( fafn ) )
+baddata=c(42,44) # FA
+efa=voxandeanatstudy( demog, famat, famask, 
+       formulathkbase, formulathktest, voi="VIQ",
+       exclusionThresh = 0.2, baddata=baddata,
+       outprefix='/tmp/ASS_FA', nv=20 )
+qv=p.adjust( efa$eanatlm$beta.pval["VIQ",], method='BH' )
+min(qv)
+```
+
+## CBF Form
+
+```{r cbffun}
+cbffn=paste(bd,"data/ptbp_vox_cbf.mha",sep='')
+cbfmat=as.matrix( antsImageRead( cbffn ) )
+baddata=NA
+ecbf=voxandeanatstudy( demog, cbfmat, thkmask, 
+       formulathkbase, formulathktest, voi="VIQ",
+       exclusionThresh = 45, baddata=baddata,
+       outprefix='/tmp/ASS_CBF', nv=20 )
+qv=p.adjust( ecbf$eanatlm$beta.pval["VIQ",], method='BH' )
+min(qv)
 ```
