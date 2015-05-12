@@ -1,0 +1,79 @@
+# ANTs Tutorial:  Other scripts
+
+##
+
+__Scripts we have not covered yet__
+
+<BR><BR>
+
+* ```antsBrainExtraction.sh```
+
+* ```antsCorticalThickness.sh```
+
+* ```antsLongitudinalCorticalThickness.sh```
+
+* ```antsMultivariateTemplateConstruction.sh```
+
+##
+
+```antsBrainExtraction.sh```
+
+_Template prior-based strategy_
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ${ANTsTutorialPath}/data/
+$ git clone https://github.com/ntustison/antsBrainExtractionExample.git
+$ cd antsBrainExtractionExample/
+$ itksnap -g IXI002-Guys-0828-T1_slice90.nii.gz &
+$ itksnap -g Template/T_template0_slice122.nii.gz -o Template/T_template0ProbabilityMask.nii.gz &
+$ antsBrainExtraction.sh -h 1
+$ more antsBrainExtractionCommand.sh
+$ snap -g IXI002-Guys-0828-T1_slice90.nii.gz -s Output/exampleBrainExtractionMask.nii.gz &
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##
+
+```antsCorticalThickness.sh```
+
+##
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ${ANTsTutorialPath}/data/
+$ git clone https://github.com/ntustison/antsCorticalThicknessExample.git
+$ cd antsCorticalThicknessExample/
+$ # let's look at the input images
+$ itksnap -g IXI002-Guys-0828-T1_slice90.nii.gz -o IXI002-Guys-0828-T2_slice90.nii.gz &
+$ # let's look at the template images
+$ itksnap -g Template/template_slice80.nii.gz -o Template/template_cerebrum_mask_smooth_slice80.nii.gz &
+$ itksnap -g Template/template_slice80.nii.gz -o Template/prior2_slice80.nii.gz &
+$ antsCorticalThickness.sh -h 1
+$ # use T1 only
+$ more antsCorticalThicknessCommand.sh
+$ sh antsCorticalThicknessCommand.sh
+$ itksnap -g ResultsT1Only/exampleBrainSegmentation0N4.nii.gz -o ResultsT1Only/exampleCorticalThickness.nii.gz &
+$ # use T1 & T2
+$ more antsCorticalThicknessT1andT2Command.sh
+$ sh antsCorticalThicknessT1andT2Command.sh
+$ itksnap -g ResultsT1andT2/exampleBrainSegmentation0N4.nii.gz -o ResultsT1andT2/exampleCorticalThickness.nii.gz &
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##
+
+```antsMultivariateTemplateConstruction.sh```
+
+##
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ${ANTsTutorialPath}/data/
+$ git clone https://github.com/ntustison/TemplateBuildingExample.git
+$ cd TemplateBuildingExample/
+$ # we won't run these examples since they take 5-30 minutes
+$ # example with buildtemplateparallel.sh
+$ more templateCommandBtp.sh
+$ # example using antsMultivariateTemplateConstruction.sh
+$ more templateCommandSyN.sh
+$ # example using antsMultivariateTemplateConstruction2.sh
+$ more templateCommandMultivariateBSplineSyN.sh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+

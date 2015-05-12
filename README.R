@@ -7,6 +7,7 @@ library( revealjs )
 buildRmd <- 'antsMniBuild.Rmd'
 rawRmds <- c( "src/PTBP_Intro.Rmd" )
 rawRmds <- c( "registration/registration.Rmd" )
+rawRmds <- c( "segmentation/segmentation.Rmd" )
 
 for( x in 1:length( rawRmds ) )
   {
