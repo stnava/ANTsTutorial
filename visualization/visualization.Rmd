@@ -1,0 +1,50 @@
+# ANTs Visualization
+
+##
+
+_Not a whole lot but a couple decent programs..._
+
+<BR><BR>
+
+* ```antsSurf```
+
+* ```CreateTiledMosaic```
+
+
+## First,
+
+download the github repository
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ cd ${ANTsTutorialPath}/data/
+$ git clone https://github.com/ntustison/antsVisualizationExamples.git
+$ cd antsVisualizationExamples/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##
+
+```antsSurf```
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ # Let's go ahead and run it and we'll take a look at the input in the interim
+$ sh antsSurfCommand.sh
+$ # Load the original image, cortical thickness, and the segmentation
+$ itksnap -g Images/OAS1_0061_MR1_mpr_n4_anon_sbj_111.nii.gz \
+          -s Images/OAS1_0061_MR1_mpr_n4_anon_sbj_111BrainSegmentation.nii.gz \
+          -o Images/OAS1_0061_MR1_mpr_n4_anon_sbj_111CorticalThickness.nii.gz
+$ antsSurf --help
+$ # open the png files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+##
+
+```CreateTiledMosaic```
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+$ sh createTiledMosaicCommand.sh
+$ CreateTiledMosaic --help
+$ # open png files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
