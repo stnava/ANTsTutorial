@@ -1,5 +1,5 @@
 ---
-title: 'The Pediatric Template of Brain Perfusion: VBM and Eigenanatomy with *ANTsR*'
+title: 'The Pediatric Template of Brain Perfusion: VBM with *ANTsR*'
 author: "Brian B. Avants et al."
 date: "May 7, 2015"
 output:
@@ -28,39 +28,30 @@ bd="/Users/stnava/data/ANTsTutorial/"
 
 ```{r dataio}
 library(ANTsR)
+library(visreg)
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
-famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 qth=0.05
 voi="Performance.IQ"
-mth='BH'
-demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
+voi="Verbal.IQ"
+multCorr='BH'
+smth=3.0
+ridger=1.e-6
+demog=read.csv(paste(bd,"data/ptbp_summary_demographics.csv",sep=''))
 demog=demog[ , 1:19 ]
 thkfn=paste(bd,"data/ptbp_vox_thk.mha",sep='')
 thkmat=as.matrix( antsImageRead( thkfn ) )
 wp=!is.na( rowMeans( thkmat ) )
 ilist=matrixToImages( thkmat[wp,], thkmask )
-for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 2.0 )
+for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 thkmat=imageListToMatrix( ilist, thkmask )
-mdl=lm( thkmat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-qv=p.adjust(   blm$beta.pval[voi,], method=mth )
-print( which( qv < qth ) )
+myform=formula( paste( "thkmat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp,] )
+blmthk=bigLMStats( mdl , ridger )
+qv=p.adjust( blmthk$beta.pval[voi,], method=multCorr  )
+print( min( qv ) )
 pvimg=makeImage( thkmask, 1.0-qv )
-antsImageWrite( pvimg, '/tmp/pvimg.nii.gz' )
-theanat=sparseDecom( thkmat, thkmask, nvecs=20,
-  sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
-mdl=lm( data.matrix( theanat$projections )
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) + FullScaleIQ +
-    Teen.Ladder.SES.score + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-voi="Teen.Ladder.SES.score"
-qv=p.adjust(   blm$beta.pval[voi,], method='BH' )
-eseg=eigSeg( mask=thkmask, theanat$eig, F  )
-eseg=maskImage( eseg, eseg,
-  level=as.numeric( which( qv < qth ) ) )
-antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
+antsImageWrite( pvimg, '/tmp/pvimg_thk.nii.gz' )
 ```
 
 
@@ -69,31 +60,28 @@ antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
 
 ```{r favox}
 fafn=paste(bd,"data/ptbp_vox_fa.mha",sep='')
+famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 famat=as.matrix( antsImageRead( fafn ) )
-wp=!is.na( rowMeans( famat ) )
-ilist=matrixToImages( famat[wp,], famask )
-for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 1.0 )
+farowmeans=rowMeans( famat )
+wp_fa = rep( FALSE, nrow( demog ) )
+for ( sub in unique( demog$SubID ) ) # get unique subjects
+  {
+  ww=which( demog$SubID == sub )
+  ww=ww[ !is.na( farowmeans[ww] )  & farowmeans[ww] > 0.2 ]
+  if ( length( ww ) > 0 ) wp_fa[ ww[ 1 ] ] = TRUE
+  }
+wp_fa[  which(wp_fa==TRUE)[c(42,44)] ]=FALSE # bad data
+ilist=matrixToImages( famat[wp_fa,], famask )
+for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 famat=imageListToMatrix( ilist, famask )
-mdl=lm( famat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-qv=p.adjust( blm$beta.pval["Performance.IQ",], method=mth )
-pvimg=thresholdImage( makeImage( famask, 1.0-qv ),
-                      0.95, 1 )
+myform=formula( paste( "famat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp_fa,] )
+blmfa=bigLMStats( mdl , ridger )
+qv=p.adjust( blmfa$beta.pval[voi,], method=multCorr  )
+print( min( qv ) )
+pvimg=makeImage( famask, 1.0-qv )
 antsImageWrite( pvimg, '/tmp/pvimg_fa.nii.gz' )
-faeanat=sparseDecom( famat, famask, nvecs=20,
-  sparseness=0.05,cthresh=2500, mycoption=0, its=5 )
-mdl=lm( data.matrix( faeanat$projections )
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) + FullScaleIQ +
-    Teen.Ladder.SES.score + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-voi="Teen.Ladder.SES.score"
-qv=p.adjust(   blm$beta.pval[voi,], method='BH' )
-eseg=eigSeg( mask=famask, faeanat$eig, F  )
-eseg=maskImage( eseg, eseg,
-  level=as.numeric( which( qv < qth ) ) )
-antsImageWrite( eseg , '/tmp/esegladcom.nii.gz')
 ```
 
 
@@ -105,28 +93,16 @@ cbfmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 cbffn=paste(bd,"data/ptbp_vox_cbf.mha",sep='')
 cbfmat=as.matrix( antsImageRead( cbffn ) )
-wp=!is.na( rowMeans( cbfmat ) )
-ilist=matrixToImages( cbfmat[wp,], cbfmask )
-for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 2.0 )
+wp_cbf=!is.na( rowMeans( cbfmat ) )
+ilist=matrixToImages( cbfmat[wp_cbf,], cbfmask )
+for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], smth )
 cbfmat=imageListToMatrix( ilist, cbfmask )
-mdl=lm( cbfmat
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) +
-    Performance.IQ + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-qv=p.adjust(   blm$beta.pval[voi,], method=mth )
-print( which( qv < qth ) )
-pvimg=makeImage( cbfmask, 1.0-qv )
-antsImageWrite( pvimg, '/tmp/pvimg.nii.gz' )
-cbfeanat=sparseDecom( cbfmat, cbfmask, nvecs=5,
-  sparseness=0.05,cthresh=2500, mycoption=0, its=1 )
-mdl=lm( data.matrix( cbfeanat$projections )
-  ~ AgeAtScan * Sex + I(AgeAtScan^2) + Performance.IQ + Cortex +
-    Teen.Ladder.SES.score + BV, data=demog[wp,] )
-blm=bigLMStats( mdl , 1.e-8 )
-voi="Verbal.IQ"
-qv=p.adjust(   blm$beta.pval[voi,], method='BH' )
-eseg=eigSeg( mask=cbfmask, cbfeanat$eig, F  )
-eseg=maskImage( eseg, eseg,
-  level=as.numeric( which( qv < qth ) ) )
-antsImageWrite( eseg , '/tmp/esegcbf.nii.gz')
+myform=formula( paste( "cbfmat ~ AgeAtScan * Sex + 
+                       I(AgeAtScan^2) + BV +",voi) )
+mdl=lm( myform, data=demog[wp_cbf,] )
+blmcbf=bigLMStats( mdl , ridger )
+qv=p.adjust( blmcbf$beta.pval[ voi ,], method=multCorr  )
+print( min( qv ) )
+pvimg=makeImage( famask, 1.0-qv )
+antsImageWrite( pvimg, '/tmp/pvimg_cbf.nii.gz' )
 ```

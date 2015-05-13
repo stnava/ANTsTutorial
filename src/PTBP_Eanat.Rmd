@@ -1,0 +1,161 @@
+---
+title: 'The Pediatric Template of Brain Perfusion: Eigenanatomy with *ANTsR*'
+author: "Brian B. Avants et al."
+date: "May 7, 2015"
+output:
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+---
+
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+# set this for your own compilation
+bd="/Users/stnava/data/ANTsTutorial/"
+```
+
+# Eigenanatomy with ANTsR
+
+## Basic Setup
+
+```{r dataio}
+library(ANTsR)
+library(visreg)
+thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
+qth=0.05
+voi="Performance.IQ"
+mth='BH'
+demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
+demog=demog[ , 1:19 ]
+```
+
+
+
+## Generic version: Function
+
+```{r genericvox}
+voxandeanatstudy <- function( demog, imgmat, imgmask,
+                              formulabase, formulatest,
+                              voi,
+                              exclusionThresh,
+                              baddata,
+                              outprefix,
+                              nv )
+  {
+  imgrowmeans=rowMeans( imgmat )
+  wp = rep( FALSE, nrow( demog ) )
+  for ( sub in unique( demog$SubID ) ) # get unique subjects
+    {
+    ww=which( demog$SubID == sub )
+    ww=ww[ !is.na( imgrowmeans[ww] )  &
+             imgrowmeans[ww] > exclusionThresh ]
+    if ( length( ww ) > 0 ) wp[ ww[ 1 ] ] = TRUE
+    }
+#  if ( ! all( is.na(baddata) ) ) # FIXME
+#   wp[  which(wp==TRUE)[ baddata ] ]=FALSE # bad data
+  ilist=matrixToImages( imgmat[wp,], imgmask )
+#  for ( i in 1:length(ilist) ) ilist[[i]]=smoothImage( ilist[[i]], 2.0 )
+  mydf=data.frame(
+                 Sex=demog[wp,]$Sex,
+                 AgeAtScan=demog[wp,]$AgeAtScan,
+                 PIQ=demog[wp,]$Performance.IQ,
+                 VIQ=demog[wp,]$Verbal.IQ,
+                 BV=demog[wp,]$BV,
+                 Cortex=demog[wp,]$Cortex,
+                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+                 Income=demog[wp,]$Income )
+  for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
+  imgmat=imageListToMatrix( ilist, imgmask )
+  locform=formula( paste( "imgmat ~", formulabase ,"+", formulatest ) )
+  mdl=lm( locform, data=mydf )
+  voxlm=bigLMStats( mdl , 1.e-8 )
+  print(paste("begin low",outprefix) )
+  lowmat = lowrankRowMatrix( imgmat , 10 )
+  print(paste("begin eanat",outprefix) )
+  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=1,
+    sparseness=0.01, cthresh=250000, mycoption=0, its=3 )
+  print(paste("end eanat",outprefix) )
+  eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
+  eproj=( eproj/rowSums(eproj) )
+  imgproj = imgmat %*% t( eproj  )
+  mydf=data.frame( mydf, imgproj )
+  print( names(mydf) )
+  formbase=formula( paste( "imgproj ~", formulabase ) )
+  formtest=formula( paste( "imgproj ~", formulabase ,"+", formulatest ) )
+  mdl1=lm( formbase, data=mydf )
+  mdl2=lm( formtest, data=mydf )
+  eanatlm=bigLMStats( mdl2 , 1.e-6 )
+  eseg=eigSeg( mask=imgmask, imgeanat$eig, F  )
+  ofn=paste( outprefix, '_eseg.nii.gz', sep='' )
+  antsImageWrite( eseg , ofn )
+  print( anova( mdl1, mdl2) )
+  return( list(mydf=mydf,
+               voxlm=voxlm,
+               eanatlm=eanatlm,
+               eseg=eseg,
+               imgproj=imgproj,
+               whichSubjects=wp ) )
+  }
+```  
+
+## Thickness Eanat
+
+```{r thkfun}
+############################################
+formulathkbase=" Income "
+formulathktest=" AgeAtScan * Sex + I(AgeAtScan^2) + BV"
+thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
+thkfn=paste(bd,"data/ptbp_vox_thk.mha",sep='')
+thkmat=as.matrix( antsImageRead( thkfn ) )
+baddata=NA
+neanatvecs=2
+ethk=voxandeanatstudy( demog, thkmat, thkmask,
+       formulathkbase, formulathktest, voi="Income",
+       exclusionThresh = 0.5, baddata=baddata,
+       outprefix='/tmp/ASS_THK', nv=neanatvecs )
+qv=p.adjust( ethk$eanatlm$beta.pval["Income",], method='BH' )
+min(qv)
+```
+
+
+## FA Eanat
+
+```{r fafun}
+fafn=paste(bd,"data/ptbp_vox_fa.mha",sep='')
+famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
+famat=as.matrix( antsImageRead( fafn ) )
+baddata=c(42,44) # FA
+efa=voxandeanatstudy( demog, famat, famask,
+       formulathkbase, formulathktest, voi="Income",
+       exclusionThresh = 0.2, baddata=baddata,
+       outprefix='/tmp/ASS_FA', nv=neanatvecs )
+qv=p.adjust( efa$eanatlm$beta.pval["Income",], method='BH' )
+min(qv)
+```
+
+## CBF Eanat
+
+```{r cbffun}
+cbffn=paste(bd,"data/ptbp_vox_cbf.mha",sep='')
+cbfmat=as.matrix( antsImageRead( cbffn ) )
+baddata=NA
+ecbf=voxandeanatstudy( demog, cbfmat, thkmask,
+       formulathkbase, formulathktest, voi="Income",
+       exclusionThresh = 45, baddata=baddata,
+       outprefix='/tmp/ASS_CBF', nv=neanatvecs )
+qv=p.adjust( ecbf$eanatlm$beta.pval["Income",], method='BH' )
+min(qv)
+```
+
+## Combined
+
+ok

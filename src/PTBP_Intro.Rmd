@@ -136,7 +136,7 @@ t1tem = antsImageRead( t1fn )
 ## Plot the structural PTBP template image
 
 ```{r plotstruct, echo=FALSE, warning=FALSE}
-plot(t1tem,dorot=1,slices=8)
+plot(t1tem,dorot=1,slices=10)
 ```
 
 ## Plot the CBF PTBP template image
@@ -144,7 +144,7 @@ plot(t1tem,dorot=1,slices=8)
 ```{r plotcbf, echo=FALSE, warning=FALSE}
 cbftem = paste(bd,"./data/template/PTBP_CBF.nii.gz",sep='')
 cbftem = antsImageRead( cbftem )
-plot(cbftem,dorot=1,slices=8)
+plot(cbftem,dorot=1,slices=10)
 ```
 
 ## Find subject image
@@ -165,46 +165,46 @@ fns=Sys.glob( paste( pre, exts , sep='') )
 
 ## Review each modality
 ```{r mod1, echo=FALSE}
-plot( antsImageRead( fns[1] ), dorot=1, slices=8)
+plot( antsImageRead( fns[1] ), dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod2, echo=FALSE}
-plot( antsImageRead( fns[2] ), dorot=1, slices=8)
+plot( antsImageRead( fns[2] ), dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod3, echo=FALSE}
-plot( antsImageRead( fns[3] ), dorot=1, slices=8)
+plot( antsImageRead( fns[3] ), dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod4, echo=FALSE}
-plot( antsImageRead( fns[4] ), dorot=1, slices=8)
+plot( antsImageRead( fns[4] ), dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod5, echo=FALSE}
-plot( antsImageRead( fns[5] ), dorot=1, slices=8)
+plot( antsImageRead( fns[5] ), dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod5b, echo=FALSE}
 cseg=antsImageRead( fns[5] ) %>% thresholdImage(2,2)
-plot( antsImageRead( fns[1] ), cseg, dorot=1, slices=8)
+plot( antsImageRead( fns[1] ), cseg, dorot=1, slices=10)
 ```
 
 ## Review each modality 
 ```{r mod6, echo=FALSE}
 aal=antsImageRead( fns[6] )
-plot( antsImageRead( fns[1] ), aal, dorot=1, slices=8, 
+plot( antsImageRead( fns[1] ), aal, dorot=1, slices=10, 
       window.overlay=c( 1, max(aal) ) )
 ```
 
 ## Review each modality 
 ```{r mod1b, echo=FALSE}
 fa=antsImageRead( fns[2] ) %>% iMath("Canny")
-plot( antsImageRead( fns[1] ), fa, dorot=1, slices=8 )
+plot( antsImageRead( fns[1] ), fa, dorot=1, slices=10 )
 ```
 
 ## Count complete subject images
@@ -326,9 +326,15 @@ The optimal voting weights are then $w_x = [0.2, 0.8]^t.$
 ## Template [Joint Label/Intensity Fusion](http://journal.frontiersin.org/article/10.3389/fninf.2013.00027/abstract)
 
 ```{r jlftem, echo=TRUE, eval=FALSE, warning=FALSE }
+if ( !exists("ilist") )
+  ilist=imageFileNames2ImageList( 
+    Sys.glob( paste(bd,"data/JLF/ilist*.nii.gz",sep='')) )
+if ( !exists("seglist") )
+  seglist=imageFileNames2ImageList( 
+    Sys.glob( paste(bd,"data/JLF/slist*.nii.gz",sep='')) )
 mk=getMask(t1tem)
 jlf=jointIntensityFusion( t1tem, mk, ilist, 
-  labelList=seglist, rad=rep(2,3), rSearch=2, 
+  labelList=seglist, rad=rep(3,3), rSearch=2, 
   computeProbs=TRUE, includezero=TRUE)
 # write out results
 if ( ! exists("tf") ) tf=tempfile() 
@@ -368,13 +374,13 @@ newcsf=makeImage( mk, newcsfvec )
 ## Augment CSF probability
 
 ```{r kmeanstemplate2,eval=TRUE}
-plot( jlf$probimgs[[1]],dorot=1,window.img=c(0,4), slices=8 )
+plot( jlf$probimgs[[1]],dorot=1,window.img=c(0,4), slices=10 )
 ```
 
 ## Augment CSF probability
 
 ```{r kmeanstemplate3,eval=TRUE}
-plot( newcsf,dorot=1,window.img=c(0,4), slices=8 )
+plot( newcsf,dorot=1,window.img=c(0,4), slices=10 )
 ```
 
 
@@ -427,19 +433,19 @@ where the priors are zero ...
 ## Template and segmentation
 
 ```{r timg,echo=FALSE}
-plot( t1tem , dorot = 1 , slices=8 )
+plot( t1tem , dorot = 1 , slices=10 )
 ```
 
 ## Template and *JLF* segmentation
 
 ```{r timg3,echo=FALSE}
-plot( t1tem, jlf$segimg , dorot = 1 , slices=8 )
+plot( t1tem, jlf$segimg , dorot = 1 , slices=10 )
 ```
 
 ## Template and *Atropos* segmentation
 
 ```{r timg2,echo=FALSE}
-plot( t1tem, segnew$segmentation , dorot = 1 , slices=8 )
+plot( t1tem, segnew$segmentation , dorot = 1 , slices=10 )
 ```
 
 ## Try the same thing on a subject (need registration)
