@@ -1,0 +1,358 @@
+---
+title: 'The Pediatric Template of Brain Perfusion: Resting state functional  mri processing example'
+author: "Brian B. Avants et al."
+date: "May 7, 2015"
+output:
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
+---
+
+```{r setup,eval=FALSE,results='hide',warning=FALSE,echo=FALSE}
+library(ANTsR)
+# set this for your own compilation
+bd="/Users/stnava/data/ANTsTutorial/"
+dd="/Users/stnava/data/"
+pre=paste(dd,"/NeuroBattery/data/input/PEDS012/20131101/",sep='')
+post=paste(dd,"/NeuroBattery/data/output/PEDS012/20131101/",sep='')
+fmrifn=paste(pre,"BOLD/PEDS012_20131101_bold_fc_1.nii.gz",sep='')
+if ( ! file.exists(fmrifn) ) stop(paste("No",fmri))
+```
+
+# Overview and resources
+
+## Overview
+
+This is a compilable document with source code located here:
+
+[https://github.com/stnava/ANTsTutorial](https://github.com/stnava/ANTsTutorial)
+
+To get this source, do:
+
+```bash
+git clone http://github.com/stnava/ANTsTutorial.git
+```
+It is expected that you will compile and, after downloading data,
+run this:
+
+```r
+rmarkdown::render("src/PTBP_rsfmri.Rmd")
+```
+
+from within the cloned `ANTsTutorial` directory.  The document needs the [complete PTBP subject data](https://github.com/jeffduda/NeuroBattery)
+discussed below. It depends on *R*, *rmarkdown* and *ANTsR* primarily.
+
+Herein, [links are in this color](http://lmgtfy.com).
+
+## Overview
+
+The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
+
+- Free multiple modality MRI data with demographics and psychometrics
+- Collected to aid as a reference for normal variability in structure and function during adolescence
+- The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv)
+- The full data is available at [figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555)
+- Here we use a single subject from this dataset.
+- There is also a template contained in the download.
+
+## Download the neurobattery data
+
+From within the ANTsTutorial directory:
+
+```bash
+git clone http://github.com/jeffduda/NeuroBattery.git
+```
+
+This will give you both raw and processed output
+for a single multiple modality subject.
+
+We test (occasionally) against this reference output to monitor
+stability of our processing.
+
+## Resting state fMRI
+
+We present *basic* processing strategies here:
+
+* Motion correction
+
+* Mapping to subject-space T1
+
+* Mapping to a T1 group template
+
+* Data-driven nuisance modeling
+
+* Network metrics and visualization
+
+* **many of these strategies are reused for DWI and ASL**
+
+## Motion correction
+
+We do more or less the same thing for any
+time series modality.
+
+```{r motion,eval=FALSE}
+fmri = antsImageRead( fmrifn )
+amc = antsMotionCalculation(fmri)
+```
+
+* Will motion correct with affine map
+
+* Will produce a mask and motion parameters
+
+* "moco_img"     "moco_params"  "moco_avg_img" "moco_mask"  "dvars"
+
+*
+
+## Visualize motion parameters: Matrix
+
+```{r vizmocoaff}
+plot( ts( amc$moco_params[,3:11] ) )
+```
+
+## Visualize motion parameters: Translation
+
+```{r vizmoco2}
+plot( ts( amc$moco_params[,12:ncol(amc$moco_params)] ) )
+```
+
+## Visualize nuisance parameters: DVARS
+
+```{r vizmoco3}
+plot( ts( amc$dvars ) )
+```
+
+## Look at the calculated average
+
+```{r mocoimg,echo=FALSE}
+plot( amc$moco_avg_img, axis=3 )
+```
+
+## Look at the calculated mask (gradient image)
+
+```{r mocomask,echo=FALSE}
+gradmask=amc$moco_mask %>% iMath("Grad") %>% iMath("Normalize")
+plot( amc$moco_avg_img, gradmask , axis=3,
+  window.overlay=c(0.5,1) )
+```
+
+## Mapping to subject-space T1
+
+We now have an "anatomical" image ... the average BOLD.
+
+Let's quickly map to T1.
+
+```{r distcor,eval=FALSE}
+t1seg=paste(post,"PEDS012_20131101_BrainSegmentation.nii.gz",sep='')
+t1n4=paste(post,"PEDS012_20131101_BrainSegmentation0N4.nii.gz",sep='')
+if ( file.exists(t1seg)  )
+  {
+  t1seg=antsImageRead( t1seg )
+  t1n4=antsImageRead( t1n4 )
+  t1brain=t1n4 * thresholdImage( t1seg, 1, 6 )
+  # might modify above depending on coverage
+  }
+bavgn3=n3BiasFieldCorrection( amc$moco_avg_img, 2 ) * amc$moco_mask
+disco=antsRegistration( bavgn3, t1brain, "SyNBold" )
+segw=antsApplyTransforms( bavgn3, t1seg,
+  disco$fwdtransforms, interpolator = "NearestNeighbor")
+```
+
+## Mapped T1
+
+```{r mappedt1}
+plot( disco$warpedmovout, axis=3 )
+```
+
+
+## Target image
+
+```{r bavgn3}
+plot(  bavgn3 , axis=3 )
+```
+
+## Mapped Segmentation
+
+```{r mappedseg}
+plot( bavgn3, segw, window.overlay=c(0,5), axis=3 )
+```
+
+## Mapping to a T1 group template
+
+We conctenate the distortion correction parameters
+with the group template mapping.
+
+Then apply to the labels to bring them to the BOLD
+subject space.
+
+Exercise?
+
+We already did this so let's just read the labels.
+
+```{r aal}
+aalfn=paste(post,"BOLD/aal.nii.gz",sep='')
+if ( file.exists(aalfn) ) {
+  aalimg = antsImageRead( aalfn )
+  } else stop("No aal labels")
+```
+
+## View the labels
+
+```{r vizaal,echo=FALSE}
+plot( bavgn3 , aalimg , axis=3 )
+```
+
+## Data-driven nuisance modeling
+
+Nick prepackaged a generic processor for this ...
+
+* We have a few methods but `compcor` is nice.
+
+```{r nickpro,eval=FALSE}
+boldpre=preprocessfMRI( fmri,
+  numberOfCompCorComponents = 6,
+  doMotionCorrection = TRUE,
+  useMotionCorrectedImage = TRUE,
+  spatialSmoothingType='none',
+  spatialSmoothingParameters =
+  mean( antsGetSpacing(fmri)[1:3] ),
+  residualizeMatrix = TRUE,
+  frequencyLowThreshold=0.01,
+  frequencyHighThreshold=0.1
+  )
+```
+
+* This redoes a few things we did above but now
+you know a little about what's happening inside.
+
+* Should we smooth?
+
+## Preprocessor outputs
+
+```bash
+> names(boldpre)
+[1] "cleanBoldImage"    "maskImage"         "DVARS"
+[4] "DVARSpostCleaning" "FD"                "globalSignal"
+[7] "nuisanceVariables"
+```
+
+## Look at FD and DVARS
+
+```{r fd}
+plot( ts( cbind( boldpre$FD, boldpre$DVARS ) ) )
+```
+
+
+## Look at FD and DVARS: Post clean
+
+```{r fdpost}
+plot( ts( cbind( boldpre$FD, boldpre$DVARSpostCleaning ) ) )
+```
+
+
+
+## Global signal
+
+```{r glob,echo=FALSE}
+tsmatpre = timeseries2matrix( fmri,
+  boldpre$maskImage )
+tsmat = timeseries2matrix( boldpre$cleanBoldImage,
+  boldpre$maskImage )
+plot( ts( cbind( rowMeans(tsmatpre) ,
+  rowMeans(tsmat) ) ) )
+```
+
+## Now we can construct time-series averages for each region
+
+Just use matrix multiplication.
+
+```{r tsavg,eval=FALSE}
+vec <- subset(aalimg, boldpre$maskImage > 0)
+nLabels <- max(vec)
+labels <- matrix(0, nrow = length(vec), ncol = nLabels)  
+for (i in 1:nLabels) {
+  if ( sum( vec == i ) > 0 )
+    labels[, i] <- (vec == i)/sum( vec == i )
+  }
+tsavg = tsmat %*% labels
+tsavgcor = antsrimpute( cor(tsavg) )
+data("aal")
+rownames( tsavgcor ) = aal$label_name
+colnames( tsavgcor ) = aal$label_name
+```
+
+## Look quickly at the correlations
+
+```{r ph,echo=FALSE}
+pheatmap::pheatmap( tsavgcor )
+```
+
+## Network metrics
+
+Now we can estimate connectivity from the BOLD data.
+
+We'll use some nice *ANTsR* tricks for this.
+
+```{r getgraphs,eval=FALSE}
+gmet <- makeGraph(tsavgcor, graphdensity = 0.02 )
+```
+
+Outputs
+
+```r
+> names(gmet)
+ [1] "mygraph"           "centrality"        "closeness"
+ [4] "pagerank"          "degree"            "betweeness"
+ [7] "localtransitivity" "strength"          "degcent"
+[10] "effinv"            "community"         "walktrapcomm"
+[13] "adjacencyMatrix"  
+```
+
+## Network visualization with `igraph`
+
+```{r igrviz}
+plot( gmet$mygraph )
+```
+
+## Community visualization with `igraph`
+
+```{r comviz}
+plot( gmet$community, gmet$mygraph)
+```
+
+
+## Network visualization in brain space
+
+```{r igrvizbrain,eval=TRUE}
+ cnt<-getCentroids( aalimg, clustparam = 20 )
+ aalcnt<-cnt[1:90,1:3] # cortex
+ brain<-renderSurfaceFunction( surfimg =list( boldpre$maskImage ) , alphasurf=0.1 ,smoothsval = 1.5 )
+ metweights=gmet$adjacencyMatrix[1:90,1:90]
+ plotBasicNetwork( centroids = aalcnt , brain, weights=metweights )
+ id<-rgl::par3d('userMatrix')
+      rid<-rotate3d( id , -pi/2, 1, 0, 0 )
+      rid2<-rotate3d( id , pi/2, 0, 0, 1 )
+      rid3<-rotate3d( id , -pi/2, 0, 0, 1 )
+      rgl::par3d(userMatrix = id )
+      dd<-make3ViewPNG(  rid, id, rid2,  paste('network1',sep='') )
+      rgl::par3d(userMatrix = id )
+```
+
+## Discussion
+
+* There is also `antsBOLDNetworkAnalysis` but it makes many assumptions
+that may not hold.  Need to look at the code.
+
+* Maybe we should have thrown a few frames away ... how? hint: `matrix2timeseries` ...
+
+* Maybe we should have imputed some data ... see `antsBOLDNetworkAnalysis`
+
+* This tutorial is more explicit.
