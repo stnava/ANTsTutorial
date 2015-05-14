@@ -94,6 +94,9 @@ We present *basic* processing strategies here:
 
 * **many of these strategies are reused for DWI and ASL**
 
+
+# Step by step preprocessing
+
 ## Motion correction
 
 We do more or less the same thing for any
@@ -230,12 +233,14 @@ boldpre=preprocessfMRI( fmri,
   )
 ```
 
+## Preprocessor outputs
+
+Nick prepackaged a generic processor for this ...
+
 * This redoes a few things we did above but now
 you know a little about what's happening inside.
 
 * Should we smooth?
-
-## Preprocessor outputs
 
 ```bash
 > names(boldpre)
@@ -246,14 +251,14 @@ you know a little about what's happening inside.
 
 ## Look at FD and DVARS
 
-```{r fd}
+```{r fd,echo=FALSE}
 plot( ts( cbind( boldpre$FD, boldpre$DVARS ) ) )
 ```
 
 
 ## Look at FD and DVARS: Post clean
 
-```{r fdpost}
+```{r fdpost,echo=FALSE}
 plot( ts( cbind( boldpre$FD, boldpre$DVARSpostCleaning ) ) )
 ```
 
@@ -269,6 +274,9 @@ tsmat = timeseries2matrix( boldpre$cleanBoldImage,
 plot( ts( cbind( rowMeans(tsmatpre) ,
   rowMeans(tsmat) ) ) )
 ```
+
+# Build the network
+
 
 ## Now we can construct time-series averages for each region
 
@@ -316,6 +324,9 @@ Outputs
 [13] "adjacencyMatrix"  
 ```
 
+# Visualize the network
+
+
 ## Network visualization with `igraph`
 
 ```{r igrviz}
@@ -331,19 +342,17 @@ plot( gmet$community, gmet$mygraph)
 
 ## Network visualization in brain space
 
-```{r igrvizbrain,eval=TRUE}
+This is something we have to run "by hand"
+
+```{r igrvizbrain,eval=FALSE}
  cnt<-getCentroids( aalimg, clustparam = 20 )
  aalcnt<-cnt[1:90,1:3] # cortex
- brain<-renderSurfaceFunction( surfimg =list( boldpre$maskImage ) , alphasurf=0.1 ,smoothsval = 1.5 )
+ brain<-renderSurfaceFunction( surfimg=
+   list( boldpre$maskImage ) , alphasurf=0.1,
+   smoothsval = 1.5 )
  metweights=gmet$adjacencyMatrix[1:90,1:90]
- plotBasicNetwork( centroids = aalcnt , brain, weights=metweights )
- id<-rgl::par3d('userMatrix')
-      rid<-rotate3d( id , -pi/2, 1, 0, 0 )
-      rid2<-rotate3d( id , pi/2, 0, 0, 1 )
-      rid3<-rotate3d( id , -pi/2, 0, 0, 1 )
-      rgl::par3d(userMatrix = id )
-      dd<-make3ViewPNG(  rid, id, rid2,  paste('network1',sep='') )
-      rgl::par3d(userMatrix = id )
+ plotBasicNetwork( centroids = aalcnt,
+   brain, weights=metweights )
 ```
 
 ## Discussion
@@ -355,4 +364,10 @@ that may not hold.  Need to look at the code.
 
 * Maybe we should have imputed some data ... see `antsBOLDNetworkAnalysis`
 
-* This tutorial is more explicit.
+* Maybe we should have used the tissue segmentation ....
+
+* How might we do group statistics?
+
+* We mostly produce node metrics but edge metrics are good too ...
+
+* Any other thoughts?
