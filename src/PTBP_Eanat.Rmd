@@ -3,9 +3,6 @@ title: 'The Pediatric Template of Brain Perfusion: Eigenanatomy with *ANTsR*'
 author: "Brian B. Avants et al."
 date: "May 7, 2015"
 output:
-  ioslides_presentation:
-    highlight: tango
-    incremental: yes
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -15,6 +12,9 @@ output:
     includes:
       in_header: mystyle.tex
     toc: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
 ---
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
@@ -29,15 +29,22 @@ bd="/Users/stnava/data/ANTsTutorial/"
 ```{r dataio}
 library(ANTsR)
 library(visreg)
+neanatvecs=4
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
-voi="Performance.IQ"
 mth='BH'
 demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
 demog=demog[ , 1:19 ]
 ```
 
+## Set up the formula
 
+```{r form}
+formulathkbase=" AgeAtScan * Sex + I(AgeAtScan^2)"
+formulathkbase=" PIQ + BV"
+formulathktest=" AgeAtScan * Sex + I(AgeAtScan^2)"
+voi="AgeAtScan"
+```
 
 ## Generic version: Function
 
@@ -81,8 +88,8 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   print(paste("begin low",outprefix) )
   lowmat = lowrankRowMatrix( imgmat , 10 )
   print(paste("begin eanat",outprefix) )
-  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=1,
-    sparseness=0.01, cthresh=250000, mycoption=0, its=3 )
+  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0,
+    sparseness=0.05, cthresh=2000, mycoption=0, its=5 )
   print(paste("end eanat",outprefix) )
   eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
   eproj=( eproj/rowSums(eproj) )
@@ -97,35 +104,39 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   eseg=eigSeg( mask=imgmask, imgeanat$eig, F  )
   ofn=paste( outprefix, '_eseg.nii.gz', sep='' )
   antsImageWrite( eseg , ofn )
-  print( anova( mdl1, mdl2) )
+  anv=anova( mdl1, mdl2)
   return( list(mydf=mydf,
                voxlm=voxlm,
                eanatlm=eanatlm,
                eseg=eseg,
                imgproj=imgproj,
-               whichSubjects=wp ) )
+               whichSubjects=wp,
+               eanat=imgeanat,
+               anv=anv) )
   }
 ```  
+
 
 ## Thickness Eanat
 
 ```{r thkfun}
 ############################################
-formulathkbase=" Income "
-formulathktest=" AgeAtScan * Sex + I(AgeAtScan^2) + BV"
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 thkfn=paste(bd,"data/ptbp_vox_thk.mha",sep='')
 thkmat=as.matrix( antsImageRead( thkfn ) )
 baddata=NA
-neanatvecs=2
 ethk=voxandeanatstudy( demog, thkmat, thkmask,
-       formulathkbase, formulathktest, voi="Income",
+       formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.5, baddata=baddata,
        outprefix='/tmp/ASS_THK', nv=neanatvecs )
-qv=p.adjust( ethk$eanatlm$beta.pval["Income",], method='BH' )
-min(qv)
+qv=p.adjust( ethk$eanatlm$beta.pval[ voi, ], method='BH' )
+print( min(qv) )
 ```
 
+## Thickness Eanat: Anova
+```{r thkfunanv}
+print( ethk$anv )
+```
 
 ## FA Eanat
 
@@ -135,11 +146,16 @@ famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 famat=as.matrix( antsImageRead( fafn ) )
 baddata=c(42,44) # FA
 efa=voxandeanatstudy( demog, famat, famask,
-       formulathkbase, formulathktest, voi="Income",
+       formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.2, baddata=baddata,
        outprefix='/tmp/ASS_FA', nv=neanatvecs )
-qv=p.adjust( efa$eanatlm$beta.pval["Income",], method='BH' )
-min(qv)
+qv=p.adjust( efa$eanatlm$beta.pval[ voi, ], method='BH' )
+print( min(qv) )
+```
+
+## FA Eanat: Anova
+```{r fafunanv}
+print( efa$anv )
 ```
 
 ## CBF Eanat
@@ -149,13 +165,182 @@ cbffn=paste(bd,"data/ptbp_vox_cbf.mha",sep='')
 cbfmat=as.matrix( antsImageRead( cbffn ) )
 baddata=NA
 ecbf=voxandeanatstudy( demog, cbfmat, thkmask,
-       formulathkbase, formulathktest, voi="Income",
+       formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 45, baddata=baddata,
        outprefix='/tmp/ASS_CBF', nv=neanatvecs )
-qv=p.adjust( ecbf$eanatlm$beta.pval["Income",], method='BH' )
-min(qv)
+qv=p.adjust( ecbf$eanatlm$beta.pval[ voi,], method='BH' )
+print( min(qv) )
 ```
 
-## Combined
+## CBF Eanat: Anova
+```{r cbffunanv}
+print( ecbf$anv )
+```
 
-ok
+
+## Combined: Option 1 $=$ Merge
+
+Here, we have to identify which subjects have all modalities.
+
+```{r modmerge}
+wth=ethk$whichSubjects
+wfa=efa$whichSubjects
+wcb=ecbf$whichSubjects
+haveAll=( wth & wfa & wcb )
+```
+
+## Make a new function that recomputes projections from existing Eanat
+
+```{r eanatproj}
+eanatproj <- function( demog, imgmat,
+  imgmask, imgeanat,
+  formulabase, formulatest,
+  voi, whichSubs )
+  {
+  wp = whichSubs
+  mydf=data.frame(
+                 Sex=demog[wp,]$Sex,
+                 AgeAtScan=demog[wp,]$AgeAtScan,
+                 PIQ=demog[wp,]$Performance.IQ,
+                 VIQ=demog[wp,]$Verbal.IQ,
+                 BV=demog[wp,]$BV,
+                 Cortex=demog[wp,]$Cortex,
+                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+                 Income=demog[wp,]$Income )
+  for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
+  imgmats=imgmat[wp,]
+  locform=formula( paste( "imgmats ~", formulabase ,"+", formulatest ) )
+  eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
+  eproj=( eproj/rowSums(eproj) )
+  imgproj = imgmats %*% t( eproj  )
+  mydf=data.frame( mydf, imgproj )
+  formbase=formula( paste( "imgproj ~", formulabase ) )
+  formtest=formula( paste( "imgproj ~", formulabase ,"+", formulatest ) )
+  mdl1=lm( formbase, data=mydf )
+  mdl2=lm( formtest, data=mydf )
+  eanatlm=bigLMStats( mdl2 , 1.e-6 )
+  print( anova( mdl1, mdl2) )
+  return( mydf )
+  }
+```
+
+## Call the new function ...
+
+
+```{r eprojcall}
+thproj=eanatproj( demog, thkmat, thkmask,
+  imgeanat=ethk$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+cbproj=eanatproj( demog, cbfmat, thkmask,
+  imgeanat=ecbf$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+faproj=eanatproj( demog, famat, famask,
+  imgeanat=efa$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+```
+
+## Join them all
+
+```{r joiner}
+n=ncol(faproj)
+faprojsub=faproj[,(n-neanatvecs+1):n]
+n=ncol(cbproj)
+cbprojsub=cbproj[,(n-neanatvecs+1):n]
+alldf=cbind( thproj, FA=faprojsub, CBF=cbprojsub)
+```
+
+
+## Joint stats: Thickness, FA $+$ CBF
+
+```{r jointstats}
+mdl1=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8)])
+mdl2=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
+anova(mdl1,mdl2)
+mdl2=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
+anova(mdl1,mdl2)
+```
+
+## Combined: Option 2 $=$ Impute
+
+Did not implement this well.... but relatively easy to improve ...
+
+```{r modimpute}
+wth=ethk$whichSubjects
+wfa=efa$whichSubjects
+wcb=ecbf$whichSubjects
+haveAll=( wth | wfa | wcb )
+```
+
+
+## Combined: Option 2 $=$ Impute
+
+Did not implement this well.... but relatively easy to improve ...
+
+```{r doimp}
+thkmati=thkmat
+thkmati[ haveAll, ]=antsrimpute( thkmat[ haveAll, ] )
+famati=famat
+famati[ haveAll, ]=antsrimpute( famat[ haveAll, ] )
+cbfmati=cbfmat
+cbfmati[ haveAll, ]=antsrimpute( cbfmat[ haveAll, ] )
+```
+
+
+
+## Call the new function ... imputation
+
+```{r eprojcalli}
+thproj=eanatproj( demog, thkmati, thkmask,
+  imgeanat=ethk$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+cbproj=eanatproj( demog, cbfmati, thkmask,
+  imgeanat=ecbf$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+faproj=eanatproj( demog, famati, famask,
+  imgeanat=efa$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+```
+
+## Join them all ... imputation
+
+```{r joineri}
+n=ncol(faproj)
+faprojsub=faproj[,(n-neanatvecs+1):n]
+n=ncol(cbproj)
+cbprojsub=cbproj[,(n-neanatvecs+1):n]
+alldf=cbind( thproj, FA=faprojsub, CBF=cbprojsub)
+```
+
+
+## Joint stats ... imputation
+
+```{r jointstatsi}
+mdl1=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8)])
+mdl2=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
+anova(mdl1,mdl2)
+mdl2=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
+anova(mdl1,mdl2)
+```
+
+## PIQ stats?
+
+```{ piq,eval=FALSE,echo=FALSE}
+mdl1=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8)])
+mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
+anova(mdl1,mdl2)
+mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
+anova(mdl1,mdl2)
+```
