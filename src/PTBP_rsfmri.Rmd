@@ -75,6 +75,8 @@ git clone http://github.com/jeffduda/NeuroBattery.git
 This will give you both raw and processed output
 for a single multiple modality subject.
 
+**FIXME**: need to actually run to get output ... that would take too long.
+
 We test (occasionally) against this reference output to monitor
 stability of our processing.
 
