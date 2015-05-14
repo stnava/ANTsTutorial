@@ -1,0 +1,187 @@
+---
+title: 'Phantom Morphometry Study with *ANTsR*'
+author: "Brian B. Avants et al."
+date: "May 7, 2015"
+output:
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
+---
+
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+# set this for your own compilation
+bd="/Users/stnava/data/ANTsTutorial/"
+templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
+if ( ! file.exists(templatefn) )
+  stop( paste( "no image", templatefn ) )
+allfns=Sys.glob( paste(bd,"phantomData/ph*wmgm.jpg",sep='')  )
+demog=read.csv(paste(bd,'phantomData/phantpredictors.csv',sep=''))
+ilist=imageFileNames2ImageList( allfns )
+```
+
+## Phantom Morphometry Study
+
+* Manually drawn three tissue images
+
+* Brain-like, two-dimensional slices
+
+* Pre-built template (`./ANTsTutorial/phantomData/phantomtemplate.jpg`)
+
+* We show how to do a log-jacobian based study
+
+* ... and a tissue study.
+
+## Look at population: S1
+
+```{r pop,results='asis'}
+plot( ilist[[1]], window.img=c(0,255) )
+```
+
+## Look at population: S2
+
+```{r pop2,results='asis'}
+plot( ilist[[2]], window.img=c(0,255) )
+```
+
+## Look at population: S5
+
+```{r pop5,results='asis'}
+plot( ilist[[5]], window.img=c(0,255) )
+```
+
+## Look at population: S6
+
+```{r pop6,results='asis'}
+plot( ilist[[6]], window.img=c(0,255) )
+```
+
+## First: segment the images
+
+```{r segment}
+template=antsImageRead( templatefn )
+ilist=imageFileNames2ImageList( allfns )
+plist=imageFileNames2ImageList( allfns )
+for ( x in 1:length(ilist) )
+  {
+  mask=getMask( ilist[[x]] )  %>% iMath("MD",1)
+  img = ilist[[ x ]]
+  km=kmeansSegmentation(  img, 3, mask ) # segment
+  gm=km$probabilityimages[[2]]
+  plist[[x]]=gm
+  }
+```
+## Quick look at segmentation results
+
+```{r segment1,echo=FALSE}
+plot( ilist[[1]])
+```
+
+## Quick look at segmentation results
+
+```{r segment1b,echo=FALSE}
+mask=getMask( ilist[[1]] )  %>% iMath("MD",1)
+img = ilist[[ 1 ]]
+km=kmeansSegmentation(  img, 3, mask ) # segment
+plot( km$segmentation, window.img=c(0,3) )
+```
+
+## Second: register the images
+
+```{r register}
+template=antsImageRead( templatefn )
+jlist=imageFileNames2ImageList( allfns )
+for ( x in 1:length(ilist) )
+  {
+  gm=plist[[x]]
+  tx=antsRegistration( template, ilist[[x]], "SyNCC" )
+  gmw=antsApplyTransforms( template, gm, tx$fwdtransforms)
+  plist[[x]]=gmw
+  jlist[[x]]=createJacobianDeterminantImage( template,
+    tx$fwdtransforms[1], 1) %>% smoothImage(3)
+  }
+```
+
+## Quick look at the template ...
+
+```{r templ,echo=FALSE}
+plot( template )
+```
+
+
+## And a registration
+
+```{r regtempl,echo=FALSE}
+plot( tx$warpedmovout  )
+```
+
+## And a registration overlay
+
+```{r regtemplb,echo=FALSE}
+plot( template, tx$warpedmovout %>% iMath("Canny"),
+  window.overlay=c(0.5,1)  )
+```
+
+##  Now look at a log-jacobian image ...
+
+```{r logj,echo=FALSE}
+plot( jlist[[1]])
+```
+
+##  another log-jacobian image ...
+
+```{r logjb,echo=FALSE}
+plot( jlist[[5]])
+```
+
+## Now we can do statistics on either warped segmentations or the log-jacobian
+
+Look at the demographics file ...
+
+```{r demog}
+knitr::kable(demog)
+```
+
+## Let's do a quick test on the jacobian
+
+```{r jaclm}
+templatemask=getMask( template )
+jmat=imageListToMatrix( jlist, templatemask )
+mdl=lm( jmat ~ vol + gender, data=demog )
+mdl=bigLMStats( mdl )
+volstats=mdl$beta.pval[ "vol", ]
+qv=p.adjust(volstats,'BH')
+qvimg=makeImage( templatemask, 1-qv )
+```
+
+## Look at results
+
+```{r jaclmviz,echo=FALSE}
+plot( template, qvimg, window.overlay=c(0.99,1))
+```
+
+## Exercise ... repeat for the GM ...
+
+...
+
+```{r gmlm,echo=FALSE}
+gmat=imageListToMatrix( plist, templatemask )
+mdl=lm( gmat ~ vol + gender, data=demog )
+mdl=bigLMStats( mdl )
+gmstats=mdl$beta.pval[ "vol", ]
+gqv=p.adjust(gmstats,'BH')
+gqvimg=makeImage( templatemask, 1-gqv )
+```
+
+
+## Exercise ... use a global covariate ...
+
+... this is always important to think about ...
