@@ -24,12 +24,25 @@ bd="/Users/stnava/data/ANTsTutorial/"
 
 # Eigenanatomy with ANTsR
 
+## Based on a recent paper
+
+[**Eigenanatomy: Sparse dimensionality reduction for multi-modal medical image analysis**](https://scholar.google.com/citations?view_op=view_citation&hl=en&user=a2sMoDEAAAAJ&citation_for_view=a2sMoDEAAAAJ:qjMakFHDy7sC)
+
+> BM Kandel, DJJ Wang, JC Gee, BB Avants*, "Methods", 2015
+
+* difference 1: here, using some rank reduction to speed things up.
+
+* difference 2: ben's work uses some eigenvector fusion to reduce
+the impact of parameter choice ...
+
+* we might do a little of that below.
+
 ## Basic Setup
 
 ```{r dataio}
 library(ANTsR)
 library(visreg)
-neanatvecs=4
+neanatvecs=20
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 mth='BH'
@@ -90,6 +103,7 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   print(paste("begin eanat",outprefix) )
   imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0,
     sparseness=0.05, cthresh=2000, mycoption=0, its=5 )
+  rm( lowmat )
   print(paste("end eanat",outprefix) )
   eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
   eproj=( eproj/rowSums(eproj) )
@@ -115,6 +129,9 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
                anv=anv) )
   }
 ```  
+
+
+# Three little modalities
 
 
 ## Thickness Eanat
@@ -177,17 +194,7 @@ print( min(qv) )
 print( ecbf$anv )
 ```
 
-
-## Combined: Option 1 $=$ Merge
-
-Here, we have to identify which subjects have all modalities.
-
-```{r modmerge}
-wth=ethk$whichSubjects
-wfa=efa$whichSubjects
-wcb=ecbf$whichSubjects
-haveAll=( wth & wfa & wcb )
-```
+# Three little modalities jointly
 
 ## Make a new function that recomputes projections from existing Eanat
 
@@ -223,6 +230,18 @@ eanatproj <- function( demog, imgmat,
   print( anova( mdl1, mdl2) )
   return( mydf )
   }
+```
+
+
+## Combined: Option 1 $=$ Merge
+
+Here, we have to identify which subjects have all modalities.
+
+```{r modmerge}
+wth=ethk$whichSubjects
+wfa=efa$whichSubjects
+wcb=ecbf$whichSubjects
+haveAll=( wth & wfa & wcb )
 ```
 
 ## Call the new function ...
@@ -266,6 +285,11 @@ mdl2=lm( AgeAtScan ~ . ,
   data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
 anova(mdl1,mdl2)
 ```
+
+
+## Do some `visreg` ?
+
+...
 
 ## Combined: Option 2 $=$ Impute
 
@@ -337,10 +361,20 @@ anova(mdl1,mdl2)
 
 ## PIQ stats?
 
-```{ piq,eval=FALSE,echo=FALSE}
+```{r piq,eval=FALSE,echo=FALSE}
 mdl1=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8)])
 mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
 anova(mdl1,mdl2)
 mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
 anova(mdl1,mdl2)
 ```
+
+# Review
+
+## Discussion
+
+* ...
+
+* ...
+
+* ...
