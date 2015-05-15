@@ -1,7 +1,7 @@
 ---
 title: 'The Pediatric Template of Brain Perfusion: Resting state functional  mri processing example'
 author: "Brian B. Avants et al."
-date: "May 7, 2015"
+date: "`r Sys.Date()`"
 output:
   beamer_presentation:
     colortheme: dolphin
@@ -115,7 +115,6 @@ amc = antsMotionCalculation(fmri)
 
 * "moco_img"     "moco_params"  "moco_avg_img" "moco_mask"  "dvars"
 
-*
 
 ## Visualize motion parameters: Matrix
 

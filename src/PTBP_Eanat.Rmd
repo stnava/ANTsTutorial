@@ -1,7 +1,7 @@
 ---
 title: 'The Pediatric Template of Brain Perfusion: Eigenanatomy with *ANTsR*'
 author: "Brian B. Avants et al."
-date: "May 7, 2015"
+date: "`r Sys.Date()`"
 output:
   beamer_presentation:
     colortheme: dolphin
@@ -20,6 +20,7 @@ output:
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
 bd="/Users/stnava/data/ANTsTutorial/"
+set.seed(11)
 ```
 
 # Eigenanatomy with ANTsR
@@ -101,8 +102,8 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   print(paste("begin low",outprefix) )
   lowmat = lowrankRowMatrix( imgmat , 10 )
   print(paste("begin eanat",outprefix) )
-  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0,
-    sparseness=0.05, cthresh=2000, mycoption=0, its=5 )
+  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0.5,
+    sparseness=0.05, cthresh=20000, mycoption=0, its=5 )
   rm( lowmat )
   print(paste("end eanat",outprefix) )
   eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
@@ -142,6 +143,7 @@ thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 thkfn=paste(bd,"data/ptbp_vox_thk.mha",sep='')
 thkmat=as.matrix( antsImageRead( thkfn ) )
 baddata=NA
+if ( ! exists("ethk") )
 ethk=voxandeanatstudy( demog, thkmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.5, baddata=baddata,
@@ -162,6 +164,7 @@ fafn=paste(bd,"data/ptbp_vox_fa.mha",sep='')
 famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
 famat=as.matrix( antsImageRead( fafn ) )
 baddata=c(42,44) # FA
+if ( ! exists("efa") )
 efa=voxandeanatstudy( demog, famat, famask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.2, baddata=baddata,
@@ -181,6 +184,7 @@ print( efa$anv )
 cbffn=paste(bd,"data/ptbp_vox_cbf.mha",sep='')
 cbfmat=as.matrix( antsImageRead( cbffn ) )
 baddata=NA
+if ( ! exists("ecbf") )
 ecbf=voxandeanatstudy( demog, cbfmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 45, baddata=baddata,
@@ -193,6 +197,26 @@ print( min(qv) )
 ```{r cbffunanv}
 print( ecbf$anv )
 ```
+
+# Visualize quickly
+
+## Thickness Viz
+```{r thkv}
+plot( thkmask, ethk$eseg , dorot=1 )
+```
+
+
+## CBF Viz
+```{r cbfv}
+plot( thkmask, ecbf$eseg , dorot=1 )
+```
+
+
+## FA Viz
+```{r fav}
+plot( famask, efa$eseg , dorot=1 )
+```
+
 
 # Three little modalities jointly
 
@@ -241,7 +265,7 @@ Here, we have to identify which subjects have all modalities.
 wth=ethk$whichSubjects
 wfa=efa$whichSubjects
 wcb=ecbf$whichSubjects
-haveAll=( wth & wfa & wcb )
+haveAllMerge=( wth & wfa & wcb )
 ```
 
 ## Call the new function ...
@@ -251,15 +275,15 @@ haveAll=( wth & wfa & wcb )
 thproj=eanatproj( demog, thkmat, thkmask,
   imgeanat=ethk$eanat,
   formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
+  voi=voi, whichSubs=haveAllMerge )
 cbproj=eanatproj( demog, cbfmat, thkmask,
   imgeanat=ecbf$eanat,
   formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
+  voi=voi, whichSubs=haveAllMerge )
 faproj=eanatproj( demog, famat, famask,
   imgeanat=efa$eanat,
   formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
+  voi=voi, whichSubs=haveAllMerge )
 ```
 
 ## Join them all
@@ -290,6 +314,56 @@ anova(mdl1,mdl2)
 ## Do some `visreg` ?
 
 ...
+
+## Let's do some prediction
+
+Use random forests to decide how relevant each
+modality is to reproducible predictions of age.
+
+First get the data organized.
+```{r orgpred}
+library(randomForest)
+library( caret )
+```
+
+
+
+## Build the RF model
+
+
+```{r rfpred,echo=FALSE}
+groups <- caret::createFolds( alldf$AgeAtScan, k = 2, list = FALSE)
+traing=groups==1
+testg=groups==2
+mdl=randomForest(  AgeAtScan ~ . , data=alldf[traing,], ntrees=2000 )
+predage = predict( mdl, newdata=alldf[ testg, ] )
+print( mean( abs(predage - alldf[testg,]$AgeAtScan ) ) )
+temp=data.frame(predage=predage,realage=alldf[testg,]$AgeAtScan )
+vmdl=lm( predage~0+realage,data=temp)
+visreg::visreg(vmdl)
+```
+
+## RF importance plot
+
+```{r rfimp,echo=FALSE}
+impdf=data.frame(
+  predNames=colnames(alldf)[ rev(order(mdl$importance)) ],
+  importance=mdl$importance[ rev(order(mdl$importance)) ]
+  )
+knitr::kable(  impdf )
+```
+
+
+## Build the RF model: Just thickness
+
+```{r rfpredt,echo=FALSE}
+mdl=randomForest(  AgeAtScan ~ . , data=thproj[traing,] )
+predage = predict( mdl, newdata=thproj[ testg, ] )
+print( mean( abs(predage - thproj[testg,]$AgeAtScan ) ) )
+temp=data.frame(predage=predage,realage=thproj[testg,]$AgeAtScan )
+vmdl=lm( predage~0+realage,data=temp)
+visreg::visreg(vmdl)
+```
 
 ## Combined: Option 2 $=$ Impute
 

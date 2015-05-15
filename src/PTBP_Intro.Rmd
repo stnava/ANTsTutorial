@@ -1,7 +1,7 @@
 ---
 title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTsR*'
 author: "Brian B. Avants et al."
-date: "May 7, 2015"
+date: "`r Sys.Date()`"
 output:
   ioslides_presentation:
     highlight: tango
