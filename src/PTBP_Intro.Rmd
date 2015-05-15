@@ -15,7 +15,7 @@ output:
     includes:
       in_header: mystyle.tex
     toc: yes
---- 
+---
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
@@ -24,7 +24,7 @@ bd="/Users/stnava/data/ANTsTutorial/"
 
 # Overview and resources
 
-## Overview 
+## Overview
 
 This is a compilable document with source code located here:
 
@@ -32,22 +32,22 @@ This is a compilable document with source code located here:
 
 To get this source, do:
 
-```bash 
+```bash
 git clone http://github.com/stnava/ANTsTutorial.git
 ```
-It is expected that you will compile and run this from within 
-the cloned `ANTsTutorial` directory.  The document needs the [ants tutorial data](https://www.dropbox.com/s/5p0vlx8en9uzbge/ants_tutorial_data.zip?dl=0) 
+It is expected that you will compile and run this from within
+the cloned `ANTsTutorial` directory.  The document needs the [ants tutorial data](https://www.dropbox.com/s/5p0vlx8en9uzbge/ants_tutorial_data.zip?dl=0)
 discussed below. It depends on *R*, *rmarkdown* and *ANTsR* primarily.
 
 Herein, [links are in this color](http://lmgtfy.com).
 
-## Overview 
+## Overview
 
 The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555).
 
 - Free multiple modality MRI data with demographics and psychometrics
 - Collected to aid as a reference for normal variability in structure and cerebral blood flow during adolescence
-- The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv) 
+- The data is accompanied by an [organized csv file](http://files.figshare.com/1699436/ptbp_summary_demographics.csv)
 - The full data is available at [figshare](http://figshare.com/articles/The_Pediatric_Template_of_Brain_Perfusion_PTBP_/923555)
 - Here we use a slightly processed version of the data
 - Each subject contains a slab version of T1, FA, B0, CBF, Thickness, Segmentation and AAL in subject space
@@ -70,10 +70,24 @@ The Pediatric Template of Brain Perfusion (PTBP) [at figshare](http://figshare.c
 - Each modality for each subject is in his/her T1 anatomical space.
 - An additional deformable mapping is needed to transform this subject space to template space or vice-versa.
 
+
+## A complete reference for PTBP processing
+
+```bash
+git clone http://github.com/jeffduda/NeuroBattery.git
+```
+
+This will give you both raw and processed output
+for a single multiple modality subject.
+
+We test (occasionally) against this reference output to monitor
+stability of our processing.
+
+
 ## If you have not already, download [*ANTsR*](http://stnava.github.io/ANTsR/)
 
-* Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or 
-  [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/), 
+* Get *R* from [OSX *R*](http://cran.r-project.org/bin/macosx/) or
+  [Linux *R*](http://www.jason-french.com/blog/2013/03/11/installing-r-in-linux/),
   optionally [*RStudio*](http://www.rstudio.com/products/rstudio/download/)
 * Install *ANTsR* dependencies
 ```r
@@ -81,20 +95,20 @@ pkgmin=c("magrittr","Rcpp") # core dependencies
 pkgxtra=c("igraph","randomForest","misc3d","rgl",
   "mFilter","fastICA","fpc","knitr","rmarkdown",
   "pixmap","png","signal","visreg")
-install.packages( c( pkgmin, pkgxtra ) ) 
+install.packages( c( pkgmin, pkgxtra ) )
 ```
 * Download the *ANTsR* tar.gz to `filename.tar.gz`
-* Install via command line (or *RStudio* `tools` $\rightarrow$ `install`): 
+* Install via command line (or *RStudio* `tools` $\rightarrow$ `install`):
 ```bash
    R CMD INSTALL filename.tar.gz
 ```
-* Test via ( in `R` ) calling: 
+* Test via ( in `R` ) calling:
 ```r
   library(ANTsR)
 ```
 * Done!
 
-# Quick Look 
+# Quick Look
 
 ## Get the demographics file
 
@@ -153,11 +167,11 @@ plot(cbftem,dorot=1,slices=10)
 subnum=11
 id=demog$SubID[subnum]
 dt=demog$ScanDate[subnum]
-exts=c( "mprage_t1.nii.gz" , 
-        "fa_anatomical.nii.gz", 
-        "MeanCBFWarpedToT1.nii.gz", 
-        "CorticalThickness.nii.gz", 
-        "BrainSegmentation.nii.gz", 
+exts=c( "mprage_t1.nii.gz" ,
+        "fa_anatomical.nii.gz",
+        "MeanCBFWarpedToT1.nii.gz",
+        "CorticalThickness.nii.gz",
+        "BrainSegmentation.nii.gz",
         "AAL.nii.gz" )
 pre=paste( bd,"data/Subjects/",id,"/",dt,"/*",sep='')
 fns=Sys.glob( paste( pre, exts , sep='') )
@@ -168,40 +182,40 @@ fns=Sys.glob( paste( pre, exts , sep='') )
 plot( antsImageRead( fns[1] ), dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod2, echo=FALSE}
 plot( antsImageRead( fns[2] ), dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod3, echo=FALSE}
 plot( antsImageRead( fns[3] ), dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod4, echo=FALSE}
 plot( antsImageRead( fns[4] ), dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod5, echo=FALSE}
 plot( antsImageRead( fns[5] ), dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod5b, echo=FALSE}
 cseg=antsImageRead( fns[5] ) %>% thresholdImage(2,2)
 plot( antsImageRead( fns[1] ), cseg, dorot=1, slices=10)
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod6, echo=FALSE}
 aal=antsImageRead( fns[6] )
-plot( antsImageRead( fns[1] ), aal, dorot=1, slices=10, 
+plot( antsImageRead( fns[1] ), aal, dorot=1, slices=10,
       window.overlay=c( 1, max(aal) ) )
 ```
 
-## Review each modality 
+## Review each modality
 ```{r mod1b, echo=FALSE}
 fa=antsImageRead( fns[2] ) %>% iMath("Canny")
 plot( antsImageRead( fns[1] ), fa, dorot=1, slices=10 )
@@ -298,12 +312,12 @@ Entries in $M_x$ relate to the likelihood two atlases make the same error.
 The expected label difference between the consensus solution obtained from weighted voting and the target segmentation is: $w_x^T M_x w_x$.
 
 Find atlas weights, $w_x$, for each of $A^i$ atlases, st
-$$ w_x^T ( M_x + \alpha \text{Id} ) w_x $$ 
+$$ w_x^T ( M_x + \alpha \text{Id} ) w_x $$
 is minimized subject to $\sum_{i=1}^n w_x(i)=1$.
 
 ## JLF theory: "Multi-Atlas Segmentation with Joint Label Fusion"
 
-Define 
+Define
 $$ K_m = \langle |~A^{i,m}_N - T^{m}_N~|, |~A^{j,m}_N - T^{m}_N~| \rangle $$
 then
 $$ M_x(i,j) =  ( \sum_m K_m )^\beta $$
@@ -318,7 +332,7 @@ Suppose that a pair of atlases $A_1$ and $A_2$ produce statistically independent
 $$
 M_x = \begin{bmatrix}
     0.5       & 0.1 \\
-    0.1       & 0.2 
+    0.1       & 0.2
 \end{bmatrix}
 $$
 The optimal voting weights are then $w_x = [0.2, 0.8]^t.$
@@ -327,21 +341,21 @@ The optimal voting weights are then $w_x = [0.2, 0.8]^t.$
 
 ```{r jlftem, echo=TRUE, eval=FALSE, warning=FALSE }
 if ( !exists("ilist") )
-  ilist=imageFileNames2ImageList( 
+  ilist=imageFileNames2ImageList(
     Sys.glob( paste(bd,"data/JLF/ilist*.nii.gz",sep='')) )
 if ( !exists("seglist") )
-  seglist=imageFileNames2ImageList( 
+  seglist=imageFileNames2ImageList(
     Sys.glob( paste(bd,"data/JLF/slist*.nii.gz",sep='')) )
 mk=getMask(t1tem)
-jlf=jointIntensityFusion( t1tem, mk, ilist, 
-  labelList=seglist, rad=rep(3,3), rSearch=2, 
+jlf=jointIntensityFusion( t1tem, mk, ilist,
+  labelList=seglist, rad=rep(3,3), rSearch=2,
   computeProbs=TRUE, includezero=TRUE)
 # write out results
-if ( ! exists("tf") ) tf=tempfile() 
+if ( ! exists("tf") ) tf=tempfile()
 antsImageWrite( jlf$segimg, paste(tf,'seg.nii.gz',sep='') )
 antsImageWrite( jlf$predimg, paste(tf,'pred.nii.gz',sep='') )
 for ( i in 1:length(jlf$probimgs) )
-  antsImageWrite( jlf$probimgs[[i]], 
+  antsImageWrite( jlf$probimgs[[i]],
                   paste(tf,'prob',i,'.nii.gz',sep='') )
 ```
 
@@ -355,7 +369,7 @@ for ( i in 1:length(jlf$probimgs) )
 if ( ! exists("jlf") ) {
 tf=paste(bd,"/data/JLF_out/jlfout_",sep='')
 kk=Sys.glob( paste(tf,"prob*nii.gz",sep='') )
-segfn=paste( tf,"seg.nii.gz", sep='') 
+segfn=paste( tf,"seg.nii.gz", sep='')
 jlf=list( segimg=antsImageRead(segfn),
   probimgs=imageFileNames2ImageList( kk  ) )
 }
@@ -409,7 +423,7 @@ newprobimgs=matrixToImages( jlfmat, mk )
 
 ```{r renoprobs2,eval=TRUE}
 jlf$probimgs[[ 1 ]] = newcsf
-newprobimgs2 = renormalizeProbabilityImages( 
+newprobimgs2 = renormalizeProbabilityImages(
   jlf$probimgs, mk, 1 )
 ```
 
@@ -424,10 +438,10 @@ segnew <- atropos( d = 3, a = t1tem, m = '[0.05,1x1x1]',
    c = '[2,0]',  i = newprobimgs2, x = mk )
 ```
 
-A more complete process is available in `antsAtroposN4.sh` which 
+A more complete process is available in `antsAtroposN4.sh` which
 is what we use for production.
 
-We might go further and force the posteriors to be zero 
+We might go further and force the posteriors to be zero
 where the priors are zero ...
 
 ## Template and segmentation
@@ -452,7 +466,7 @@ plot( t1tem, segnew$segmentation , dorot = 1 , slices=10 )
 
 Let's do this as example later ...
 
-## Summary 
+## Summary
 
 * Briefly reviewed PTBP and the modalities therein.
 
