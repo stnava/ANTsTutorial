@@ -125,10 +125,11 @@ mask=( famask+thkmask ) %>%
 inds=1:40
 y=mydf$AgeAtScan[traing][inds]
 x=slist[traing][inds]
-mr=c(8,4,2)
+mr=c(8,4)
+if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
   mask, rad=rep(1,3),
-  nsamples=200, ntrees=2000,
+  nsamples=20, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -137,10 +138,29 @@ rfm<-mrvnrfs( y, x,
 ## MRVNRF Test
 
 ```{r mrvtest}
+if ( ! exists("rfm2") )
 rfm2<-mrvnrfs.predict( rfm$rflist,
   slist[testg][inds], mask, rad=rep(1,3),
   multiResSchedule=mr,
   asFactors = FALSE )
 cor( mydf$AgeAtScan[testg][inds] , rfm2$seg )
 print(  mean( abs( mydf$AgeAtScan[testg][inds] - rfm2$seg) ) )
+```
+
+## MRVNRF Viz
+
+```{r mrviz}
+predmat<-imageListToMatrix( unlist(rfm2$probs) , mask )
+rfpred <- apply( predmat,  FUN = median, MARGIN = 1)
+print(  cor.test( mydf$AgeAtScan[testg][inds] , rfpred ) )
+print(  mean( abs( mydf$AgeAtScan[testg][inds] - rfpred) ) )
+corrmat<-antsrimpute( cor( predmat , mydf$AgeAtScan[testg][inds] ) )
+corimg<-makeImage( mask, corrmat )
+```
+
+## MRVNRF Viz
+
+```{r mrviz2,echo=FALSE}
+plot( mask, corimg, axis=3, nslices=16,
+   window.overlay=c( 0.666*max(corimg) , max(corimg) ) )
 ```
