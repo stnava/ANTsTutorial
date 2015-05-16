@@ -82,8 +82,7 @@ for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
 First get the data organized.
 ```{r orgpred}
 library(randomForest)
-library( caret )
-groups <- caret::createFolds( mydf$AgeAtScan, k = 2, list = FALSE)
+groups <- rep( c(1,2), 1000 )[1:nrow(mydf)]
 traing=groups==1
 testg=groups==2
 ```
@@ -129,7 +128,7 @@ mr=c(8,4)
 if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
   mask, rad=rep(1,3),
-  nsamples=20, ntrees=2000,
+  nsamples=50, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
