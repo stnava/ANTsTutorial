@@ -338,23 +338,23 @@ print( min(qv) )
 knitr::kable( ecbf$anv )
 ```
 
-# Visualize quickly
+# Visualize eigenanatomy segmentations
 
 ## Thickness Viz
 ```{r thkv}
-plot( thkmask, ethk$eseg , dorot=1 )
+plot( thkmask, ethk$eseg , axis=3 )
 ```
 
 
 ## CBF Viz
 ```{r cbfv}
-plot( thkmask, ecbf$eseg , dorot=1 )
+plot( thkmask, ecbf$eseg , axis=3 )
 ```
 
 
 ## FA Viz
 ```{r fav}
-plot( famask, efa$eseg , dorot=1 )
+plot( famask, efa$eseg , axis=3 )
 ```
 
 
@@ -522,7 +522,7 @@ if ( ! exists("sccan") )
 
 ## Check the CCA regions
 
-```{r thkcca4,eval=TRUE}
+```{r thkcca4,eval=TRUE,echo=FALSE}
 ccaeseg=eigSeg( thkmask, sccan$eig1, FALSE  )
 plot( thkmask, ccaeseg, axis=3, nslices=16 )
 ```
@@ -571,7 +571,7 @@ if ( ! exists("fsccan") )
 
 ## Check the CCA regions
 
-```{r facca4,eval=TRUE}
+```{r facca4,eval=TRUE,echo=FALSE}
 ccaeseg=eigSeg( famask, fsccan$eig1, FALSE  )
 plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
@@ -624,14 +624,14 @@ if ( ! exists("fcsccan") )
 
 ## Check the CCA regions:FA
 
-```{r faccavfa,eval=TRUE}
+```{r faccavfa,eval=TRUE,echo=FALSE}
 ccaeseg=eigSeg( famask, fcsccan$eig1, FALSE  )
 plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
 ## Check the CCA regions:CBF
 
-```{r faccavcbf,eval=TRUE}
+```{r faccavcbf,eval=TRUE,echo=FALSE}
 ccaeseg=eigSeg( thkmask, fcsccan$eig2, FALSE  )
 plot( thkmask, ccaeseg, axis=3, nslices=16 )
 ```
