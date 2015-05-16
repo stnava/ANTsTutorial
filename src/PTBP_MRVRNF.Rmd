@@ -107,9 +107,9 @@ for ( x in which(wp) )
     ct=ct+1
     }
   }
-# rm( thkmat )
-# rm( famat )
-# rm( cbfmat )
+rm( thkmat )
+rm( famat )
+rm( cbfmat )
 gc()
 ```
 
@@ -125,10 +125,10 @@ mask=( famask+thkmask ) %>%
 inds=1:40
 y=mydf$AgeAtScan[traing][inds]
 x=slist[traing][inds]
-mr=c(8,4)
+mr=c(8,4,2)
 rfm<-mrvnrfs( y, x,
   mask, rad=rep(1,3),
-  nsamples=25, ntrees=2000,
+  nsamples=200, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -142,5 +142,5 @@ rfm2<-mrvnrfs.predict( rfm$rflist,
   multiResSchedule=mr,
   asFactors = FALSE )
 cor( mydf$AgeAtScan[testg][inds] , rfm2$seg )
-print(  mean( abs( mydf$AgeAtScan[testg][1:20] - rfm2$seg) ) )
+print(  mean( abs( mydf$AgeAtScan[testg][inds] - rfm2$seg) ) )
 ```
