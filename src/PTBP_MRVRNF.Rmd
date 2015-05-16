@@ -87,6 +87,24 @@ traing=groups==1
 testg=groups==2
 ```
 
+## Select parts of masks that are related to age ( our outcome )
+
+
+```{r fsel}
+temp=thkmat[wp,]
+thkcor=abs( cor(temp[traing,], mydf$AgeAtScan[traing]) )
+temp=famat[wp,]
+facor=abs( cor(temp[traing,], mydf$AgeAtScan[traing]) )
+temp=cbfmat[wp,]
+cbfcor=abs( cor(temp[traing,], mydf$AgeAtScan[traing]) )
+corimg=makeImage( thkmask, thkcor )
+corimg=corimg+makeImage( thkmask, cbfcor )
+corimg=corimg+makeImage( famask, facor )
+mrvmask=thresholdImage(corimg,0.5,Inf)
+rm(temp)
+```
+
+
 ## Set up mrvnrfs
 
 ```{r mrvsubs}
@@ -117,17 +135,13 @@ gc()
 We train from the CBF, FA and cortical thickness images.
 
 ```{r mrvtrain}
-mask=( famask+thkmask ) %>%
-  iMath("MD",2) %>%
-  iMath("FillHoles") %>%
-  iMath("ME",2)
 inds=1:40
 y=mydf$AgeAtScan[traing][inds]
 x=slist[traing][inds]
 mr=c(8,4)
 if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
-  mask, rad=rep(1,3),
+  mrvmask, rad=rep(1,3),
   nsamples=50, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
@@ -139,7 +153,7 @@ rfm<-mrvnrfs( y, x,
 ```{r mrvtest}
 if ( ! exists("rfm2") )
 rfm2<-mrvnrfs.predict( rfm$rflist,
-  slist[testg][inds], mask, rad=rep(1,3),
+  slist[testg][inds], mrvmask, rad=rep(1,3),
   multiResSchedule=mr,
   asFactors = FALSE )
 cor( mydf$AgeAtScan[testg][inds] , rfm2$seg )
@@ -149,12 +163,12 @@ print(  mean( abs( mydf$AgeAtScan[testg][inds] - rfm2$seg) ) )
 ## MRVNRF Viz
 
 ```{r mrviz}
-predmat<-imageListToMatrix( unlist(rfm2$probs) , mask )
+predmat<-imageListToMatrix( unlist(rfm2$probs) , mrvmask )
 rfpred <- apply( predmat,  FUN = median, MARGIN = 1)
 print(  cor.test( mydf$AgeAtScan[testg][inds] , rfpred ) )
 print(  mean( abs( mydf$AgeAtScan[testg][inds] - rfpred) ) )
 corrmat<-antsrimpute( cor( predmat , mydf$AgeAtScan[testg][inds] ) )
-corimg<-makeImage( mask, corrmat )
+corimg<-makeImage( thkmask, corrmat )
 ```
 
 ## MRVNRF Viz
