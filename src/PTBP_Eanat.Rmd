@@ -501,6 +501,62 @@ vmdl=lm( predage~realage,data=temp)
 visreg::visreg(vmdl)
 ```
 
+
+## Combined: Option 2 $=$ Impute
+
+Did not implement this well.... but relatively easy to improve ...
+
+```{r doimp}
+thkmati=thkmat
+thkmati[ haveAll, ]=antsrimpute( thkmat[ haveAll, ] )
+famati=famat
+famati[ haveAll, ]=antsrimpute( famat[ haveAll, ] )
+cbfmati=cbfmat
+cbfmati[ haveAll, ]=antsrimpute( cbfmat[ haveAll, ] )
+```
+
+
+## Call the new function ... imputation
+
+```{r eprojcalli}
+thproj=eanatproj( demog, thkmati, thkmask,
+  imgeanat=ethk$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+cbproj=eanatproj( demog, cbfmati, thkmask,
+  imgeanat=ecbf$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+faproj=eanatproj( demog, famati, famask,
+  imgeanat=efa$eanat,
+  formulathkbase, formulathktest,
+  voi=voi, whichSubs=haveAll )
+```
+
+## Join them all ... imputation
+
+```{r joineri}
+n=ncol(faproj)
+faprojsub=faproj[,(n-neanatvecs+1):n]
+n=ncol(cbproj)
+cbprojsub=cbproj[,(n-neanatvecs+1):n]
+alldf=cbind( thproj, FA=faprojsub, CBF=cbprojsub)
+```
+
+
+## Joint stats ... imputation
+
+```{r jointstatsi}
+mdl1=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8)])
+mdl2=lm( AgeAtScan ~ . ,
+  data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
+knitr::kable( anova(mdl1,mdl2) )
+```
+
+
+# SCCAN with ANTsR
+
 ## A little bit of CCA ...
 
 First, thickness ...
@@ -656,83 +712,7 @@ cor.test( pviq, ccadf[testg,]$AgeAtScan )
 
 
 
-## Combined: Option 2 $=$ Impute
 
-Did not implement this well.... but relatively easy to improve ...
-
-```{r modimpute}
-wth=ethk$whichSubjects
-wfa=efa$whichSubjects
-wcb=ecbf$whichSubjects
-haveAll=( wth | wfa | wcb )
-```
-
-
-## Combined: Option 2 $=$ Impute
-
-Did not implement this well.... but relatively easy to improve ...
-
-```{r doimp}
-thkmati=thkmat
-thkmati[ haveAll, ]=antsrimpute( thkmat[ haveAll, ] )
-famati=famat
-famati[ haveAll, ]=antsrimpute( famat[ haveAll, ] )
-cbfmati=cbfmat
-cbfmati[ haveAll, ]=antsrimpute( cbfmat[ haveAll, ] )
-```
-
-
-
-## Call the new function ... imputation
-
-```{r eprojcalli}
-thproj=eanatproj( demog, thkmati, thkmask,
-  imgeanat=ethk$eanat,
-  formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
-cbproj=eanatproj( demog, cbfmati, thkmask,
-  imgeanat=ecbf$eanat,
-  formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
-faproj=eanatproj( demog, famati, famask,
-  imgeanat=efa$eanat,
-  formulathkbase, formulathktest,
-  voi=voi, whichSubs=haveAll )
-```
-
-## Join them all ... imputation
-
-```{r joineri}
-n=ncol(faproj)
-faprojsub=faproj[,(n-neanatvecs+1):n]
-n=ncol(cbproj)
-cbprojsub=cbproj[,(n-neanatvecs+1):n]
-alldf=cbind( thproj, FA=faprojsub, CBF=cbprojsub)
-```
-
-
-## Joint stats ... imputation
-
-```{r jointstatsi}
-mdl1=lm( AgeAtScan ~ . ,
-  data=alldf[,c(1:2,3,5,8)])
-mdl2=lm( AgeAtScan ~ . ,
-  data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
-anova(mdl1,mdl2)
-mdl2=lm( AgeAtScan ~ . ,
-  data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
-anova(mdl1,mdl2)
-```
-
-## PIQ stats?
-
-```{r piq,eval=FALSE,echo=FALSE}
-mdl1=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8)])
-mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
-anova(mdl1,mdl2)
-mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
-anova(mdl1,mdl2)
-```
 
 # Review
 
