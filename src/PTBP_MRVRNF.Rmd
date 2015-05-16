@@ -1,0 +1,146 @@
+---
+title: 'The Pediatric Template of Brain Perfusion: MRVNRF with *ANTsR*'
+author: "Brian B. Avants et al."
+date: "`r Sys.Date()`"
+output:
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
+---
+
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+# set this for your own compilation
+set.seed(1000)
+bd="/Users/stnava/data/ANTsTutorial/"
+```
+
+# MRVNRF with ANTsR
+
+## Extension of a recent paper
+
+[**BRATS Challenge**](http://www.ncbi.nlm.nih.gov/pubmed/25433513)
+
+> Tustison et al
+
+* difference 1: here, using multiple resolution RFs
+
+* difference 2: predicting a continuous outcome ...
+
+
+## Basic Setup
+
+```{r dataio}
+library(ANTsR)
+library(visreg)
+library(randomForest)
+thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
+famask=antsImageRead( paste(bd,"data/ptbp_mask_fa.nii.gz",sep='') )
+demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
+demog=demog[ , 1:19 ]
+```
+
+## Get all voxel data
+
+```{r form}
+thkmat=antsImageRead( paste(bd,"data/ptbp_vox_thk.mha",sep='') )
+famat=antsImageRead( paste(bd,"data/ptbp_vox_fa.mha",sep='') )
+cbfmat=antsImageRead( paste(bd,"data/ptbp_vox_cbf.mha",sep='') )
+thkmat=as.matrix( thkmat )
+cbfmat=as.matrix( cbfmat )
+famat=as.matrix( famat )
+```
+
+## Get common images and make a dataframe
+
+```{r mdf}
+wp=( !is.na(rowMeans(thkmat)) & rowMeans(thkmat) > 0.5  &
+     !is.na(rowMeans(famat)) & rowMeans(famat) > 0.2  &
+     !is.na(rowMeans(cbfmat)) & rowMeans(cbfmat) > 40 )
+mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
+                 PIQ=demog[wp,]$Performance.IQ,
+                 VIQ=demog[wp,]$Verbal.IQ,
+                 BV=demog[wp,]$BV,
+                 Cortex=demog[wp,]$Cortex,
+                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+                 Income=demog[wp,]$Income )
+for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
+```  
+
+
+## Train/Test
+
+First get the data organized.
+```{r orgpred}
+library(randomForest)
+library( caret )
+groups <- caret::createFolds( mydf$AgeAtScan, k = 2, list = FALSE)
+traing=groups==1
+testg=groups==2
+```
+
+## Set up mrvnrfs
+
+```{r mrvsubs}
+slist=list()
+agelist=list()
+ct=1
+for ( x in which(wp) )
+  {
+  if (  wp[x] == TRUE )
+    {
+    i1=makeImage(thkmask, thkmat[x,])
+    i2=makeImage(famask, famat[x,])
+    i3=makeImage(thkmask, cbfmat[x,] )
+    feati=list( i1, i2, i3 )
+    slist[[ct]]=feati
+    agelist[[ct]]=mydf$AgeAtScan[x]
+    ct=ct+1
+    }
+  }
+# rm( thkmat )
+# rm( famat )
+# rm( cbfmat )
+gc()
+```
+
+## MRVNRF Train
+
+We train from the CBF, FA and cortical thickness images.
+
+```{r mrvtrain}
+mask=( famask+thkmask ) %>%
+  iMath("MD",2) %>%
+  iMath("FillHoles") %>%
+  iMath("ME",2)
+inds=1:40
+y=mydf$AgeAtScan[traing][inds]
+x=slist[traing][inds]
+mr=c(8,4)
+rfm<-mrvnrfs( y, x,
+  mask, rad=rep(1,3),
+  nsamples=25, ntrees=2000,
+  multiResSchedule=mr,
+  asFactors = FALSE )
+```
+
+
+## MRVNRF Test
+
+```{r mrvtest}
+rfm2<-mrvnrfs.predict( rfm$rflist,
+  slist[testg][inds], mask, rad=rep(1,3),
+  multiResSchedule=mr,
+  asFactors = FALSE )
+cor( mydf$AgeAtScan[testg][inds] , rfm2$seg )
+print(  mean( abs( mydf$AgeAtScan[testg][1:20] - rfm2$seg) ) )
+```
