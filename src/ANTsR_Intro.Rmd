@@ -337,7 +337,7 @@ Can be converted to vectors, matrices, arrays ...
 
 ## Plot the `antsImage`
 
-```{r plotai,echo=FALSE,out.width='.75\\linewidth'}
+```{r plotai,echo=FALSE,out.width='.5\\linewidth'}
 plot( img )
 ```
 
@@ -370,7 +370,7 @@ print( dim(imgmat) )
 ```
 
 ## Show the average
-```{r plotavg,echo=FALSE,out.width='.75\\linewidth'}
+```{r plotavg,echo=FALSE,out.width='.5\\linewidth'}
 plot( avg )
 ```
 
