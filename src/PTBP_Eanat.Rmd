@@ -187,7 +187,7 @@ neanatvecs=2
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 mth='BH'
-demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
+demog=read.csv(paste(bd,"data/ptbp_summary_demographics.csv",sep='') )
 demog=demog[ , 1:19 ]
 ```
 
@@ -287,7 +287,7 @@ if ( ! exists("ethk") )
 ethk=voxandeanatstudy( demog, thkmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.5, baddata=baddata,
-       outprefix='/tmp/ASS_THK', nv=neanatvecs )
+       outprefix='/tmp/Eanat_THK', nv=neanatvecs )
 qv=p.adjust( ethk$eanatlm$beta.pval[ voi, ], method='BH' )
 print( min(qv) )
 ```
@@ -308,7 +308,7 @@ if ( ! exists("efa") )
 efa=voxandeanatstudy( demog, famat, famask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.2, baddata=baddata,
-       outprefix='/tmp/ASS_FA', nv=neanatvecs )
+       outprefix='/tmp/Eanat_FA', nv=neanatvecs )
 qv=p.adjust( efa$eanatlm$beta.pval[ voi, ], method='BH' )
 print( min(qv) )
 ```
@@ -328,7 +328,7 @@ if ( ! exists("ecbf") )
 ecbf=voxandeanatstudy( demog, cbfmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 45, baddata=baddata,
-       outprefix='/tmp/ASS_CBF', nv=neanatvecs )
+       outprefix='/tmp/Eanat_CBF', nv=neanatvecs )
 qv=p.adjust( ecbf$eanatlm$beta.pval[ voi,], method='BH' )
 print( min(qv) )
 ```
@@ -397,11 +397,11 @@ eanatproj <- function( demog, imgmat,
 ```
 
 
-## Combined: Option 1 $=$ Merge
+## Modalities Combined: Option 1 $=$ Merge
 
 Here, we have to identify which subjects have all modalities.
 
-```{r modmerge}
+```{r modmerge1}
 wth=ethk$whichSubjects
 wfa=efa$whichSubjects
 wcb=ecbf$whichSubjects
@@ -502,7 +502,18 @@ visreg::visreg(vmdl)
 ```
 
 
-## Combined: Option 2 $=$ Impute
+## Modalities Combined: Option 2 $=$ Impute
+
+Here, we have to identify which subjects have all modalities.
+
+```{r modmerge}
+wth=ethk$whichSubjects
+wfa=efa$whichSubjects
+wcb=ecbf$whichSubjects
+haveAll=( wth | wfa | wcb )
+```
+
+## Do the imputation
 
 Did not implement this well.... but relatively easy to improve ...
 
@@ -562,17 +573,15 @@ knitr::kable( anova(mdl1,mdl2) )
 First, thickness ...
 
 ```{r thkcca,eval=TRUE}
-sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8,13)] )
+sdemog=antsrimpute( demog[haveAllMerge,c(7,8)] )
 # above is a bug sparseDecom/2 does not handle NAs well
 temp=thkmat[haveAllMerge,][traing,]
-for ( i in 1:nrow(temp) )
-  temp[i,]=temp[i,]-mean(temp[i,])
 inmatrix=list( temp ,
   data.matrix(sdemog[traing,])  )
 if ( ! exists("sccan") )
   sccan=sparseDecom2(inmatrix, c(thkmask, NA),
-     sparseness = c( 0.05, 0.3 ),
-     nvecs = 3, its = 2, cthresh = c(5000, 0),
+     sparseness = c( 0.005, 0.3 ),
+     nvecs = 2, its = 15, cthresh = c(5000, 0),
      perms = 0, smooth = 0.5, mycoption = 1 )
 ```
 
@@ -599,70 +608,25 @@ sccanmat=imageListToMatrix( sccan$eig1, thkmask)
 sccanmat=sccanmat/rowSums(sccanmat)
 sccanproj = thkmat[haveAllMerge,] %*% t( sccanmat )
 ccadf=data.frame( sdemog, sccanproj,
-  gender=demog$Sex[haveAllMerge] )
-mdl=randomForest( AgeAtScan ~ X1+X2+X3, data=ccadf[traing,], ntrees=5500 )
-pviq = predict( mdl, newdata=ccadf[ testg, ] )
-print( mean( abs( pviq - ccadf[testg,]$AgeAtScan) ) )
-cor.test( pviq, ccadf[testg,]$AgeAtScan )
-```
-
-
-
-## More cca ...
-
-Second, FA ...
-
-```{r facca,eval=TRUE}
-temp=famat[haveAllMerge,][traing,]
-for ( i in 1:nrow(temp) )
-  temp[i,]=temp[i,]-mean(temp[i,])
-inmatrix=list( temp ,
-  data.matrix(sdemog[traing,])  )
-if ( ! exists("fsccan") )
-  fsccan=sparseDecom2(inmatrix, c(famask, NA),
-     sparseness = c( 0.05, 0.3 ),
-     nvecs = 3, its = 2, cthresh = c(5000, 0),
-     perms = 0, smooth = 0.5, mycoption = 1 )
-```
-
-## Check the CCA regions
-
-```{r facca4,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( famask, fsccan$eig1, FALSE  )
-plot( famask, ccaeseg, axis=3, nslices=16 )
-```
-
-## Look over cca results
-
-Which demographic variables match which imaging variables?
-
-```{r facca2,eval=TRUE}
-rownames( fsccan$eig2 )=colnames( sdemog )
-knitr::kable( fsccan$eig2 )
-```
-
-## Quick CCA-based prediction
-
-```{r facca3,eval=TRUE}
-fsccanmat=imageListToMatrix( fsccan$eig1, famask)
-fsccanmat=fsccanmat/rowSums(fsccanmat)
-fsccanproj = famat[haveAllMerge,] %*% t( fsccanmat )
-ccadf=data.frame( sdemog, fsccanproj,
-  gender=demog$Sex[haveAllMerge] )
-lmdl=lm( AgeAtScan ~ .,
-  data=ccadf[traing,] )
-mdl=randomForest( AgeAtScan ~., data=ccadf[traing,] )
-pviq = predict( mdl, newdata=ccadf[ testg, ] )
-print( mean( abs( pviq - ccadf[testg,]$AgeAtScan) ) )
-cor.test( pviq, ccadf[testg,]$AgeAtScan )
+  gender=demog$Sex[haveAllMerge],
+  age=demog$AgeAtScan[haveAllMerge])
+mdl=randomForest( Performance.IQ ~ . ,
+  data=ccadf[traing,c(2,3:6)] )
+pviq = predict( mdl,
+  newdata=ccadf[ testg,c(2,3:6)] )
+print( mean( abs( pviq - ccadf[testg,]$Performance.IQ) ) )
+cor.test( pviq, ccadf[testg,]$Performance.IQ )
 ```
 
 
 ## More cca ...
 
-Third, FA and CBF ...
+Second, FA and CBF ...
+
+These modalities relate strongly to age ... how do they covary?
 
 ```{r faccacbf,eval=TRUE}
+sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8)] )
 temp=famat[haveAllMerge,][traing,]
 for ( i in 1:nrow(temp) )
   temp[i,]=temp[i,]-mean(temp[i,])
