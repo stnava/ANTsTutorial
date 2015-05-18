@@ -171,7 +171,7 @@ for ( x in which(wp) )
     i1=makeImage(thkmask, thkmat[x,])
     i2=makeImage(famask, famat[x,])
     i3=makeImage(thkmask, cbfmat[x,] )
-    feati=list( i1 , i2 ) #  , i3 )
+    feati=list( i1, i2 )
     slist[[ct]]=feati
     agelist[[ct]]=mydf$VIQ[x]
     ct=ct+1
@@ -237,7 +237,7 @@ plot( thkmask, corimg, axis=3, nslices=16,
 ```{r mrvmdl,echo=FALSE}
 temp=mydf[testg,]
 mrvdf=data.frame( temp , mrvpred=rfpred )
-mrvmdl=lm( VIQ ~ . , data=mrvdf )
+mrvmdl=lm( VIQ ~ AgeAtScan + BV + Income + mrvpred , data=mrvdf )
 m_table <- broom::tidy(mrvmdl)
 knitr::kable(m_table, digits = 3, align = "r",
       col.names = c("Param", "B", "SE", "t", "p"))

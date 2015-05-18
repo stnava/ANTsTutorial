@@ -30,6 +30,8 @@ ilist=imageFileNames2ImageList( allfns )
 sccansig=0
 ```
 
+# Phantom Morphometry Study
+
 ## Phantom Morphometry Study
 
 * Manually drawn three tissue images
@@ -41,6 +43,8 @@ sccansig=0
 * We show how to do a log-jacobian based study
 
 * ... and a tissue study.
+
+# Population
 
 ## Look at population: S1
 
@@ -65,6 +69,8 @@ plot( ilist[[5]], window.img=c(0,255) )
 ```{r pop6,results='asis'}
 plot( ilist[[6]], window.img=c(0,255) )
 ```
+
+# Segmentation
 
 ## First: segment the images
 
@@ -95,6 +101,9 @@ img = ilist[[ 1 ]]
 km=kmeansSegmentation(  img, 3, mask ) # segment
 plot( km$segmentation, window.img=c(0,3) )
 ```
+
+
+# Registration
 
 ## Second: register the images
 
@@ -132,6 +141,8 @@ plot( template, tx$warpedmovout %>% iMath("Canny"),
   window.overlay=c(0.5,1)  )
 ```
 
+# Jacobian
+
 ##  Now look at a log-jacobian image ...
 
 ```{r logj,echo=FALSE}
@@ -145,6 +156,8 @@ plot( jlist[[5]])
 ```
 
 ## Now we can do statistics on either warped segmentations or the log-jacobian
+
+# Statistics
 
 Look at the demographics file ...
 
@@ -194,8 +207,10 @@ gqvimg=makeImage( templatemask, 1-gqv )
 
 ... this is always important to think about ...
 
-## Try a multivariate version of the same study
 
+# Multivariate statistics
+
+## Try a multivariate version of the same study
 
 ##  .... multivariate statistics in *R*
 \transdissolve
@@ -221,3 +236,76 @@ when you vary parameters?
 ```{r sccanviz,echo=FALSE,out.width='.6\\linewidth',message=FALSE,warning=FALSE,eval=TRUE}
 plot( template, sccansol, window.overlay=c(0.1,1.01) )
 ```
+
+# And MNI space ....
+
+## Mapping to MNI space with *ANTsR*
+
+* We implemented a simple approach to mapping a
+custom template, and its blobs, to MNI coordinates.
+
+* See `?getTemplateCoordinates` for an example.
+
+* We also report summary regional labels.
+
+* First, get a template, here the `ch2` brain.
+```{r ch2}
+if ( ! exists("tem") )
+  tem<-antsImageRead( getANTsRData("ch2") )
+```
+
+## Mapping to MNI space with *ANTsR*
+
+* Next, define pseudoclusters in ch2 space.
+```{r defineclust}
+clust <- thresholdImage( tem, 82, 90 ) %>%
+   iMath("ME",1)  %>% labelClusters()
+```
+
+## Mapping to MNI space with *ANTsR*
+
+* Download the MNI template and its labels.  
+```{r mymnidl}
+if ( ! exists("mymni") ) {
+# try getANTsRData if you have www access
+  mymni<-list( antsImageRead(getANTsRData("mni") ),
+               antsImageRead(getANTsRData("mnib") ),
+               antsImageRead(getANTsRData("mnia") ) )
+}
+```
+
+## Mapping to MNI space with *ANTsR*
+
+* Next define a pair of your template and its clusters.
+
+```{r mypair}
+template_cluster_pair<-list(tem,clust)
+```
+
+* Call the function to map to MNI space.
+```{r mymni}
+gcoords<-getTemplateCoordinates( template_cluster_pair ,
+    mymni , convertToTal = TRUE )
+```
+
+* This performs a registration and returns the coordinates for each cluster.
+
+
+## Reporting cluster coordinates in MNI space with *ANTsR*
+
+\small
+
+Show the table of results.
+```{r repomni,echo=FALSE}
+knitr::kable( gcoords$templatepoints  )
+```
+
+## Review
+
+* A simple reproducible example for a phantom morphometry study
+
+* Plotting, segmentation, registration
+
+* Statistics of two flavors ....
+
+* Mapping to MNI coordinates.
