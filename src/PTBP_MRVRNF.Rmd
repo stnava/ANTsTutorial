@@ -66,12 +66,12 @@ wp=( !is.na(rowMeans(thkmat)) & rowMeans(thkmat) > 0.5  &
      !is.na(rowMeans(famat)) & rowMeans(famat) > 0.2  &
      !is.na(rowMeans(cbfmat)) & rowMeans(cbfmat) > 40 )
 mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
-                 PIQ=demog[wp,]$Performance.IQ,
+   #             PIQ=demog[wp,]$Performance.IQ,
                  VIQ=demog[wp,]$Verbal.IQ,
                  BV=demog[wp,]$BV,
                  Cortex=demog[wp,]$Cortex,
-                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
-                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+    #           LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+    #            LadderSES=demog[wp,]$Teen.Ladder.SES.score,
                  Income=demog[wp,]$Income )
 for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
 ```  
@@ -87,27 +87,63 @@ traing=groups==1
 testg=groups==2
 ```
 
-## Select parts of masks that are related to age ( our outcome )
+## Select thickness zones related to VIQ ( our outcome )
 
 
-```{r fsel}
-temp=thkmat[wp,]
-thkcor=abs( cor(temp[traing,], mydf$VIQ[traing]) )
-temp=famat[wp,]
-facor=abs( cor(temp[traing,], mydf$VIQ[traing]) )
-temp=cbfmat[wp,]
-cbfcor=abs( cor(temp[traing,], mydf$VIQ[traing]) )
-corimg=makeImage( thkmask, thkcor ) %>% smoothImage(1)
-corimg=corimg+makeImage( thkmask, cbfcor ) %>% smoothImage(1)
-corimg=corimg+makeImage( famask, facor ) %>% smoothImage(1)
-mrvmask=thresholdImage( corimg, 0.25, Inf )
-rm(temp)
+```{r fselth,echo=FALSE}
+y=mydf$VIQ[traing]
+temp=thkmat[wp,][traing,]
+thkR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+thkR2[ abs(thkR2) > 1.e9 ]=0
+thkR2[ thkR2 < 0 ]=0
+thkR2img=makeImage( thkmask, thkR2 ) %>%
+  smoothImage(1)
+plot( thkmask, thkR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(thkR2img)) )
+```
+
+## Select FA zones related to VIQ ( our outcome )
+
+```{r fselfa,echo=FALSE}
+temp=famat[wp,][traing,]
+faR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+faR2[ abs(faR2) > 1.e9 ]=0
+faR2[ faR2 < 0 ]=0
+faR2img=makeImage( famask, faR2 ) %>%
+  smoothImage(1)
+plot( famask, faR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(faR2img)) )
+```
+
+## Select CBF zones related to VIQ ( our outcome )
+
+```{r fselcbf,echo=FALSE}
+temp=cbfmat[wp,][traing,]
+cbfR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+cbfR2[ abs(cbfR2) > 1.e9 ]=0
+cbfR2[ cbfR2 < 0 ]=0
+cbfR2img=makeImage( thkmask, cbfR2 ) %>%
+  smoothImage(1)
+plot( thkmask, cbfR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(cbfR2img)) )
+```
+
+## Merge this images to establish a single mask
+
+```{r maskmerge}
+mrvR2=cbfR2img+faR2img+thkR2img
+thr2=2
+mrvmask=thresholdImage( mrvR2, thr2, Inf )
 ```
 
 ## MRVNRF Mask
 
 ```{r mrviz3,echo=FALSE}
-plot( thkmask, corimg, axis=3, nslices=16, window.overlay=c(0.2,0.66) )
+plot( thkmask, mrvR2, axis=3, nslices=16,
+   window.overlay=c(thr2, max(mrvR2) ) )
 ```
 
 
@@ -124,7 +160,7 @@ for ( x in which(wp) )
     i1=makeImage(thkmask, thkmat[x,])
     i2=makeImage(famask, famat[x,])
     i3=makeImage(thkmask, cbfmat[x,] )
-    feati=list( i1 )
+    feati=list( i1 , i2 , i3 )
     slist[[ct]]=feati
     agelist[[ct]]=mydf$VIQ[x]
     ct=ct+1
@@ -147,7 +183,7 @@ mr=c(4,2)
 if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
   mrvmask, rad=rep(1,3),
-  nsamples=200, ntrees=2000,
+  nsamples=200, ntrees=1000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -182,3 +218,28 @@ corimg<-makeImage( mrvmask, corrmat )
 plot( thkmask, corimg, axis=3, nslices=16,
    window.overlay=c( 0.1 , max(corimg) ) )
 ```
+
+## Investigate the final model (single regression)
+
+```{r mrvmdl}
+mrvdf=data.frame( mydf, mrvpred=rfpred )
+mrvmdl=lm( VIQ ~ . , data=mrvdf )
+knitr::kable( coefficients( mrvmdl ) )
+```
+
+## Discussion
+
+* MRV-NRF:  Multiple resolution
+
+* MRV-NRF:  voxel-wise
+
+* MRV-NRF:  neighborhood
+
+* MRV-NRF:  random forest ...
+
+* High-dimensional, non-local predictions from multiple modalities
+
+* Powerful, yet remains interpretable in terms of
+traditional statistical studies.
+
+* .... but how did we get the final "single" prediction?

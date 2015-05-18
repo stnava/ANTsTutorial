@@ -18,7 +18,7 @@ output:
 # set this for your own compilation
 bd="/Users/stnava/data/ANTsTutorial/"
 options(width=50)
-opts_chunk$set(fig.path='figure/antsr-',fig.align='center',fig.show='hold',size='footnotesize')
+knitr::opts_chunk$set(fig.path='figure/antsr-',fig.align='center',fig.show='hold',size='footnotesize')
 ```
 
 
@@ -43,6 +43,22 @@ sccansig=0
 
 
 # Intro
+
+## Motivation
+
+\Large
+
+* Medical image analysis (MIA) is applied statistics
+
+* MIA is becoming a subfield of machine learning (ML)
+
+* Physicians are beginning to accept/want ML
+
+* NIH conducting large prospective studies (ABCD)
+
+* *R* is the leading statistical software
+
+* *ANTsR* addresses the need for cutting-edge statistics/ML in MIA
 
 ## ANTsR
 

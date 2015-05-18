@@ -603,7 +603,9 @@ knitr::kable( sccan$eig2 )
 
 ## Quick CCA-based prediction
 
-```{r thkcca3,eval=TRUE}
+PIQ prediction ...
+
+```{r thkcca3,eval=TRUE,echo=FALSE}
 sccanmat=imageListToMatrix( sccan$eig1, thkmask)
 sccanmat=sccanmat/rowSums(sccanmat)
 sccanproj = thkmat[haveAllMerge,] %*% t( sccanmat )
@@ -660,7 +662,7 @@ plot( thkmask, ccaeseg, axis=3, nslices=16 )
 
 ```{r facca3cbf,eval=TRUE,echo=FALSE}
 fcsccanmat=imageListToMatrix( fcsccan$eig1, famask)
-fcsccanmat=fsccanmat/rowSums(fcsccanmat)
+fcsccanmat=fcsccanmat/rowSums(fcsccanmat)
 fcsccanproj = famat[haveAllMerge,] %*% t( fcsccanmat )
 fcsccanmat2=imageListToMatrix( fcsccan$eig2, thkmask)
 fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)

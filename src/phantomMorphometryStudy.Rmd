@@ -19,6 +19,7 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
+library(ANTsR)
 bd="/Users/stnava/data/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
@@ -26,6 +27,7 @@ if ( ! file.exists(templatefn) )
 allfns=Sys.glob( paste(bd,"phantomData/ph*wmgm.jpg",sep='')  )
 demog=read.csv(paste(bd,'phantomData/phantpredictors.csv',sep=''))
 ilist=imageFileNames2ImageList( allfns )
+sccansig=0
 ```
 
 ## Phantom Morphometry Study
@@ -106,7 +108,7 @@ for ( x in 1:length(ilist) )
   gmw=antsApplyTransforms( template, gm, tx$fwdtransforms)
   plist[[x]]=gmw
   jlist[[x]]=createJacobianDeterminantImage( template,
-    tx$fwdtransforms[1], 1) %>% smoothImage(3)
+    tx$fwdtransforms[1], 1) %>% smoothImage(1.5)
   }
 ```
 
@@ -146,11 +148,14 @@ plot( jlist[[5]])
 
 Look at the demographics file ...
 
-```{r demog}
+```{r demog,echo=FALSE}
 knitr::kable(demog)
 ```
 
 ## Let's do a quick test on the jacobian
+
+`bigLMStats` is a great little function for
+large (on the left) statistical studies ...
 
 ```{r jaclm}
 templatemask=getMask( template )
@@ -161,6 +166,9 @@ volstats=mdl$beta.pval[ "vol", ]
 qv=p.adjust(volstats,'BH')
 qvimg=makeImage( templatemask, 1-qv )
 ```
+
+for large on the right studies, use a quick
+implementation in `RcppEigen` or `RcppArmadillo`
 
 ## Look at results
 
@@ -185,3 +193,31 @@ gqvimg=makeImage( templatemask, 1-gqv )
 ## Exercise ... use a global covariate ...
 
 ... this is always important to think about ...
+
+## Try a multivariate version of the same study
+
+
+##  .... multivariate statistics in *R*
+\transdissolve
+```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
+mypreds<-as.matrix( cbind( demog$vol*(-1), demog$vol*(-1) ) )
+sccan<-sparseDecom2(
+  inmatrix  = list( jmat, mypreds ),
+  inmask    = c( templatemask , NA ) ,
+  mycoption = 1,
+  sparseness=c( 0.2, -1 ),
+  nvecs=1, its=10,
+  cthresh=c(10,0),
+  smooth=0.0, perms=200 )
+knitr::kable(sccan$ccasummary)
+sccansol <- sccan$eig1[[1]] %>% iMath("Normalize")
+```
+Exercise: What happens to the permutation based significance
+when you vary parameters?
+
+##  Visualizing multivariate statistics in *R*
+\transdissolve
+
+```{r sccanviz,echo=FALSE,out.width='.6\\linewidth',message=FALSE,warning=FALSE,eval=TRUE}
+plot( template, sccansol, window.overlay=c(0.1,1.01) )
+```
