@@ -21,7 +21,147 @@ output:
 # set this for your own compilation
 bd="/Users/stnava/data/ANTsTutorial/"
 set.seed(11)
+library( candisc )
+library(ggplot2)
 ```
+
+# Classical multivariate methods updated for neuroimaging
+
+
+## What is multiple regression?
+The solution to a quadratic minimization problem:
+
+**Multiple Regression**
+$$
+\|  y - X \beta \|^2  +  \textcolor{blue}{\lambda \| \beta \| ^2}
+$$
+Solved by ordinary least squares methods:
+$$
+\hat{\beta}=( X^T X)^{-1} X^T y
+$$
+with theory for turning $\beta$ entries into "significance" measurements.
+
+The "ridge" penalty is useful if $p >> n$.
+
+
+
+## Principal Component Analysis
+Also the solution to a quadratic minimization problem:
+
+**PCA**: $U$, $V$ minimize reconstruction error:
+$$
+\|  X  - U V^T \|^2   +  \textcolor{blue}{\sum_k \lambda_k \| V_k
+\|_1}
+$$
+Each of the columns of $X$ is a linear combination of the
+columns of $U$.
+
+## Principal Component Analysis
+
+Easy solution in *R*
+(w/o penalties):
+```bash
+mysolution=svd(X)
+# or prcomp(X) if X not centered
+```
+
+The $\ell_1$ penalty is useful if $p >> n$.
+
+
+
+## Principal Component Analysis Example
+```{r,out.width='.8\\linewidth',eval=TRUE,show='hide',echo=FALSE}
+PCbiplot <- function(PC, x="PC1", y="PC2") {
+    # PC being a prcomp object
+    data <- data.frame(obsnames=row.names(PC$x), PC$x)
+    plot <- ggplot(data, aes_string(x=x, y=y)) + geom_text(alpha=.4, size=3, aes(label=obsnames))
+    plot <- plot + geom_hline(aes(0), size=.2) + geom_vline(aes(0), size=.2)
+    datapc <- data.frame(varnames=rownames(PC$rotation), PC$rotation)
+    mult <- min(
+        (max(data[,y]) - min(data[,y])/(max(datapc[,y])-min(datapc[,y]))),
+        (max(data[,x]) - min(data[,x])/(max(datapc[,x])-min(datapc[,x])))
+        )
+    datapc <- transform(datapc,
+            v1 = .7 * mult * (get(x)),
+            v2 = .7 * mult * (get(y))
+            )
+    plot <- plot + coord_equal() + geom_text(data=datapc, aes(x=v1, y=v2, label=varnames), size = 5, vjust=1, color="red")
+    plot <- plot + geom_segment(data=datapc, aes(x=0, y=0, xend=v1, yend=v2), alpha=0.75, color="red")
+    plot
+}
+fit <- prcomp(USArrests, scale=T)
+```
+
+```{r,out.width='.85\\linewidth',dev='pdf',echo=FALSE,eval=TRUE}
+PCbiplot(fit)
+```
+
+
+
+
+## Canonical Correlation Analysis
+
+**CCA** Generalizes Multiple Regression
+
+$$  
+Y V + \textcolor{blue}{\sum_k \lambda_k \| V_k \|_1} \propto X W  + \textcolor{blue}{\sum_k \gamma_k \| W_k \|_1}
+$$
+where $Y, V, X, W$ are matrices and $V, W$ are canonical variates (the
+CCA solutions).
+
+
+## Canonical Correlation Analysis
+Also easy in *R*
+(SVD used internally):
+```{r,out.width='.4\\linewidth',echo=TRUE,eval=TRUE,results='hide'}
+ enginedata<-mtcars[,c(2,3,4,11)]
+ outputdata<-mtcars[,c(1,7)]
+ mycca<-cancor( enginedata, outputdata )
+```
+
+CCA is "symmetric" in that the sets X and Y have equivalent
+status.  A truly multivariate multiple regression.
+
+
+
+## Canonical Correlation Analysis Visualization 1
+```{r,out.width='.7\\linewidth',dev='pdf',echo=TRUE,eval=TRUE,warning=FALSE,results='show'}
+print( mycca )
+```
+
+
+
+
+## Canonical Correlation Analysis Visualization 2
+```{r,out.width='.65\\linewidth',dev='pdf',echo=TRUE,eval=TRUE,warning=FALSE,results='hide'}
+heplot(mycca, xpd=TRUE, scale=0.3)
+```
+
+
+## Sparse multiple regression/PCA/CCA
+Any of the methods can be made sparse by enforcing the penalties
+previously highlighted in \textcolor{blue}{blue}.
+
+**Sparse Optimization**
+
+* Formulate the problem as a constrained optimization.
+* Identify the gradient descent solution---*without sparseness*.
+* Use projected gradient descent to solve the optimization---*with sparseness*.
+* In imaging, other constraints are valuable too.
+
+
+
+## *R* Multivariate Study with `SCCAN`
+
+* Sparse canonical correlation analysis for neuroimaging
+
+* Compare training/testing reliability wrt e.g. voxel-wise univariate feature selection
+
+* Problem: find  voxels in training that predict X in testing
+
+* A separate tutorial is here [sccan tutorial](http://stnava.github.io/sccanTutorial/) that uses the same data.
+
+
 
 # Eigenanatomy with ANTsR
 
@@ -43,11 +183,11 @@ the impact of parameter choice ...
 ```{r dataio}
 library(ANTsR)
 library(visreg)
-neanatvecs=20
+neanatvecs=2
 thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 mth='BH'
-demog=read.csv("/Users/stnava/data/ANTsTutorial/data/ptbp_summary_demographics.csv")
+demog=read.csv(paste(bd,"data/ptbp_summary_demographics.csv",sep='') )
 demog=demog[ , 1:19 ]
 ```
 
@@ -147,14 +287,14 @@ if ( ! exists("ethk") )
 ethk=voxandeanatstudy( demog, thkmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.5, baddata=baddata,
-       outprefix='/tmp/ASS_THK', nv=neanatvecs )
+       outprefix='/tmp/Eanat_THK', nv=neanatvecs )
 qv=p.adjust( ethk$eanatlm$beta.pval[ voi, ], method='BH' )
 print( min(qv) )
 ```
 
 ## Thickness Eanat: Anova
 ```{r thkfunanv}
-print( ethk$anv )
+knitr::kable( ethk$anv )
 ```
 
 ## FA Eanat
@@ -168,14 +308,14 @@ if ( ! exists("efa") )
 efa=voxandeanatstudy( demog, famat, famask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 0.2, baddata=baddata,
-       outprefix='/tmp/ASS_FA', nv=neanatvecs )
+       outprefix='/tmp/Eanat_FA', nv=neanatvecs )
 qv=p.adjust( efa$eanatlm$beta.pval[ voi, ], method='BH' )
 print( min(qv) )
 ```
 
 ## FA Eanat: Anova
 ```{r fafunanv}
-print( efa$anv )
+knitr::kable( efa$anv )
 ```
 
 ## CBF Eanat
@@ -188,33 +328,33 @@ if ( ! exists("ecbf") )
 ecbf=voxandeanatstudy( demog, cbfmat, thkmask,
        formulathkbase, formulathktest, voi=voi,
        exclusionThresh = 45, baddata=baddata,
-       outprefix='/tmp/ASS_CBF', nv=neanatvecs )
+       outprefix='/tmp/Eanat_CBF', nv=neanatvecs )
 qv=p.adjust( ecbf$eanatlm$beta.pval[ voi,], method='BH' )
 print( min(qv) )
 ```
 
 ## CBF Eanat: Anova
 ```{r cbffunanv}
-print( ecbf$anv )
+knitr::kable( ecbf$anv )
 ```
 
-# Visualize quickly
+# Visualize eigenanatomy segmentations
 
 ## Thickness Viz
 ```{r thkv}
-plot( thkmask, ethk$eseg , dorot=1 )
+plot( thkmask, ethk$eseg , axis=3 )
 ```
 
 
 ## CBF Viz
 ```{r cbfv}
-plot( thkmask, ecbf$eseg , dorot=1 )
+plot( thkmask, ecbf$eseg , axis=3 )
 ```
 
 
 ## FA Viz
 ```{r fav}
-plot( famask, efa$eseg , dorot=1 )
+plot( famask, efa$eseg , axis=3 )
 ```
 
 
@@ -251,17 +391,17 @@ eanatproj <- function( demog, imgmat,
   mdl1=lm( formbase, data=mydf )
   mdl2=lm( formtest, data=mydf )
   eanatlm=bigLMStats( mdl2 , 1.e-6 )
-  print( anova( mdl1, mdl2) )
+  knitr::kable( anova( mdl1, mdl2) )
   return( mydf )
   }
 ```
 
 
-## Combined: Option 1 $=$ Merge
+## Modalities Combined: Option 1 $=$ Merge
 
 Here, we have to identify which subjects have all modalities.
 
-```{r modmerge}
+```{r modmerge1}
 wth=ethk$whichSubjects
 wfa=efa$whichSubjects
 wcb=ecbf$whichSubjects
@@ -299,15 +439,12 @@ alldf=cbind( thproj, FA=faprojsub, CBF=cbprojsub)
 
 ## Joint stats: Thickness, FA $+$ CBF
 
-```{r jointstats}
+```{r jointstats,echo=FALSE}
 mdl1=lm( AgeAtScan ~ . ,
   data=alldf[,c(1:2,3,5,8)])
 mdl2=lm( AgeAtScan ~ . ,
   data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
-anova(mdl1,mdl2)
-mdl2=lm( AgeAtScan ~ . ,
-  data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
-anova(mdl1,mdl2)
+knitr::kable(anova(mdl1,mdl2))
 ```
 
 
@@ -323,7 +460,6 @@ modality is to reproducible predictions of age.
 First get the data organized.
 ```{r orgpred}
 library(randomForest)
-library( caret )
 ```
 
 
@@ -332,14 +468,14 @@ library( caret )
 
 
 ```{r rfpred,echo=FALSE}
-groups <- caret::createFolds( alldf$AgeAtScan, k = 2, list = FALSE)
+groups <- rep( c(1,2), 1000 )[1:nrow(alldf)]
 traing=groups==1
 testg=groups==2
 mdl=randomForest(  AgeAtScan ~ . , data=alldf[traing,], ntrees=2000 )
 predage = predict( mdl, newdata=alldf[ testg, ] )
 print( mean( abs(predage - alldf[testg,]$AgeAtScan ) ) )
 temp=data.frame(predage=predage,realage=alldf[testg,]$AgeAtScan )
-vmdl=lm( predage~0+realage,data=temp)
+vmdl=lm( predage~realage,data=temp)
 visreg::visreg(vmdl)
 ```
 
@@ -361,23 +497,23 @@ mdl=randomForest(  AgeAtScan ~ . , data=thproj[traing,] )
 predage = predict( mdl, newdata=thproj[ testg, ] )
 print( mean( abs(predage - thproj[testg,]$AgeAtScan ) ) )
 temp=data.frame(predage=predage,realage=thproj[testg,]$AgeAtScan )
-vmdl=lm( predage~0+realage,data=temp)
+vmdl=lm( predage~realage,data=temp)
 visreg::visreg(vmdl)
 ```
 
-## Combined: Option 2 $=$ Impute
 
-Did not implement this well.... but relatively easy to improve ...
+## Modalities Combined: Option 2 $=$ Impute
 
-```{r modimpute}
+Here, we have to identify which subjects have all modalities.
+
+```{r modmerge}
 wth=ethk$whichSubjects
 wfa=efa$whichSubjects
 wcb=ecbf$whichSubjects
 haveAll=( wth | wfa | wcb )
 ```
 
-
-## Combined: Option 2 $=$ Impute
+## Do the imputation
 
 Did not implement this well.... but relatively easy to improve ...
 
@@ -389,7 +525,6 @@ famati[ haveAll, ]=antsrimpute( famat[ haveAll, ] )
 cbfmati=cbfmat
 cbfmati[ haveAll, ]=antsrimpute( cbfmat[ haveAll, ] )
 ```
-
 
 
 ## Call the new function ... imputation
@@ -427,28 +562,132 @@ mdl1=lm( AgeAtScan ~ . ,
   data=alldf[,c(1:2,3,5,8)])
 mdl2=lm( AgeAtScan ~ . ,
   data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
-anova(mdl1,mdl2)
-mdl2=lm( AgeAtScan ~ . ,
-  data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
-anova(mdl1,mdl2)
+knitr::kable( anova(mdl1,mdl2) )
 ```
 
-## PIQ stats?
 
-```{r piq,eval=FALSE,echo=FALSE}
-mdl1=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8)])
-mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:ncol(alldf))])
-anova(mdl1,mdl2)
-mdl2=lm( PIQ ~ . , data=alldf[,c(1:2,3,5,8,10:(10+neanatvecs-1))])
-anova(mdl1,mdl2)
+# SCCAN with ANTsR
+
+## A little bit of CCA ...
+
+First, thickness ...
+
+```{r thkcca,eval=TRUE}
+sdemog=antsrimpute( demog[haveAllMerge,c(7,8)] )
+# above is a bug sparseDecom/2 does not handle NAs well
+temp=thkmat[haveAllMerge,][traing,]
+inmatrix=list( temp ,
+  data.matrix(sdemog[traing,])  )
+if ( ! exists("sccan") )
+  sccan=sparseDecom2(inmatrix, c(thkmask, NA),
+     sparseness = c( 0.005, 0.3 ),
+     nvecs = 2, its = 15, cthresh = c(5000, 0),
+     perms = 0, smooth = 0.5, mycoption = 1 )
 ```
+
+## Check the CCA regions
+
+```{r thkcca4,eval=TRUE,echo=FALSE}
+ccaeseg=eigSeg( thkmask, sccan$eig1, FALSE  )
+plot( thkmask, ccaeseg, axis=3, nslices=16 )
+```
+
+## Look over cca results
+
+Which demographic variables match which imaging variables?
+
+```{r thkcca2,eval=TRUE}
+rownames( sccan$eig2 )=colnames( sdemog )
+knitr::kable( sccan$eig2 )
+```
+
+## Quick CCA-based prediction
+
+PIQ prediction ...
+
+```{r thkcca3,eval=TRUE,echo=FALSE}
+sccanmat=imageListToMatrix( sccan$eig1, thkmask)
+sccanmat=sccanmat/rowSums(sccanmat)
+sccanproj = thkmat[haveAllMerge,] %*% t( sccanmat )
+ccadf=data.frame( sdemog, sccanproj,
+  gender=demog$Sex[haveAllMerge],
+  age=demog$AgeAtScan[haveAllMerge])
+mdl=randomForest( Performance.IQ ~ . ,
+  data=ccadf[traing,c(2,3:6)] )
+pviq = predict( mdl,
+  newdata=ccadf[ testg,c(2,3:6)] )
+print( mean( abs( pviq - ccadf[testg,]$Performance.IQ) ) )
+cor.test( pviq, ccadf[testg,]$Performance.IQ )
+```
+
+
+## More cca ...
+
+Second, FA and CBF ...
+
+These modalities relate strongly to age ... how do they covary?
+
+```{r faccacbf,eval=TRUE}
+sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8)] )
+temp=famat[haveAllMerge,][traing,]
+for ( i in 1:nrow(temp) )
+  temp[i,]=temp[i,]-mean(temp[i,])
+temp2=cbfmat[haveAllMerge,][traing,]
+for ( i in 1:nrow(temp2) )
+    temp2[i,]=temp2[i,]-mean(temp2[i,])
+inmatrix=list( temp , temp2 )
+if ( ! exists("fcsccan") )
+  fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
+     sparseness = c( 0.05, -0.05 ),
+     nvecs = 3, its = 2, cthresh = c(5000, 5000),
+     perms = 0, smooth = 0.5, mycoption = 1 )
+```
+
+
+## Check the CCA regions:FA
+
+```{r faccavfa,eval=TRUE,echo=FALSE}
+ccaeseg=eigSeg( famask, fcsccan$eig1, FALSE  )
+plot( famask, ccaeseg, axis=3, nslices=16 )
+```
+
+## Check the CCA regions:CBF
+
+```{r faccavcbf,eval=TRUE,echo=FALSE}
+ccaeseg=eigSeg( thkmask, fcsccan$eig2, FALSE  )
+plot( thkmask, ccaeseg, axis=3, nslices=16 )
+```
+
+## Quick CCA-based prediction: FA and CBF
+
+```{r facca3cbf,eval=TRUE,echo=FALSE}
+fcsccanmat=imageListToMatrix( fcsccan$eig1, famask)
+fcsccanmat=fcsccanmat/rowSums(fcsccanmat)
+fcsccanproj = famat[haveAllMerge,] %*% t( fcsccanmat )
+fcsccanmat2=imageListToMatrix( fcsccan$eig2, thkmask)
+fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)
+fcsccanproj2 = cbfmat[haveAllMerge,] %*% t( fcsccanmat2 )
+ccadf=data.frame( sdemog, fcsccanproj,fcsccanproj2,
+  gender=demog$Sex[haveAllMerge] )
+lmdl=lm( AgeAtScan ~ ., data=ccadf[traing,] )
+mdl=randomForest( AgeAtScan ~., data=ccadf[traing,] )
+pviq = predict( mdl, newdata=ccadf[ testg, ] )
+print( mean( abs( pviq - ccadf[testg,]$AgeAtScan) ) )
+cor.test( pviq, ccadf[testg,]$AgeAtScan )
+```
+
+
+
+
 
 # Review
 
 ## Discussion
 
-* ...
+* Reviewed sparse dimensionality reduction
 
-* ...
+* These methods update traditional dimensionality reduction tools for neuroimaging
 
-* ...
+* We showed strategies for using these modalities together to find meaningful predictors.
+
+* Performed some visualization and interpretation.

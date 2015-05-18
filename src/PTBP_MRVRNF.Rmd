@@ -61,20 +61,30 @@ famat=as.matrix( famat )
 
 ## Get common images and make a dataframe
 
-```{r mdf}
+```{r subsel,echo=FALSE}
 wp=( !is.na(rowMeans(thkmat)) & rowMeans(thkmat) > 0.5  &
      !is.na(rowMeans(famat)) & rowMeans(famat) > 0.2  &
      !is.na(rowMeans(cbfmat)) & rowMeans(cbfmat) > 40 )
+for ( x in unique( demog$SubID ) )
+  {
+  kk=which( demog$SubID == x )
+  if ( length(kk) > 1 ) wp[ kk[2:length(kk)] ] = FALSE
+  }
+```
+
+```{r mdf}
 mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
-                 PIQ=demog[wp,]$Performance.IQ,
+   #             PIQ=demog[wp,]$Performance.IQ,
                  VIQ=demog[wp,]$Verbal.IQ,
                  BV=demog[wp,]$BV,
                  Cortex=demog[wp,]$Cortex,
-                 LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
-                 LadderSES=demog[wp,]$Teen.Ladder.SES.score,
+    #           LadderCom=demog[wp,]$Teen.Ladder.Community.Score,
+    #            LadderSES=demog[wp,]$Teen.Ladder.SES.score,
                  Income=demog[wp,]$Income )
 for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
 ```  
+
+# Cross-validation and Feature Selection
 
 
 ## Train/Test
@@ -82,11 +92,71 @@ for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
 First get the data organized.
 ```{r orgpred}
 library(randomForest)
-library( caret )
-groups <- caret::createFolds( mydf$AgeAtScan, k = 2, list = FALSE)
+groups <- rep( c(1,2), 1000 )[1:nrow(mydf)]
 traing=groups==1
 testg=groups==2
 ```
+
+## Select thickness zones related to VIQ ( our outcome )
+
+
+```{r fselth,echo=FALSE}
+y=mydf$VIQ[traing]
+temp=thkmat[wp,][traing,]
+thkR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+thkR2[ abs(thkR2) > 1.e9 ]=0
+thkR2[ thkR2 < 0 ]=0
+thkR2img=makeImage( thkmask, thkR2 ) %>%
+  smoothImage(1)
+plot( thkmask, thkR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(thkR2img)) )
+```
+
+## Select FA zones related to VIQ ( our outcome )
+
+```{r fselfa,echo=FALSE}
+temp=famat[wp,][traing,]
+faR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+faR2[ abs(faR2) > 1.e9 ]=0
+faR2[ faR2 < 0 ]=0
+faR2img=makeImage( famask, faR2 ) %>%
+  smoothImage(1)
+plot( famask, faR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(faR2img)) )
+```
+
+## Select CBF zones related to VIQ ( our outcome )
+
+```{r fselcbf,echo=FALSE}
+temp=cbfmat[wp,][traing,]
+cbfR2=colMeans(
+  crossvalidatedR2( temp, y, ngroups=4 ) )
+cbfR2[ abs(cbfR2) > 1.e9 ]=0
+cbfR2[ cbfR2 < 0 ]=0
+cbfR2img=makeImage( thkmask, cbfR2 ) %>%
+  smoothImage(1)
+plot( thkmask, cbfR2img, axis=3, nslices=16,
+  window.overlay=c(1,max(cbfR2img)) )
+```
+
+## Merge the images to establish a single mask
+
+```{r maskmerge}
+mrvR2=cbfR2img+faR2img+thkR2img
+thr2=2
+mrvmask=thresholdImage( mrvR2, thr2, Inf )
+```
+
+## MRVNRF Mask
+
+```{r mrviz3,echo=FALSE}
+plot( thkmask, mrvR2, axis=3, nslices=16,
+   window.overlay=c(thr2, max(mrvR2) ) )
+```
+
+# MRVNRF Setup and Algorithm
 
 ## Set up mrvnrfs
 
@@ -101,15 +171,15 @@ for ( x in which(wp) )
     i1=makeImage(thkmask, thkmat[x,])
     i2=makeImage(famask, famat[x,])
     i3=makeImage(thkmask, cbfmat[x,] )
-    feati=list( i1, i2, i3 )
+    feati=list( i1 , i2 ) #  , i3 )
     slist[[ct]]=feati
-    agelist[[ct]]=mydf$AgeAtScan[x]
+    agelist[[ct]]=mydf$VIQ[x]
     ct=ct+1
     }
   }
-# rm( thkmat )
-# rm( famat )
-# rm( cbfmat )
+rm( thkmat )
+rm( famat )
+rm( cbfmat )
 gc()
 ```
 
@@ -118,17 +188,13 @@ gc()
 We train from the CBF, FA and cortical thickness images.
 
 ```{r mrvtrain}
-mask=( famask+thkmask ) %>%
-  iMath("MD",2) %>%
-  iMath("FillHoles") %>%
-  iMath("ME",2)
-inds=1:40
-y=mydf$AgeAtScan[traing][inds]
-x=slist[traing][inds]
-mr=c(8,4)
+y=mydf$VIQ[traing]
+x=slist[traing]
+mr=c(4,2)
+if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
-  mask, rad=rep(1,3),
-  nsamples=25, ntrees=2000,
+  mrvmask, rad=rep(1,3),
+  nsamples=200, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -137,10 +203,61 @@ rfm<-mrvnrfs( y, x,
 ## MRVNRF Test
 
 ```{r mrvtest}
+if ( ! exists("rfm2") )
 rfm2<-mrvnrfs.predict( rfm$rflist,
-  slist[testg][inds], mask, rad=rep(1,3),
+  slist[testg], mrvmask, rad=rep(1,3),
   multiResSchedule=mr,
   asFactors = FALSE )
-cor( mydf$AgeAtScan[testg][inds] , rfm2$seg )
-print(  mean( abs( mydf$AgeAtScan[testg][1:20] - rfm2$seg) ) )
+cor( mydf$VIQ[testg] , rfm2$seg )
+print(  mean( abs( mydf$VIQ[testg] - rfm2$seg) ) )
 ```
+
+# MRVNRF Results
+
+## MRVNRF Viz
+
+```{r mrviz}
+predmat<-imageListToMatrix( unlist(rfm2$probs) , mrvmask )
+rfpred <- apply( predmat,  FUN = median, MARGIN = 1)
+print(  cor.test( mydf$VIQ[testg] , rfpred ) )
+print(  mean( abs( mydf$VIQ[testg] - rfpred) ) )
+corrmat<-antsrimpute( cor( predmat , mydf$VIQ[testg] ) )
+corimg<-makeImage( mrvmask, corrmat )
+```
+
+## MRVNRF Viz
+
+```{r mrviz2,echo=FALSE}
+plot( thkmask, corimg, axis=3, nslices=16,
+   window.overlay=c( 0.1 , max(corimg) ) )
+```
+
+## Investigate the final model (single regression predicting VIQ)
+
+```{r mrvmdl,echo=FALSE}
+temp=mydf[testg,]
+mrvdf=data.frame( temp , mrvpred=rfpred )
+mrvmdl=lm( VIQ ~ . , data=mrvdf )
+m_table <- broom::tidy(mrvmdl)
+knitr::kable(m_table, digits = 3, align = "r",
+      col.names = c("Param", "B", "SE", "t", "p"))
+```
+
+# Done!
+
+## Discussion
+
+* MRV-NRF:  Multiple resolution
+
+* MRV-NRF:  voxel-wise
+
+* MRV-NRF:  neighborhood
+
+* MRV-NRF:  random forest ...
+
+* High-dimensional, non-local predictions from multiple modalities
+
+* Powerful, yet remains interpretable in terms of
+traditional statistical studies.
+
+* .... but how did we get the final "single" prediction?

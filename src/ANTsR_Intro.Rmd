@@ -1,0 +1,508 @@
+---
+title: 'Introduction to *ANTsR*'
+author: "Brian B. Avants et al."
+date: "`r Sys.Date()`"
+output:
+  beamer_presentation:
+    colortheme: dolphin
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+---
+
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+# set this for your own compilation
+bd="/Users/stnava/data/ANTsTutorial/"
+options(width=50)
+knitr::opts_chunk$set(fig.path='figure/antsr-',fig.align='center',fig.show='hold',size='footnotesize')
+```
+
+
+```{r setup0,results='hide',warning=FALSE,echo=FALSE,message=FALSE}
+booleval<-FALSE
+library(knitr)
+library(rmarkdown)
+options(width=50)
+library( ANTsR )
+library( oro.nifti )
+library( visreg )
+library( ggplot2 )
+library( boot )
+library( candisc )
+library( pheatmap )
+library( MASS )
+ageregions<-"Not calculated"
+myregion<-"CentralSulcus"
+sccansig=0
+```
+
+
+
+# Intro
+
+## Motivation
+
+\Large
+
+* Medical image analysis (MIA) is applied statistics
+
+* MIA is becoming a subfield of machine learning (ML)
+
+* Physicians are beginning to accept/want ML
+
+* NIH conducting large prospective studies (ABCD)
+
+* *R* is the leading statistical software
+
+* *ANTsR* addresses the need for cutting-edge statistics/ML in MIA
+
+## ANTsR
+
+* This slide or two briefly summarizes the [vignette](http://htmlpreview.github.io/?https://github.com/stnava/ANTsDoc/blob/master/html/ANTsR.html) for [*ANTsR*](http://stnava.github.io/ANTsR/)
+
+* Interfaces state of the art image processing with R statistical methods.
+
+* Wraps ANTs and ITK C++ core via Rcpp (Eddelbuettel 2013).
+
+*  ITK is a templated C++ framework with I/O and support for arbitrary image types (usually 2, 3 or 4 dimensions) as well as surface representations.
+
+* ITK/ANTs allow powerful image manipulations but lack a true statistical back-end.
+
+
+
+## ANTsR Algorithms
+
+In combination, these tools enable one to go from near-raw medical imaging data to a fully reproducible scientific publication (Avants 2015).
+
+* core image processing and I/O: ITK (B. B. Avants, Tustison, et al. 2014);
+
+* registration and utilities for image processing: ANTs mappings (Tustison, Cook, et al. 2014) and feature extraction (Tustison, Shrinidhi, et al. 2014);
+
+*  dimensionality reduction: Eigenanatomy (Dhillon et al. 2014) and SCCAN (B. B. Avants, Libon, et al. 2014);
+
+* methods for ASL-based cerebral blood flow quantification (Kandel et al. 2015);
+
+* neighborhood representations of images that enable rich statistical models (Kandel et al. 2015)
+
+* core statistics and temporal filtering via R packages that is amenable to BOLD image processing
+
+
+## Setup
+
+* Assume latest 3.x R-version from [CRAN](http://cran.r-project.org).
+
+* Assume you have [*ANTsR*](https://github.com/stnava/ANTsR)
+
+* `git clone http://github.com/stnava/RMI.git`
+
+* `cd RMI/stnava`
+
+* `git clone http://github.com/stnava/RMI_Data.git`
+
+* in *R*, `install.packages("rmarkdown")`
+
+* in *R*, `rmarkdown::render("rmi.Rmd")`
+
+## Tutorial Goals
+* Learn about *R*
+in general (operations, dataframes, models) and *ANTsR*
+* Understand basics of *R*
+image-based statistics (I/O, accessing
+values, structure, function)
+* Practice some example reproducible studies ...
+* Identify opportunities for innovation/future work
+* A good source on data analysis with *R*
+examples: [Advanced
+Data Analysis from an Elementary Point of View](http://www.stat.cmu.edu/~cshalizi/uADA/12/lectures/ADAfaEPoV.pdf)
+
+
+
+## The first 3 rules of statistics:
+
+> Draw a picture, Draw a picture, Draw a picture.
+> --Michael Starbird
+
+
+
+## *R* in medical imaging?
+
+Search "r-project.org $+$ medical $+$ imaging"
+
+```{r rinmi}
+dd<-read.csv( paste(bd,'data/RMI.csv',sep='') )
+mdl<-lm( NPublications ~ Year +I(Year^2), data = dd)
+```
+
+
+## *R* in medical imaging?
+
+*R* contains virtually all popular statistical and machine learning algorithms, including Boosting, the LASSO, and random
+forests, often contributed by the inventors.
+```{r vr,echo=FALSE,out.width='.75\\linewidth'}
+visreg(mdl,main='Total Publications In Year X')
+```
+
+
+
+## Why use *R* in medical imaging?
+
+* It's free --- not "free" like Matlab/SPM but really free
+
+* It is the *de facto* standard for statistical computing
+
+* a New York Times article from 2009 estimated
+that there are at least 250,000 active R users
+
+* Why not use Python?
+
+* IMHO, *R* is easier to compile/maintain/install
+
+* Visualization in *R* is as good or better than Python
+
+* Most importantly---*statisticians contribute directly to R*
+
+* Because of this, many Python users rely on *R*
+
+* *R* facilitates reproducible research:
+
+* [CRAN Task View](http://cran.r-project.org/web/views/ReproducibleResearch.html)
+
+* [Biostatistics](http://biostatistics.oxfordjournals.org/content/10/3/405.long)
+
+* [jstatsoft](http://www.jstatsoft.org/)
+
+* *R* assists reproducible medical image analysis but it's still
+effortful to do it correctly.  See
+[comments on reproducibility in Frontiers](http://www.frontiersin.org/Journal/10.3389/fnins.2013.00162/full)
+
+
+
+# Set up for Medical Image Analysis
+
+
+##  We now open *R*
+
+Install MIA-relevant packages.
+
+```{r,echo=FALSE,results='hide'}
+# some setup
+options(width=60)  # make the printing fit on the page
+set.seed(1121)   # make the results repeatable
+library( ANTsR )
+library( oro.nifti )
+```
+
+
+## Packages
+```{r pkg}
+pkgnames <- c( "visreg" , "boot" , "rgl",
+ "knitr" , "ggplot2","oro.nifti" ,
+ "candisc" , "pheatmap" )
+# might try these too
+pkgnames2=c( "abind", "BGLR", "caret", "cluster,
+    d3Network", "DMwR", "e1071", "extremevalues", "fastICA",
+    "fpc", "glasso", "glmnet", "grid", "igraph", "knitr",
+    "magic", "MASS", "mFilter", "misc3d", "moments",
+    "pixmap", "png", "psych", "randomForest", "rgl",
+    "robust", "robustbase", "signal", "sna", "testthat",
+    "visreg", "wmtsa")
+k<-length( pkgnames )
+```
+
+## Next actually install the packages.
+
+```bash
+install.packages( pkgnames )
+```
+
+
+##
+
+We installed `r k[1]` packages.
+
+
+## What is `knitr` or `rmarkdown`?
+* Yihui Xie's system
+[http://yihui.name/knitr/](http://yihui.name/knitr/) for making
+**documents that compute**
+
+* `knitr` lets you write a document that employs *R*
+directly
+
+* *R*
+evaluates code when the document is compiled
+
+* The user controls when this does / does not happen ...
+
+* Creates, figures, statistics etc that are embedded in rst, html,
+latex, pretty much any common document format is doable.
+
+## Simple `knitr` Example
+
+Use `knitr` to make a couple of plots in our code "chunk":
+
+```{r,boring-plots,fig.width=4,fig.height=4,out.width='.35\\linewidth',dev='pdf'}
+x <- rnorm( 20 )
+boxplot( x )
+hist( x , main='', col="blue", probability = TRUE )
+lines( density( x ), col = "red" )
+```
+
+
+## *R* $\star$Very$\star$ Basics
+
+*R*
+organizes data with dataframes, vectors, matrices and arrays (matrices with $\ge$
+3 dimensions).
+
+These can contain missing variables - but you must be careful about type!
+```{r,out.width='.4\\linewidth'}
+as.numeric( as.character( c("0.5",0.1,0.6,"A") ) )
+```
+A data frame is used for storing data tables. It is a list of vectors
+of equal length.
+
+
+
+
+## *R* $\star$Very$\star$ Basics 2
+
+`mtcars` is a built-in *R*
+dataframe
+```{r,out.width='.4\\linewidth',results='show',echo=TRUE}
+mtcars[c(1,13,28),1:6]
+```
+
+## MPG example
+
+We analyze the relationship between MPG and other variables.
+
+```{r,out.width='.4\\linewidth',results='hide'}
+myform<-paste( colnames( mtcars )[2:ncol(mtcars)] ,
+               collapse='+'  )
+myform<-as.formula( paste( "mpg~", myform ) )
+mdl <- lm(  myform , data = mtcars )
+mdla<-stepAIC( mdl , direction =  c("both" ) )
+print(myform)
+```
+
+
+
+
+## *R* $\star$Very$\star$ Basics 3
+
+```{r,out.width='.4\\linewidth',results='show',echo=FALSE}
+print(summary( lm(  mdla$call$formula , data = mtcars ) ) )
+```
+Vehicle weight ,  1/4 mile time  and Transmission type are most predictive!
+
+
+
+
+
+
+## *R* $\star$Very$\star$ Basics: Draw a Picture
+
+```{r,out.width='.3\\linewidth',dev='pdf',results='show',echo=TRUE}
+mdl <- lm(  mdla$call$formula , data = mtcars )
+visreg( mdl, xvar="wt")
+visreg( mdl, xvar="qsec")
+visreg( mdl, xvar="am")
+```
+
+**Oops! Transmission type should be a factor.**
+
+
+## *R* $\star$Very$\star$ Basics: Draw a Picture Fix
+
+```{r,out.width='.3\\linewidth',dev='pdf',results='show',echo=TRUE}
+mtcars$am<-as.factor( mtcars$am )
+mdl <- lm(  mdla$call$formula , data = mtcars )
+visreg( mdl, xvar="wt")
+visreg( mdl, xvar="qsec")
+visreg( mdl, xvar="am")
+```
+This is better ...
+
+
+
+## *R* $\star$Very$\star$ Basics: Draw a Picture 3
+
+```{r,out.width='.6\\linewidth',dev='pdf',echo=TRUE,eval=TRUE}
+ coplot(mpg ~ wt | qsec , data = mtcars, panel = panel.smooth, rows = 1)
+```
+
+**Exercise: Try this!**
+
+# Medical Image Representations
+
+## Data representation standards
+
+Represent image as `antsImage`s which are basically ITK
+type images with all I/O etc.
+```{r antsimage}
+img=antsImageRead( getANTsRData("r16" ) )
+img
+```
+
+Can be converted to vectors, matrices, arrays ...
+
+## Plot the `antsImage`
+
+```{r plotai,echo=FALSE,out.width='.5\\linewidth'}
+plot( img )
+```
+
+## Data representation standards
+
+Represent an image as a *vector* (more on this later).  This
+vector may be derived from a 2 or 3D array of spatially related voxels.
+```{r,imgvec,out.width='.25\\linewidth',dev='pdf'}
+imgmask=getMask( img )
+mydat<-data.frame( space = 1:sum(imgmask==1),
+                   imgvec = img[ imgmask == 1 ] )
+ggplot(data=mydat, aes(x=space, y=imgvec, group=1)) + geom_line()
+```
+
+
+
+## Data Representation
+
+Represent an image set as a *matrix*.
+
+```{r imgmat}
+fns=c( getANTsRData('r16'),
+       getANTsRData('r27'),
+       getANTsRData('r62') )
+ilist=imageFileNames2ImageList( fns )
+avg=antsAverageImages( ilist )
+avgmask=getMask(avg)
+imgmat=imageListToMatrix( ilist, avgmask )
+print( dim(imgmat) )
+```
+
+## Show the average
+```{r plotavg,echo=FALSE,out.width='.5\\linewidth'}
+plot( avg )
+```
+
+## Matrix of vectorized images
+
+```{r imgmat2,echo=FALSE,out.width='.75\\linewidth'}
+pheatmap::pheatmap( (imgmat), cluster_rows=FALSE, cluster_cols=FALSE )
+```
+
+
+## Reading Images
+
+Read em and weep
+
+```{r,myio,echo=TRUE,warning=FALSE,results='show',fig.width=4,fig.height=4,out.width='.45\\linewidth'}
+fn<-getANTsRData( "ch2" , usefixedlocation = FALSE  )
+
+# oro.nifti
+colin <- readNIfTI( fn )
+
+# antsr
+colina <- antsImageRead( fn )
+```
+
+
+## Quickly Show Images by oro.nifti
+```{r,myviz,echo=TRUE,warning=FALSE,results='hide',fig.width=4,fig.height=4,out.width='.5\\linewidth'}
+orthographic( as.array( colina ), oma=rep(2,4))
+```
+
+## Quickly Show Images w/ANTsR
+```{r,myviza,echo=TRUE,warning=FALSE,tidy=TRUE,results='hide',fig.width=4,fig.height=4,out.width='.9\\linewidth'}
+plot( as.antsImage( colin ) , axis=1 )
+```
+
+
+
+## Convert an Image to a Vector
+Use *ANTsR* to convert an image to a vector.
+```{r,convvec,echo=TRUE,warning=FALSE,tidy=TRUE,results='hide',fig.width=4,fig.height=4,out.width='.4\\linewidth'}
+imgvec<-colina[  colina > 50  ]
+print( length( imgvec ) )
+```
+Use  oro.nifti to convert an image to a vector.
+```{r,convvec2,echo=TRUE,warning=FALSE,tidy=TRUE,results='hide',fig.width=4,fig.height=4,out.width='.4\\linewidth'}
+imgvec<-colin[  colin > 50  ]
+print( length( imgvec ) )
+```
+Both packages enable similar functionality in terms of accessing /
+converting images to vectors.  *ANTsR* allows I/O to files other than
+nifti such as meta, jpg, dicom, etc, anything ITK reads/writes.
+
+# Quantifying Images
+
+
+## Image Quantification with *R*
+
+It is possible to implement full processing pipelines with *R*
+for submission to distributed computing systems ...
+
+My knowledge is limited to *ANTsR*.
+
+There are also packages TractR, fMRI, dce-MRI and likely many more.
+
+See the [medical imaging task view on CRAN](http://cran.r-project.org/web/views/MedicalImaging.html).
+
+
+## The Basic Toolset from outside *R*
+
+\textcolor{blue}{Registration: Data is in Examples/Data}
+```bash
+antsRegistration -d 2
+ -m CC[r16slice.nii.gz,r64slice.nii.gz,1,4]
+ -t SyN[0.25,3,0]  -o TEST -i 50x40x30 -c 50
+```
+`antsRegistration` in *ANTsR*
+
+\textcolor{blue}{Segmentation}
+```bash
+Atropos -d 2 -a r16slice.nii.gz -x r16mask.nii.gz
+-m [0.1,1x1]   -c [10,0]  -i kmeans[3]
+-o [Output.nii.gz,Output\_prob\_\%02d.nii.gz]
+```
+`atropos` in *ANTsR*
+
+`antsApplyTransforms` in both
+
+## The Basic Toolset from outside *R*
+
+\textcolor{blue}{Template building}
+```bash
+ bash buildtemplateparallel.sh -d 3 -m 30x50x20
+-t GR  -s CC -c 1 -o OutPrefix  *ImageName*T1x.nii.gz
+```
+not available in *ANTsR*
+
+# Vignettes
+
+## ANTsR Vignette
+
+[ANTsR vignette](http://htmlpreview.github.io/?https://github.com/stnava/ANTsDoc/blob/master/html/ANTsR.html)
+
+## iMath Vignette
+
+[iMath vignette](http://htmlpreview.github.io/?https://github.com/stnava/ANTsDoc/blob/master/html/iMath.html)
+
+# The manual file
+
+## Accessing help in ANTsR
+
+```{r antsrhelp,eval=FALSE}
+?sparseDecom
+?antsRegistration
+ANTsR::<double-tab>
+```
+
+Currently 199 help objects ...
+
+Also see (little bit out of date) [manual](https://github.com/stnava/ANTsR/releases/download/v0.3.1/ANTsR-manual.pdf)
