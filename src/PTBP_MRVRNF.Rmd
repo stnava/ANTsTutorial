@@ -154,7 +154,6 @@ mrvmask=thresholdImage( mrvR2, thr2, Inf )
 ```{r mrviz3,echo=FALSE}
 plot( thkmask, mrvR2, axis=3, nslices=16,
    window.overlay=c(thr2, max(mrvR2) ) )
-   ddd
 ```
 
 # MRVNRF Setup and Algorithm
