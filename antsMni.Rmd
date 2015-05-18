@@ -2,10 +2,18 @@
 title: <span style="color:red;">Building a house with<br />Advanced Normalization Tools (*ANTs*)</span>
 author: Brian B. Avants (<span style="color:blue;">PENN</span>) and <br />Nicholas J. Tustison (<span style="color:orange;">UVA</span>)
 bibliography: REFERENCES.bib
-logo:    logo.jpg
 output:
+  revealjs::revealjs_presentation:
+    pandoc_args: [ "--slide-level", "2" ]
+    incremental: true
+    widescreen: true
+    smaller: false
+    theme: night
+    transition: fade
+    highlight: tango
+    center: true
+    self_contained: false
   ioslides_presentation:
-    css: atk.css
     incremental: false
     widescreen: true
     smaller: false
@@ -21,16 +29,6 @@ output:
   html_document:
     toc: true
     theme: readable
-  revealjs_presentation:
-    pandoc_args: [ "--slide-level", "2" ]
-    incremental: true
-    widescreen: true
-    smaller: false
-    theme: night
-    transition: fade
-    highlight: tango
-    center: true
-    self_contained: false
 ---
 
 ```{r global options, include=FALSE}
@@ -45,4 +43,3 @@ opts_chunk$set(fig.width=9, fig.height=6, fig.path=figpath,
 ##
 
 This talk is online
-

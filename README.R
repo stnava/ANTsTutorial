@@ -6,7 +6,7 @@ library( revealjs )
 
 buildRmd <- 'antsMniBuild.Rmd'
 rawRmds <- c( "src/PTBP_Intro.Rmd" )
-rawRmds <- c( "registration/registration.Rmd" )
+rawRmds <- c( "antsMNI.Rmd","registration/registration.Rmd" )
 # rawRmds <- c( "segmentation/segmentation.Rmd" )
 # rawRmds <- c( "scripts/scripts.Rmd" )
 
@@ -21,4 +21,4 @@ for( x in 1:length( rawRmds ) )
   system( cmd )
   }
 
-render( buildRmd, clean = TRUE, output_file = 'index.html' )
+render( buildRmd,clean = TRUE, output_file = 'index.html' )
