@@ -61,10 +61,18 @@ famat=as.matrix( famat )
 
 ## Get common images and make a dataframe
 
-```{r mdf}
+```{r subsel,echo=FALSE}
 wp=( !is.na(rowMeans(thkmat)) & rowMeans(thkmat) > 0.5  &
      !is.na(rowMeans(famat)) & rowMeans(famat) > 0.2  &
      !is.na(rowMeans(cbfmat)) & rowMeans(cbfmat) > 40 )
+for ( x in unique( demog$SubID ) )
+  {
+  kk=which( demog$SubID == x )
+  if ( length(kk) > 1 ) wp[ kk[2:length(kk)] ] = FALSE
+  }
+```
+
+```{r mdf}
 mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
    #             PIQ=demog[wp,]$Performance.IQ,
                  VIQ=demog[wp,]$Verbal.IQ,
@@ -75,6 +83,8 @@ mydf=data.frame( AgeAtScan=demog[wp,]$AgeAtScan,
                  Income=demog[wp,]$Income )
 for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
 ```  
+
+# Cross-validation and Feature Selection
 
 
 ## Train/Test
@@ -131,7 +141,7 @@ plot( thkmask, cbfR2img, axis=3, nslices=16,
   window.overlay=c(1,max(cbfR2img)) )
 ```
 
-## Merge this images to establish a single mask
+## Merge the images to establish a single mask
 
 ```{r maskmerge}
 mrvR2=cbfR2img+faR2img+thkR2img
@@ -144,8 +154,10 @@ mrvmask=thresholdImage( mrvR2, thr2, Inf )
 ```{r mrviz3,echo=FALSE}
 plot( thkmask, mrvR2, axis=3, nslices=16,
    window.overlay=c(thr2, max(mrvR2) ) )
+   ddd
 ```
 
+# MRVNRF Setup and Algorithm
 
 ## Set up mrvnrfs
 
@@ -160,7 +172,7 @@ for ( x in which(wp) )
     i1=makeImage(thkmask, thkmat[x,])
     i2=makeImage(famask, famat[x,])
     i3=makeImage(thkmask, cbfmat[x,] )
-    feati=list( i1 , i2 , i3 )
+    feati=list( i1 , i2 ) #  , i3 )
     slist[[ct]]=feati
     agelist[[ct]]=mydf$VIQ[x]
     ct=ct+1
@@ -183,7 +195,7 @@ mr=c(4,2)
 if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
   mrvmask, rad=rep(1,3),
-  nsamples=200, ntrees=1000,
+  nsamples=200, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -200,6 +212,8 @@ rfm2<-mrvnrfs.predict( rfm$rflist,
 cor( mydf$VIQ[testg] , rfm2$seg )
 print(  mean( abs( mydf$VIQ[testg] - rfm2$seg) ) )
 ```
+
+# MRVNRF Results
 
 ## MRVNRF Viz
 
@@ -219,13 +233,18 @@ plot( thkmask, corimg, axis=3, nslices=16,
    window.overlay=c( 0.1 , max(corimg) ) )
 ```
 
-## Investigate the final model (single regression)
+## Investigate the final model (single regression predicting VIQ)
 
-```{r mrvmdl}
-mrvdf=data.frame( mydf, mrvpred=rfpred )
+```{r mrvmdl,echo=FALSE}
+temp=mydf[testg,]
+mrvdf=data.frame( temp , mrvpred=rfpred )
 mrvmdl=lm( VIQ ~ . , data=mrvdf )
-knitr::kable( coefficients( mrvmdl ) )
+m_table <- broom::tidy(mrvmdl)
+knitr::kable(m_table, digits = 3, align = "r",
+      col.names = c("Param", "B", "SE", "t", "p"))
 ```
+
+# Done!
 
 ## Discussion
 
