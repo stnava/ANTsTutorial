@@ -1,0 +1,353 @@
+---
+title: "Advanced Normalization Tools Quick Reference"
+author: "Brian B. Avants"
+date: "July 15, 2015"
+output: rmarkdown::tufte_handout
+---
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(ANTsR)
+```
+
+# Introduction
+
+\newthought{Advanced Normalization Tools}[^ants] is software for biomedical image analysis with a focus on registration, segmentation, geometric quantification and statistics. 
+Statistical methods are available in *ANTsR* ^[http://stnava.github.io/ANTsR/] which tightly integrates *ANTs* with the *R* statistical computing language.  This document briefly highlights major features of *ANTs*.
+
+# Provenance and Testing
+
+Much core functionality in *ANTs* lives in ITK, a project to which we contribute regularly.  This core is tested on many platforms via `ctest` and the results are on the ITK dashboard^[https://open.cdash.org/index.php?project=Insight].
+*ANTs* is also tested with every commit via codeship ^[https://codeship.com] and Travis ^[https://travis-ci.org/stnava/ANTs].  Many (not all) *ANTs* programs support `programName --version`.  Our github commit hashes give the best way to track code versions by identifying core and dependency versions.  See the *ANTs* website for current testing results and **installation** instructions.
+
+# In conjunction with other analysis systems
+
+ANTs and ITK work synergistically within a well-defined I/O and world
+coordinate system.  Using FSL, SPM or other pre-processing in 
+conjunction with ITK and ANTs must be done with extreme care. The 
+physical spaces (or interpretation of image headers) may not be the same in different systems.  Such inconsistencies may lead to severe misinterpretation of results. \marginnote{WARNING!}
+
+# Data types
+
+## Images
+Images are the core data type in ANTs. Valid extensions are determined by ITK ^[www.itk.org] image input/output libraries ^[NiftiImageIO, NrrdImageIO, GiplImageIO, HDF5ImageIO, JPEGImageIO, GDCMImageIO, BMPImageIO, LSMImageIO, PNGImageIO, TIFFImageIO, VTKImageIO, StimulateImageIO, BIORadImageIO,
+MetaImageIO, MRCImageIO, GE4ImageIO, GE5ImageIO, MGHImageIO].  ITK images can be of arbitrary dimensionality and pixel type, but in *ANTs* we instantiate `float` pixel type in 2, 3 or 4 dimensions.
+
+
+## CSV files and point sets
+
+CSV (comma separated value) files are useful for storing tabular data.  We may also use them to store point sets.  It is critical when using point sets with *ANTs* to ensure that the physical space of the points matches that of the images.  It is best to start with our standard example of registering images and applying the results to points ^[https://github.com/stnava/chicken].  Point sets may also be stored in the binary format provided by the Meta I/O library ^[http://www.itk.org/Wiki/ITK/MetaIO/Documentation].  This format allows much faster I/O for large datasets.
+
+
+# Registration
+
+The most well-known
+
+## Quick start
+
+Images and graphics play an integral role in Tufte's work. To place figures or tables in the margin you can use the `fig.margin` knitr chunk option. For example:
+
+```{r, fig.margin = TRUE, fig.cap = "Sepal length vs. petal length, colored by species"}
+library(ggplot2)
+qplot(Sepal.Length, Petal.Length, data = iris, color = Species)
+```
+
+Note the use of the `fig.cap` chunk option to provide a figure caption. You can adjust the proportions of figures using the `fig.width` and `fig.height` chunk options. These are specified in inches, and will be automatically scaled down to fit within the handout margin.
+
+## Low-dimensional
+
+translation, rigid, affine
+
+## High-dimensional
+
+transformations with many parameters
+
+## Parameter choices and testing
+
+We wrote a paper that details procedures for evaluating analysis software ^[http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3766821/].  We wrote this paper in order to help those who want to use or evaluate *ANTs* make more informed choices on how to proceed.  Briefly: (1) ask developers questions; (2) leverage biologically motivated testing metrics that are independent of registration.
+
+## Equations
+
+You can also include \LaTeX\ equations in the margin by explicitly invoking the `marginfigure` environment.
+
+\begin{marginfigure}
+$$\frac{d}{dx}\left( \int_{0}^{x} f(u)\,du\right)=f(x).$$
+\caption{An equation}
+\end{marginfigure}
+
+Note the use of the `\caption` command to add additional text below the equation.
+
+## Full Width Figures
+
+You can arrange for figures to span across the entire page by using the `fig.fullwidth` chunk option. 
+
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, fig.cap = "Full width figure"}
+qplot(wt, mpg, data=mtcars, colour=factor(cyl))
+```
+
+Note the use of the `fig.width` and `fig.height` chunk options to establish the proportions of the figure. Full width figures look much better if their height is minimized.
+
+## Main Column Figures
+
+Besides margin and full width figures, you can of course also include figures constrained to the main column.
+
+```{r, fig.cap = "Another figure"}
+qplot(factor(cyl), mpg, data = mtcars, geom = "boxplot")
+```
+
+# Segmentation, geometry and labeling
+
+describe this category
+
+## N4
+
+Nick's N3
+
+## Atropos
+
+Expecation maximization segmentation ... MAP 
+
+## Weingarten map-based surface curvature and area
+
+The shape operator provides a beautiful way to compute the mean or Gaussian curvature (or related values) in any three-dimensional image ^[http://www.ncbi.nlm.nih.gov/pubmed/15344450].  The *ANTs* program that impl
+
+One of the most prominent and distinctive features of this style is the extensive use of sidenotes. There is a wide margin to provide ample room for sidenotes and small figures. Any use of a footnote will automatically be converted to a sidenote. ^[This is a sidenote that was entered using a footnote.] 
+
+If you'd like to place ancillary information in the margin without the sidenote mark (the superscript number), you can use the `\marginnote` command. \marginnote{This is a margin note.  Notice that there isn't a number preceding the note.}
+
+Note also that the two footnote references (`tufte_latex` and `books_be`, both defined below) were also included in the margin on the first page of this document.
+
+# Cortical thickness pipeline
+
+You can use the **xtable** package to format \LaTeX\ tables that integrate well with the rest of the Tufte handout style. Note that it's important to set the `xtable.comment` and `xtable.booktabs` options as shown below to ensure the table is formatted correctly for inclusion in the document.
+
+```{r, results='asis'}
+library(xtable)
+options(xtable.comment = FALSE)
+options(xtable.booktabs = TRUE)
+xtable(head(mtcars[,1:6]), caption = "First rows of mtcars")
+```
+
+
+# Multiple modality pipeline
+
+derka
+
+# Brain mapping in the presence of lesions or other obstructions
+
+Our fully automated registration and segmentation approach for the lesioned occluded brain uses machine learning to identify and down-weight missing data.  One may also uses pre-identified inclusive masks to focus registration on healthy tissue ^[` antsRegistration -d 3 ... etcetera ... -x healthyTissueMask.nii.gz` ].
+
+# Statistical pipelines
+
+derka
+
+# Overview of ANTs programs
+
+ANTs executables come in either binary ( compiled from `C++` ) or script form ( usually `bash` or `R` ).  Here, we summarize the relevants programs.
+
+
+```{r, results='asis',echo=FALSE}
+library(xtable)
+options(xtable.comment = FALSE)
+options(xtable.booktabs = TRUE)
+############################################
+prog=c("ANTS","see antsRegistration","old",
+"ANTSAverage2DAffine.sh","see AverageAffine*","old",
+"ANTSAverage3DAffine.sh","see AverageAffine*","old",
+"ANTSIntegrateVectorField","ode integration of vector field","transformation",
+"ANTSIntegrateVelocityField","ode integration of velocity field","transformation",
+"ANTSJacobian","see CreateJacobianDeterminantImage","old",
+"ANTSUseDeformationFieldToGetAffineTransform","fit affine tx to deformation field","old",
+"ANTSUseLandmarkImagesToGetAffineTransform","fit affine tx to landmarks","transformation",
+"ANTSUseLandmarkImagesToGetBSplineDisplacementField","fit bspline to landmarks","old",
+"ANTSpexec.sh","helper for parallel execution","util",
+"Atropos","EM segmentation framework and tools","segmentation",
+"AverageAffineTransform","average affine transformations","transformation",
+"AverageAffineTransformNoRigid","average affine transformations without rigid part","transformation",
+"AverageImages","average list of images","processing",
+"AverageTensorImages","average list of tensor images","processing",
+"CheckTopology","see antsSurf","old",
+"ClusterImageStatistics","summarize label images","old",
+"ComposeMultiTransform","see antsApplyTransforms","old",
+"CompositeTransformUtil","dis/assembles composite transform files","transformation",
+"ConvertImage","change pixel type","old",
+"ConvertImagePixelType","change pixel type","processing",
+"ConvertInputImagePixelTypeToFloat","change pixel type","old",
+"ConvertScalarImageToRGB","use lookup table to make RBG from gray","visualization",
+"ConvertToJpg","make jpg from medical image","old",
+"ConvertTransformFile","convert mat to txt, for example","transformation",
+"CopyImageHeaderInformation","copy header from one image to another","util",
+"CreateDTICohort","simulate DTI population","statistics",
+"CreateDisplacementField","make vector field from component images","util",
+"CreateImage","make an image","util",
+"CreateJacobianDeterminantImage","compute deformation gradient from displacement","transformation",
+"CreateTiledMosaic","tile images for viewing","visualization",
+"CreateWarpedGridImage","make a warped grid from displacement","visualization",
+"DeNrrd","?","?",
+"DenoiseImage","non-local denoising","processing",
+"ExtractRegionFromImage","get subset of image using indices","util",
+"ExtractRegionFromImageByMask","get subset of image using mask","util",
+"ExtractSliceFromImage","get slice from image","util",
+"FitBSplineToPoints","fit bspline to point set","transformation",
+"GetConnectedComponentsFeatureImages","?","processing",
+"GetMeshAndTopology","see antsSurf","old",
+"ITK_bld_internal_H5detect","?","util",
+"ITK_bld_internal_H5make_libsettings","?","util",
+"ImageCompare","see if images are nearly the same","util",
+"ImageIntensityStatistics","simple summary stats for image +/- ROIs","statistics",
+"ImageMath","basic processing operations on images","processing",
+"ImageSetStatistics","compute mean, median, etc of images","statistics",
+"KellyKapowski","image-based thickness estimator","processing",
+"KellySlater","see KellyKapowski","old",
+"LabelClustersUniquely","label each isolated region","segmentation",
+"LabelGeometryMeasures","measure geometry of labeled regions","processing",
+"LabelOverlapMeasures","compute overlaps","statistics",
+"LaplacianThickness","old school thickness estimator","old",
+"LesionFilling","WIP - do not use","old",
+"MeasureImageSimilarity","similarity between image pairs","statistics",
+"MeasureMinMaxMean","basic stats on an image","statistics",
+"MemoryTest","memory profiler","util",
+"MultiplyImages","multiply image1 by x","util",
+"N3BiasFieldCorrection","ancient bias corrector","processing",
+"N4BiasFieldCorrection","better bias corrector","processing",
+"PasteImageIntoImage","put one image in another","util",
+"PermuteFlipImageOrientationAxes","flip or permute image","util",
+"PrintHeader","image header information","util",
+"RebaseTensorImage","map tensor into new basis","processing",
+"ReorientTensorImage","reorient tensors by transformation","transformation",
+"ResampleImage","change image resolution","util",
+"ResampleImageBySpacing","change image resolution","util",
+"ResetDirection","change image direction to identity","util",
+"SetDirectionByMatrix","change image direction","util",
+"SetOrigin","set origin in image","util",
+"SetSpacing","set spacing in image","util",
+"SmoothImage","smooth in given units","processing",
+"StackSlices","stack up a population of image slices","visualization",
+"SurfaceBasedSmoothing","smoothing restricted to segmentation","processing",
+"SurfaceCurvature","shape operator curvature","processing",
+"TextureCooccurrenceFeatures","texture based statistics","processing",
+"TextureRunLengthFeatures","texture based statistics","processing",
+"ThresholdImage","simple image thresholding","segmentation",
+"TileImages","collect images in tile form for viewing","visualization",
+"TimeSCCAN","cca for temporal images","statistics",
+"WarpImageMultiTransform","see antsApplyTransforms","old",
+"WarpTensorImageMultiTransform","see antsApplyTransforms","old",
+"WarpTimeSeriesImageMultiTransform","see antsApplyTransforms","old",
+"WarpVTKPolyDataMultiTransform","see antsApplyTransformsToPoints","old",
+"ants.sh","deprecated","old",
+"antsAI","multi-start low-dimensional registration","transformation",
+"antsASLProcessing.R","BMKandel ASL processing","processing",
+"antsASLProcessing.sh","BMKandel ASL processing","processing",
+"antsAffineInitializer","see antsAI","transformation",
+"antsAlignOrigin","basic origin alignment","transformation",
+"antsApplyTransforms","apply (multiple) transformations to image types","transformation",
+"antsApplyTransformsToPoints","apply (multiple) transformations to points","transformation",
+"antsAtroposN4.sh","joint segmentation and bias correction","segmentation",
+"antsBOLDNetworkAnalysis.R","primive BOLD analysis - see ANTsR instead","old",
+"antsBrainExtraction.sh","brain extraction via registration and segmentation","segmentation",
+"antsCorticalThickness.sh","brain thickness pipeline","processing",
+"antsIntermodalityIntrasubject.sh","example of how to map within subject","transformation",
+"antsIntroduction.sh","see antsRegistrationSyNQuick.sh","old",
+"antsJointFusion","better JLF implementation","segmentation",
+"antsJointLabelFusion.sh","better JLF script","segmentation",
+"antsLaplacianBoundaryCondition.R","WIP do not use","old",
+"antsLongitudinalCorticalThickness.sh","longitudinal brain thickness pipeline","processing",
+"antsMalfLabeling.sh","see antsJointLabelFusion","old",
+"antsMotionCorr","time series motion correction","transformation",
+"antsMotionCorrDiffusionDirection","DWI specific motion correction","transformation",
+"antsMotionCorrExample","?","old",
+"antsMotionCorrStats","summarize antsMotionCorr output","transformation",
+"antsMultivariateTemplateConstruction.sh","multiple modality templates","transformation",
+"antsMultivariateTemplateConstruction2.sh","multiple modality templates","transformation",
+"antsNetworkAnalysis.R","basic network analysis - see ANTsR instead","old",
+"antsNeuroimagingBattery","align MR modalities to common space","processing",
+"antsRegistration","standard registration algorithms","transformation",
+"antsRegistrationSpaceTime.sh","spatiotemporal registration methods","transformation",
+"antsRegistrationSyN.sh","default decent quality registration","transformation",
+"antsRegistrationSyNQuick.sh","default fast registration","transformation",
+"antsSliceRegularizedRegistration","see spinal cord toolbox","transformation",
+"antsSurf","surface rendering and other operations","visualization",
+"antsTransformInfo","investigate a transformation","util",
+"antsUtilitiesTesting","see how metric changes with tx","util",
+"antsaffine.sh","see antsRegistrationSyN.sh","old",
+"antsbashstats.sh","deprecated - see ANTsR","old",
+"antsdeformationmag.sh","deprecated - see ANTsR","old",
+"antsqsub.sh","deprecated","old",
+"antswithdt.sh","deprecated","old",
+"asymmetry.sh","basic asymmetry estimate - not recommended","old",
+"basic_ants_example.sh","basic example - not recommended","old",
+"bl","?","old",
+"buildtemplateparallel.sh","old school but good template estimation","old",
+"cbf_pasl_robust_batch.R","deprecated","old",
+"cbf_pcasl_robust_batch.R","deprecated","old",
+"compareTwoTransforms","as described","util",
+"directlabels.sh","WIP - do not use","old",
+"geodesicinterpolation.sh","shape-based interpolate two images","transformation",
+"guidedregistration.sh","example of landmark based registration","transformation",
+"iMath","utility","old",
+"itkTestDriver","utility","old",
+"jointfusion","deprecated","old",
+"landmarkmatch.sh","example of landmark based registration","transformation",
+"lohmann.sh","WIP - do not use","old",
+"multi_template_script.sh","WIP - do not use","old",
+"newAntsExample.sh","deprecated","old",
+"optimalsmooth.sh","deprecated","old",
+"phantomstudy.sh","deprecated - see ANTsR","old",
+"registerimages.pl","deprecated","old",
+"runprogramonimageset.pl","deprecated","old",
+"sa","?","old",
+"sccan","utility for sparse decomposition - see ANTsR","statistics",
+"sccan_tests","WIP - do not use","old",
+"shapeupdatetotemplate.sh","shape step for template","old",
+"simpleSynRegistration","?","old",
+"skel.sh","topological skeleton of segmentation","segmentation",
+"submitexperimentalbuild.sh","?","old",
+"sygnccavg.sh","deprecated","old",
+"thickstudy.sh","deprecated","old",
+"unbiased_longitudinal_map","deprecated","old",
+"unbiased_pairwise_registration.sh","example of unbiased registration","old",
+"unbiased_pairwise_registration_with_aux_images.sh","example of unbiased registration","old",
+"waitForPBSQJobs.pl","utility","util",
+"waitForSGEQJobs.pl","utility","util",
+"waitForXGridJobs.pl","utility","util",
+"warpimages.pl","deprecated","old",
+"weightedaverage.pl","deprecated","old",
+"weightedaverage.sh","deprecated","old",
+"mrvnrf","machine learning segmentation - see ANTsR","segmentation")
+nents=1:round(length(prog)/3)
+mydata <- data.frame(
+program=prog[  nents*3-2 ],
+description=prog[  nents*3-1],
+label=prog[nents*3]
+  )
+knitr::kable( mydata[ mydata$label == "transformation" , 1:2 ], 
+              caption="ANTs transformation programs")
+knitr::kable( mydata[ mydata$label == "segmentation" , 1:2 ], 
+              caption="ANTs segmentation programs")
+knitr::kable( mydata[ mydata$label == "processing" , 1:2 ], 
+              caption="ANTs processing programs")
+knitr::kable( mydata[ mydata$label == "statistics" , 1:2 ], 
+              caption="ANTs statistics programs")
+knitr::kable( mydata[ mydata$label == "visualization" , 1:2 ], 
+              caption="ANTs visualization programs")
+knitr::kable( mydata[ mydata$label == "util" , 1:2 ], 
+              caption="ANTs utility programs")
+# knitr::kable( mydata[21:40,] )
+# knitr::kable( mydata[41:60,] )
+```
+
+
+[^ants]: http://stnava.github.io/ANTs/
+[^antsr]: http://stnava.github.io/ANTsR/
+[^tufte_latex]: https://code.google.com/p/tufte-latex/
+[^books_be]: http://www.edwardtufte.com/tufte/books_be
+
+
+
+
+
+
+
+
+
+
