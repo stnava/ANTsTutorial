@@ -41,18 +41,49 @@ CSV (comma separated value) files are useful for storing tabular data.  We may a
 
 # Registration
 
-The most well-known
+The most well-known components of *ANTs* relate to mapping between coordinate systems ^[Registration: targeting of points in one coordinate system onto another].  Briefly, these maps may relate to:
+
+* statistical image similarity: image difference, correlation or mutual information
+
+* translation, rotation, affine, B-spline or various diffeomorphic models ^[Diffeomorphism: differentiable map with differentiable inverse]
+
+* spatial or spatiotemporal maps
+
+* dense or sparse transformation models, the latter being similar to SIFT or HOGG
+
+* applying composite transformations to images, labels or point sets.
+
+These components all exist within an integrated framework which is nearly always capable of incorporating many features or applying to multiple different modalities.^[http://journal.frontiersin.org/article/10.3389/fninf.2014.00044/abstract]
+
+## Evaluation history
+
+ANTs became well known because it performed well in a variety of open competitions related to image registration.  Most of these successes occurred in the days before the community had many such competitions. ^[Klein 2009, Murphy 2011, SATA 201*, BRATS 2013, etc.]  Highlights include:  
+
+* finishing in the top rank in the Klein 2009 evaluation on brain MRI
+
+* finishing in the top rank in the Murphy 2011 lung CT evaluation
+
+* top SATA 2012 and 2013 finishers used ANTs
+
+* performing well in a cardiac motion estimation competition
+
+* well-known robust performance on large datasets 
+
+Although ANTs has often performed well without using domain knowledge, it is still valuable to use problem-specific solutions when feasible.
 
 ## Quick start
 
-Images and graphics play an integral role in Tufte's work. To place figures or tables in the margin you can use the `fig.margin` knitr chunk option. For example:
+ANTsR gives some quick registration options.  One can achieve similar performance with `antsRegistrationSyNQuick.sh`.
 
-```{r, fig.margin = TRUE, fig.cap = "Sepal length vs. petal length, colored by species"}
-library(ggplot2)
-qplot(Sepal.Length, Petal.Length, data = iris, color = Species)
+```{r reg, fig.cap='quick parameter free registration'}
+fi <- antsImageRead(getANTsRData("r16") )
+mi <- antsImageRead(getANTsRData("r64") )
+mytx <- antsRegistration(fixed=fi, moving=mi, typeofTransform = c('SyN') )
+mywarpedimage <- antsApplyTransforms( fixed=fi, moving=mi,
+  transformlist=mytx$fwdtransforms )
+plot(fi, mi %>% iMath("Canny",1,5,12) )
+plot(fi, mywarpedimage %>% iMath("Canny",1,5,12) )
 ```
-
-Note the use of the `fig.cap` chunk option to provide a figure caption. You can adjust the proportions of figures using the `fig.width` and `fig.height` chunk options. These are specified in inches, and will be automatically scaled down to fit within the handout margin.
 
 ## Low-dimensional
 
