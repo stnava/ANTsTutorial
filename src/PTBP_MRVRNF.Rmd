@@ -147,13 +147,26 @@ plot( thkmask, cbfR2img, axis=3, nslices=16,
 mrvR2=cbfR2img+faR2img+thkR2img
 thr2=2
 mrvmask=thresholdImage( mrvR2, thr2, Inf )
+thr4=4
+mrvmask4=thresholdImage( mrvR2, thr4, Inf )
+mrvmask4=labelClusters( mrvmask4,
+  minClusterSize=10 )
 ```
 
 ## MRVNRF Mask
 
 ```{r mrviz3,echo=FALSE}
 plot( thkmask, mrvR2, axis=3, nslices=16,
-   window.overlay=c(thr2, max(mrvR2) ) )
+   window.overlay=c(thr4, max(mrvR2) ) )
+```
+
+## MRVNRF Mask: After surgery
+
+```{r mrviz4,echo=FALSE}
+plot( thkmask, mrvmask4, axis=3, nslices=16,
+   window.overlay=c(1, max(mrvmask4) ) )
+mrvmask4=thresholdImage( mrvmask4, 1, Inf )
+nmask=sum( mrvmask4 == 1 )
 ```
 
 # MRVNRF Setup and Algorithm
@@ -171,7 +184,7 @@ for ( x in which(wp) )
     i1=makeImage(thkmask, thkmat[x,])
     i2=makeImage(famask, famat[x,])
     i3=makeImage(thkmask, cbfmat[x,] )
-    feati=list( i1, i2 )
+    feati=list( i1 , i2 )
     slist[[ct]]=feati
     agelist[[ct]]=mydf$VIQ[x]
     ct=ct+1
@@ -193,8 +206,8 @@ x=slist[traing]
 mr=c(4,2)
 if ( ! exists("rfm") )
 rfm<-mrvnrfs( y, x,
-  mrvmask, rad=rep(1,3),
-  nsamples=200, ntrees=2000,
+  mrvmask4, rad=rep(1,3),
+  nsamples=nmask/10, ntrees=2000,
   multiResSchedule=mr,
   asFactors = FALSE )
 ```
@@ -205,7 +218,7 @@ rfm<-mrvnrfs( y, x,
 ```{r mrvtest}
 if ( ! exists("rfm2") )
 rfm2<-mrvnrfs.predict( rfm$rflist,
-  slist[testg], mrvmask, rad=rep(1,3),
+  slist[testg], mrvmask4, rad=rep(1,3),
   multiResSchedule=mr,
   asFactors = FALSE )
 cor( mydf$VIQ[testg] , rfm2$seg )
@@ -217,12 +230,12 @@ print(  mean( abs( mydf$VIQ[testg] - rfm2$seg) ) )
 ## MRVNRF Viz
 
 ```{r mrviz}
-predmat<-imageListToMatrix( unlist(rfm2$probs) , mrvmask )
+predmat<-imageListToMatrix( unlist(rfm2$probs) , mrvmask4 )
 rfpred <- apply( predmat,  FUN = median, MARGIN = 1)
 print(  cor.test( mydf$VIQ[testg] , rfpred ) )
 print(  mean( abs( mydf$VIQ[testg] - rfpred) ) )
 corrmat<-antsrimpute( cor( predmat , mydf$VIQ[testg] ) )
-corimg<-makeImage( mrvmask, corrmat )
+corimg<-makeImage( mrvmask4, corrmat )
 ```
 
 ## MRVNRF Viz

@@ -3,6 +3,8 @@ title: 'The Pediatric Template of Brain Perfusion: Eigenanatomy with *ANTsR*'
 author: "Brian B. Avants et al."
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    highlight: tango
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -240,10 +242,10 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   mdl=lm( locform, data=mydf )
   voxlm=bigLMStats( mdl , 1.e-8 )
   print(paste("begin low",outprefix) )
-  lowmat = lowrankRowMatrix( imgmat , 10 )
+  lowmat = randwhiten( imgmat , 10 )
   print(paste("begin eanat",outprefix) )
   imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0.5,
-    sparseness=0.05, cthresh=20000, mycoption=0, its=5 )
+    sparseness=0.05, cthresh=20000, mycoption=0, its=2 )
   rm( lowmat )
   print(paste("end eanat",outprefix) )
   eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
@@ -572,12 +574,12 @@ knitr::kable( anova(mdl1,mdl2) )
 
 First, thickness ...
 
-```{r thkcca,eval=TRUE}
+```{r thkcca,eval=FALSE}
 sdemog=antsrimpute( demog[haveAllMerge,c(7,8)] )
 # above is a bug sparseDecom/2 does not handle NAs well
 temp=thkmat[haveAllMerge,][traing,]
-inmatrix=list( temp ,
-  data.matrix(sdemog[traing,])  )
+inmatrix=list( scale(temp,scale=FALSE) ,
+  scale( data.matrix(sdemog[traing,]), scale=FALSE) )
 if ( ! exists("sccan") )
   sccan=sparseDecom2(inmatrix, c(thkmask, NA),
      sparseness = c( 0.005, 0.3 ),
@@ -587,7 +589,7 @@ if ( ! exists("sccan") )
 
 ## Check the CCA regions
 
-```{r thkcca4,eval=TRUE,echo=FALSE}
+```{r thkcca4,eval=FALSE,echo=FALSE}
 ccaeseg=eigSeg( thkmask, sccan$eig1, FALSE  )
 plot( thkmask, ccaeseg, axis=3, nslices=16 )
 ```
@@ -596,7 +598,7 @@ plot( thkmask, ccaeseg, axis=3, nslices=16 )
 
 Which demographic variables match which imaging variables?
 
-```{r thkcca2,eval=TRUE}
+```{r thkcca2,eval=FALSE}
 rownames( sccan$eig2 )=colnames( sdemog )
 knitr::kable( sccan$eig2 )
 ```
@@ -605,7 +607,7 @@ knitr::kable( sccan$eig2 )
 
 PIQ prediction ...
 
-```{r thkcca3,eval=TRUE,echo=FALSE}
+```{r thkcca3,eval=FALSE,echo=FALSE}
 sccanmat=imageListToMatrix( sccan$eig1, thkmask)
 sccanmat=sccanmat/rowSums(sccanmat)
 sccanproj = thkmat[haveAllMerge,] %*% t( sccanmat )
@@ -628,18 +630,29 @@ Second, FA and CBF ...
 These modalities relate strongly to age ... how do they covary?
 
 ```{r faccacbf,eval=TRUE}
+
+stop("DERKADERKA")
+
 sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8)] )
 temp=famat[haveAllMerge,][traing,]
-for ( i in 1:nrow(temp) )
-  temp[i,]=temp[i,]-mean(temp[i,])
-temp2=cbfmat[haveAllMerge,][traing,]
-for ( i in 1:nrow(temp2) )
-    temp2[i,]=temp2[i,]-mean(temp2[i,])
-inmatrix=list( temp , temp2 )
+# for ( i in 1:nrow(temp) )
+#  temp[i,]=temp[i,]-mean(temp[i,])
+temp2=cbfmat[haveAllMerge,][traing,] 
+temp3=thkmat[haveAllMerge,]
+temp=famat[haveAllMerge,][traing,]
+# for ( i in 1:nrow(temp2) )
+#    temp2[i,]=temp2[i,]-mean(temp2[i,])
+ranker=40
+# tempw2=randcca( temp3, temp, ranker, 1 )
+# tempw=randcca( temp, temp3, ranker, 1 )
+# tempw2p=randcca( temp3, temp[ sample(1:nrow(temp)), ], ranker, 1 )
+tempw=randwhiten( temp, ranker, 1 )
+tempw2=randwhiten( temp2, ranker, 1 )
+inmatrix=list( scale(tempw) , scale( tempw2 ) )
 if ( ! exists("fcsccan") )
   fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
-     sparseness = c( 0.05, -0.05 ),
-     nvecs = 3, its = 2, cthresh = c(5000, 5000),
+     sparseness = c( 0.05, -0.05 ), verbose=1,
+     nvecs = 3, its = 10, cthresh = c(5000, 5000),
      perms = 0, smooth = 0.5, mycoption = 1 )
 ```
 
@@ -669,8 +682,8 @@ fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)
 fcsccanproj2 = cbfmat[haveAllMerge,] %*% t( fcsccanmat2 )
 ccadf=data.frame( sdemog, fcsccanproj,fcsccanproj2,
   gender=demog$Sex[haveAllMerge] )
-lmdl=lm( AgeAtScan ~ ., data=ccadf[traing,] )
 mdl=randomForest( AgeAtScan ~., data=ccadf[traing,] )
+mdl=lm( AgeAtScan ~ ., data=ccadf[traing,] )
 pviq = predict( mdl, newdata=ccadf[ testg, ] )
 print( mean( abs( pviq - ccadf[testg,]$AgeAtScan) ) )
 cor.test( pviq, ccadf[testg,]$AgeAtScan )

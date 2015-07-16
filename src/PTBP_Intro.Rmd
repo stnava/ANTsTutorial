@@ -3,9 +3,6 @@ title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTs
 author: "Brian B. Avants et al."
 date: "`r Sys.Date()`"
 output:
-  ioslides_presentation:
-    highlight: tango
-    incremental: yes
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -15,6 +12,9 @@ output:
     includes:
       in_header: mystyle.tex
     toc: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
 ---
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
