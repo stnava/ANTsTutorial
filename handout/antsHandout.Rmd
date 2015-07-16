@@ -24,7 +24,7 @@ Much core functionality in *ANTs* lives in ITK, a project to which we contribute
 
 ANTs and ITK work synergistically within a well-defined I/O and world
 coordinate system.  Using FSL, SPM or other pre-processing in 
-conjunction with ITK and ANTs must be done with extreme care. The 
+conjunction with ITK and *ANTs* must be done with extreme care. The 
 physical spaces (or interpretation of image headers) may not be the same in different systems.  Such inconsistencies may lead to severe misinterpretation of results. \marginnote{WARNING!}
 
 # Data types
@@ -69,100 +69,137 @@ ANTs became well known because it performed well in a variety of open competitio
 
 * well-known robust performance on large datasets 
 
-Although ANTs has often performed well without using domain knowledge, it is still valuable to use problem-specific solutions when feasible.
+Although *ANTs* has often performed well without using domain knowledge, it is still valuable to use problem-specific solutions when feasible.
 
 ## Quick start
 
 ANTsR gives some quick registration options.  One can achieve similar performance with `antsRegistrationSyNQuick.sh`.
 
-```{r reg, fig.cap='quick parameter free registration'}
+```{r reg, fig.cap='quick parameter free registration',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 fi <- antsImageRead(getANTsRData("r16") )
 mi <- antsImageRead(getANTsRData("r64") )
 mytx <- antsRegistration(fixed=fi, moving=mi, typeofTransform = c('SyN') )
 mywarpedimage <- antsApplyTransforms( fixed=fi, moving=mi,
   transformlist=mytx$fwdtransforms )
+```
+
+```{r reg0, fig.cap='initial relative image positions',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 plot(fi, mi %>% iMath("Canny",1,5,12) )
+```
+
+```{r reg1, fig.cap='quick parameter free registration',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 plot(fi, mywarpedimage %>% iMath("Canny",1,5,12) )
 ```
 
 ## Low-dimensional
 
-translation, rigid, affine
+translation, rigid, affine - optional multi-start exploration of the transformation space (`antsAI`)
 
 ## High-dimensional
 
-transformations with many parameters
+transformations with many parameters - primarily `SyN` and `B-spline SyN` as well as time-varying diffeomorphic models.
 
 ## Parameter choices and testing
 
 We wrote a paper that details procedures for evaluating analysis software ^[http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3766821/].  We wrote this paper in order to help those who want to use or evaluate *ANTs* make more informed choices on how to proceed.  Briefly: (1) ask developers questions; (2) leverage biologically motivated testing metrics that are independent of registration.
 
-## Equations
-
-You can also include \LaTeX\ equations in the margin by explicitly invoking the `marginfigure` environment.
+```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, fig.cap = "Full width figure",eval=FALSE,echo=FALSE}
+# You can also include \LaTeX\ equations in the margin by explicitly invoking the `marginfigure` environment.
 
 \begin{marginfigure}
 $$\frac{d}{dx}\left( \int_{0}^{x} f(u)\,du\right)=f(x).$$
 \caption{An equation}
 \end{marginfigure}
 
-Note the use of the `\caption` command to add additional text below the equation.
-
-## Full Width Figures
-
-You can arrange for figures to span across the entire page by using the `fig.fullwidth` chunk option. 
-
-```{r, fig.width = 10, fig.height = 2, fig.fullwidth = TRUE, fig.cap = "Full width figure"}
+# You can arrange for figures to span across the entire page by using the `fig.fullwidth` chunk option. 
 qplot(wt, mpg, data=mtcars, colour=factor(cyl))
 ```
 
-Note the use of the `fig.width` and `fig.height` chunk options to establish the proportions of the figure. Full width figures look much better if their height is minimized.
 
-## Main Column Figures
 
-Besides margin and full width figures, you can of course also include figures constrained to the main column.
-
-```{r, fig.cap = "Another figure"}
+```{r, fig.cap = "Another figure",echo=FALSE,eval=FALSE}
+# Note the use of the `fig.width` and `fig.height` chunk options to establish the proportions of the figure. Full width figures look much better if their height is minimized.
+# Besides margin and full width figures, you can of course also include figures constrained to the main column.
 qplot(factor(cyl), mpg, data = mtcars, geom = "boxplot")
 ```
 
 # Segmentation, geometry and labeling
 
-describe this category
+This category of methods relates to labeling and quantifying images.  These methods may require data of reasonable quality to perform well. \marginnote{WARNING!}  
 
 ## N4
 
-Nick's N3
+Nick's N3 ^[http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3071855/] improves the original N3 inhomogeneity correction method.
 
-## Atropos
+```{r n4}
+ficorrupt = as.antsImage( as.array( fi ) * 1:length(fi[fi>=0]) )
+fifixed = n4BiasFieldCorrection( ficorrupt )
+```
 
-Expecation maximization segmentation ... MAP 
+```{r n4a, fig.cap='corrupted image',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+plot( ficorrupt )
+```
 
-## Weingarten map-based surface curvature and area
-
-The shape operator provides a beautiful way to compute the mean or Gaussian curvature (or related values) in any three-dimensional image ^[http://www.ncbi.nlm.nih.gov/pubmed/15344450].  The *ANTs* program that impl
-
-One of the most prominent and distinctive features of this style is the extensive use of sidenotes. There is a wide margin to provide ample room for sidenotes and small figures. Any use of a footnote will automatically be converted to a sidenote. ^[This is a sidenote that was entered using a footnote.] 
-
-If you'd like to place ancillary information in the margin without the sidenote mark (the superscript number), you can use the `\marginnote` command. \marginnote{This is a margin note.  Notice that there isn't a number preceding the note.}
-
-Note also that the two footnote references (`tufte_latex` and `books_be`, both defined below) were also included in the margin on the first page of this document.
-
-# Cortical thickness pipeline
-
-You can use the **xtable** package to format \LaTeX\ tables that integrate well with the rest of the Tufte handout style. Note that it's important to set the `xtable.comment` and `xtable.booktabs` options as shown below to ensure the table is formatted correctly for inclusion in the document.
-
-```{r, results='asis'}
-library(xtable)
-options(xtable.comment = FALSE)
-options(xtable.booktabs = TRUE)
-xtable(head(mtcars[,1:6]), caption = "First rows of mtcars")
+```{r n4b, fig.cap='n4 repair',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+plot( fifixed )
 ```
 
 
+## Atropos
+
+Expecation maximization segmentation with a variety of likelihood models and initialization strategies.  Incorporates multiple modalities and allows control of prior strength.  The finite mixture modeling (FMM) segmentation approach is the most popular. Prior constraints include the specification of a prior label image, prior probability images (one for each class), and/or an MRF prior to enforce spatial smoothing of the labels. 
+
+```{r atropos}
+img <- antsImageRead( getANTsRData("r16")  )
+mask <- getMask(img)
+segs1 <- kmeansSegmentation( img, 3, mask )
+
+# Use probabilities from k-means seg as priors
+feats <- list(img, iMath(img,"Laplacian"), iMath(img,"Grad") )
+segs2 <- atropos( d = 2, a = feats, m = '[0.2,1x1]',
+   c = '[2,0]',  i = segs1$probabilityimages, x = mask )
+```
+
+
+
+```{r atropos_0, fig.cap='kmeans result',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+plot( fi, segs1$segmentation )
+```
+
+
+```{r atropos_1, fig.cap='prior probability result with 2 feature channels',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+plot( fi, segs2$segmentation )
+```
+
+## Weingarten map-based surface curvature and area
+
+The shape operator provides a beautiful way to compute the mean or Gaussian curvature (or related values) in any three-dimensional image ^[http://www.ncbi.nlm.nih.gov/pubmed/15344450].  The *ANTs* program that implements this is called `SurfaceCurvature`.
+
+```{r shapeop}
+fi <- antsImageRead( getANTsRData( "mni" ) )
+fiseg = kmeansSegmentation( fi, 3 )
+fik <- weingartenImageCurvature( fi )
+```
+
+
+```{r shapeopViz, fig.cap='shape operator in 3D',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+plot(  fik, axis=3 )
+```
+
+```{r shapeopViz2, fig.cap='shape operator selects sulci',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+fisulc = antsImageClone( fik ) * 0
+selector = ( fiseg$segmentation == 2 & fik < 127.999 )
+fisulc[  selector ] = fik[ selector ]
+plot(  fi, fisulc, axis=3 )
+```
+
+# Cortical thickness pipeline
+
+You can use `antsCorticalThickness.sh` to reproduce our lifespan thickness analysis from the Freesurfer evaluation paper ^[http://www.ncbi.nlm.nih.gov/pubmed/24879923].
+
 # Multiple modality pipeline
 
-derka
+You can use our *neurobattery* to reproduce our adolescent multiple modality analysis from the paper ^[http://www.nature.com/articles/sdata20153].  The neurobattery is online and administered by Jeffrey T. Duda ^[https://github.com/jeffduda/NeuroBattery].
 
 # Brain mapping in the presence of lesions or other obstructions
 
@@ -170,9 +207,23 @@ Our fully automated registration and segmentation approach for the lesioned occl
 
 # Statistical pipelines
 
-derka
+*ANTs*-based statistical pipelines are best accessed through *ANTsR*.  We use these pipelines for:
 
-# Overview of ANTs programs
+* estimating cerebral blood flow with robust and data-driven methods
+
+* performing structural and functional connectivity measurements
+
+* employing biologically-regularized dimensionality reduction for hypothesis testing
+
+* implementing exploratory multivariate analysis tools such as *sparse canonical correlation analysis for neuroimaging* ^[http://www.sciencedirect.com/science/article/pii/S1053811913009841]
+
+* performing prediction studies ^[http://www.sciencedirect.com/science/article/pii/S1046202314003338]
+
+* associating modalities ^[http://www.sciencedirect.com/science/article/pii/S105381191400891X]
+
+and more basic studies such as mass univariate regression.
+
+# Overview of *ANTs* programs
 
 ANTs executables come in either binary ( compiled from `C++` ) or script form ( usually `bash` or `R` ).  Here, we summarize the relevants programs.
 
