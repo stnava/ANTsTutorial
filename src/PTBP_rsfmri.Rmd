@@ -19,11 +19,10 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 library(ANTsR)
-# set this for your own compilatio
-bd="/home/socs/csuser74/ANTsTutorial/"
-dd="/usr/local/pkgs/CREATE-MIA/"
-pre=paste(dd,"/data/ants_mm_input/PEDS012/20131101/",sep='')
-post=paste(dd,"/data/ants_mm_output/PEDS012/20131101/",sep='')
+# set this for your own compilation
+dd="/Users/stnava/data/NeuroBattery/"
+pre=paste(dd,"/data/input/PEDS012/20131101/",sep='')
+post=paste(dd,"/data/output/PEDS012/20131101/",sep='')
 fmrifn=paste(pre,"BOLD/PEDS012_20131101_bold_fc_1.nii.gz",sep='')
 if ( ! file.exists(fmrifn) ) stop(paste("No",fmri))
 ```
@@ -283,7 +282,7 @@ plot( ts( cbind( rowMeans(tsmatpre) ,
 
 Just use matrix multiplication.
 
-```{r tsavg,eval=FALSE}
+```{r tsavg,eval=TRUE}
 vec <- subset(aalimg, boldpre$maskImage > 0)
 nLabels <- max(vec)
 labels <- matrix(0, nrow = length(vec), ncol = nLabels)  
@@ -310,8 +309,8 @@ Now we can estimate connectivity from the BOLD data.
 
 We'll use some nice *ANTsR* tricks for this.
 
-```{r getgraphs,eval=FALSE}
-gmet <- makeGraph(tsavgcor, graphdensity = 0.02 )
+```{r getgraphs,eval=TRUE}
+gmet <- makeGraph(tsavgcor, graphdensity = 0.1 )
 ```
 
 Outputs
@@ -346,14 +345,13 @@ plot( gmet$community, gmet$mygraph)
 This is something we have to run "by hand"
 
 ```{r igrvizbrain,eval=FALSE}
- cnt<-getCentroids( aalimg, clustparam = 20 )
+ cnt<-getCentroids( aalimg, clustparam = 0 )
  aalcnt<-cnt[1:90,1:3] # cortex
  brain<-renderSurfaceFunction( surfimg=
    list( boldpre$maskImage ) , alphasurf=0.1,
    smoothsval = 1.5 )
  metweights=gmet$adjacencyMatrix[1:90,1:90]
- plotBasicNetwork( centroids = aalcnt,
-   brain, weights=metweights )
+ plotBasicNetwork( centroids = aalcnt, brain, weights=metweights, scaling=c(1,2) )
 ```
 
 ## Discussion

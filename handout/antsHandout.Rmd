@@ -137,11 +137,11 @@ fifixed = n4BiasFieldCorrection( ficorrupt )
 ```
 
 ```{r n4a, fig.cap='corrupted image',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot( ficorrupt )
+invisible( plot( ficorrupt ) )
 ```
 
 ```{r n4b, fig.cap='n4 repair',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot( fifixed )
+invisible( plot( fifixed ) )
 ```
 
 
@@ -163,12 +163,12 @@ segs2 <- atropos( d = 2, a = feats, m = '[0.2,1x1]',
 
 
 ```{r atropos_0, fig.cap='kmeans result',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot( fi, segs1$segmentation )
+invisible( plot( fi, segs1$segmentation ) )
 ```
 
 
 ```{r atropos_1, fig.cap='prior probability result with 2 feature channels',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot( fi, segs2$segmentation )
+invisible( plot( fi, segs2$segmentation ) )
 ```
 
 ## Weingarten map-based surface curvature and area
@@ -183,19 +183,32 @@ fik <- weingartenImageCurvature( fi )
 
 
 ```{r shapeopViz, fig.cap='shape operator in 3D',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot(  fik, axis=3 )
+invisible( plot(  fik, axis=3 ) )
 ```
 
 ```{r shapeopViz2, fig.cap='shape operator selects sulci',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 fisulc = antsImageClone( fik ) * 0
 selector = ( fiseg$segmentation == 2 & fik < 127.999 )
 fisulc[  selector ] = fik[ selector ]
-plot(  fi, fisulc, axis=3 )
+invisible( plot(  fi, fisulc, axis=3 ) )
 ```
 
 # Cortical thickness pipeline
 
 You can use `antsCorticalThickness.sh` to reproduce our lifespan thickness analysis from the Freesurfer evaluation paper ^[http://www.ncbi.nlm.nih.gov/pubmed/24879923].
+
+```{r kk, fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+img<-antsImageRead( getANTsRData("r16") ,2)
+mask<-getMask( img )
+segs<-kmeansSegmentation( img, k=3, kmask = mask)
+thk<-kellyKapowski( s=segs$segmentation, g=segs$probabilityimages[[2]],
+       w=segs$probabilityimages[[3]],its=45,r=0.5,m=1 )
+```
+
+
+```{r kkViz, fig.cap='thickness calculation',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+invisible( plot(  img, thk, window.overlay = c(0.1,max(thk)) ) )
+```
 
 # Multiple modality pipeline
 
