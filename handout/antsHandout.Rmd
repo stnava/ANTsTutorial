@@ -13,7 +13,7 @@ library(ANTsR)
 # Introduction
 
 \newthought{Advanced Normalization Tools}[^ants] is software for biomedical image analysis with a focus on registration, segmentation, geometric quantification and statistics. 
-Statistical methods are available in *ANTsR* ^[http://stnava.github.io/ANTsR/] which tightly integrates *ANTs* with the *R* statistical computing language.  This document briefly highlights major features of *ANTs*.
+Statistical methods are available in *ANTsR* ^[http://stnava.github.io/ANTsR/] which tightly integrates *ANTs* with the *R* statistical computing language.  This document briefly highlights *ANTs* features.
 
 # Provenance and Testing
 
@@ -203,7 +203,7 @@ You can use our *neurobattery* to reproduce our adolescent multiple modality ana
 
 # Brain mapping in the presence of lesions or other obstructions
 
-Our fully automated registration and segmentation approach for the lesioned occluded brain uses machine learning to identify and down-weight missing data.  One may also uses pre-identified inclusive masks to focus registration on healthy tissue ^[` antsRegistration -d 3 ... etcetera ... -x healthyTissueMask.nii.gz` ].
+Our fully automated registration and segmentation approach for the lesioned or occluded brain uses machine learning to identify and down-weight missing data.  One may also use pre-identified inclusive masks to focus registration on healthy tissue ^[` antsRegistration -d 3 ... etcetera ... -x healthyTissueMask.nii.gz` ].
 
 # Statistical pipelines
 
@@ -225,7 +225,7 @@ and more basic studies such as mass univariate regression.
 
 # Overview of *ANTs* programs
 
-ANTs executables come in either binary ( compiled from `C++` ) or script form ( usually `bash` or `R` ).  Here, we summarize the relevants programs.
+ANTs executables come in either binary ( compiled from `C++` ) or script form ( usually `bash` or `R` ).  Here, we summarize the relevant programs.
 
 
 ```{r, results='asis',echo=FALSE}

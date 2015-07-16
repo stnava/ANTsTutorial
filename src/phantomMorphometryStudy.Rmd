@@ -20,8 +20,8 @@ output:
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
 library(ANTsR)
-bd="/Users/stnava/data/ANTsTutorial/"
 bd="/home/socs/csuser74/ANTsTutorial/"
+bd="/Users/stnava/data/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
   stop( paste( "no image", templatefn ) )
@@ -45,7 +45,6 @@ sccansig=0
 
 * ... and a tissue study.
 
-# Population
 
 ## Look at population: S1
 
@@ -88,6 +87,7 @@ for ( x in 1:length(ilist) )
   plist[[x]]=gm
   }
 ```
+
 ## Quick look at segmentation results
 
 ```{r segment1,echo=FALSE}
@@ -138,11 +138,12 @@ plot( tx$warpedmovout  )
 ## And a registration overlay
 
 ```{r regtemplb,echo=FALSE}
-plot( template, tx$warpedmovout %>% iMath("Canny"),
+plot( template, tx$warpedmovout %>% iMath("Canny",1,5,12),
   window.overlay=c(0.5,1)  )
 ```
 
 # Jacobian
+
 
 ##  Now look at a log-jacobian image ...
 
@@ -156,9 +157,16 @@ plot( jlist[[1]])
 plot( jlist[[5]])
 ```
 
+
 ## Now we can do statistics on either warped segmentations or the log-jacobian
 
+.... but we should look at the demographics first.
+
+
+
 # Statistics
+
+## Always the first thing ...
 
 Look at the demographics file ...
 
@@ -168,7 +176,7 @@ knitr::kable(demog)
 
 ## Let's do a quick test on the jacobian
 
-`bigLMStats` is a great little function for
+Check out `bigLMStats`. It is a great little function for
 large (on the left) statistical studies ...
 
 ```{r jaclm}
@@ -189,6 +197,7 @@ implementation in `RcppEigen` or `RcppArmadillo`
 ```{r jaclmviz,echo=FALSE}
 plot( template, qvimg, window.overlay=c(0.99,1))
 ```
+
 
 ## Exercise ... repeat for the GM ...
 
@@ -213,8 +222,11 @@ gqvimg=makeImage( templatemask, 1-gqv )
 
 ## Try a multivariate version of the same study
 
+Do we believe that many aspects of cognition are fundamentally multivariate?
+
+
 ##  .... multivariate statistics in *R*
-\transdissolve
+
 ```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
 mypreds<-as.matrix( cbind( demog$vol*(-1), demog$vol*(-1) ) )
 sccan<-sparseDecom2(
@@ -232,7 +244,6 @@ Exercise: What happens to the permutation based significance
 when you vary parameters?
 
 ##  Visualizing multivariate statistics in *R*
-\transdissolve
 
 ```{r sccanviz,echo=FALSE,out.width='.6\\linewidth',message=FALSE,warning=FALSE,eval=TRUE}
 plot( template, sccansol, window.overlay=c(0.1,1.01) )
@@ -266,7 +277,7 @@ clust <- thresholdImage( tem, 82, 90 ) %>%
 ## Mapping to MNI space with *ANTsR*
 
 * Download the MNI template and its labels.  
-```{r mymnidl}
+```{r mymnidl,eval=TRUE}
 if ( ! exists("mymni") ) {
 # try getANTsRData if you have www access
   mymni<-list( antsImageRead(getANTsRData("mni") ),
@@ -279,14 +290,17 @@ if ( ! exists("mymni") ) {
 
 * Next define a pair of your template and its clusters.
 
-```{r mypair}
+```{r mypair,eval=TRUE}
 template_cluster_pair<-list(tem,clust)
 ```
 
 * Call the function to map to MNI space.
-```{r mymni}
+```{r mymni,eval=TRUE}
+t1=Sys.time()
 gcoords<-getTemplateCoordinates( template_cluster_pair ,
     mymni , convertToTal = TRUE )
+t2=Sys.time()
+print(t2-t1)
 ```
 
 * This performs a registration and returns the coordinates for each cluster.
@@ -297,7 +311,7 @@ gcoords<-getTemplateCoordinates( template_cluster_pair ,
 \small
 
 Show the table of results.
-```{r repomni,echo=FALSE}
+```{r repomni,echo=FALSE,eval=TRUE}
 knitr::kable( gcoords$templatepoints  )
 ```
 
@@ -310,3 +324,4 @@ knitr::kable( gcoords$templatepoints  )
 * Statistics of two flavors ....
 
 * Mapping to MNI coordinates.
+
