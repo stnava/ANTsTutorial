@@ -17,13 +17,13 @@ output:
     incremental: yes
 ---
 
-```{r setup,eval=FALSE,results='hide',warning=FALSE,echo=FALSE}
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 library(ANTsR)
-# set this for your own compilation
-bd="/Users/stnava/data/ANTsTutorial/"
-dd="/Users/stnava/data/"
-pre=paste(dd,"/NeuroBattery/data/input/PEDS012/20131101/",sep='')
-post=paste(dd,"/NeuroBattery/data/output/PEDS012/20131101/",sep='')
+# set this for your own compilatio
+bd="/home/socs/csuser74/ANTsTutorial/"
+dd="/usr/local/pkgs/CREATE-MIA/"
+pre=paste(dd,"/data/ants_mm_input/PEDS012/20131101/",sep='')
+post=paste(dd,"/data/ants_mm_output/PEDS012/20131101/",sep='')
 fmrifn=paste(pre,"BOLD/PEDS012_20131101_bold_fc_1.nii.gz",sep='')
 if ( ! file.exists(fmrifn) ) stop(paste("No",fmri))
 ```
@@ -104,9 +104,9 @@ We present *basic* processing strategies here:
 We do more or less the same thing for any
 time series modality.
 
-```{r motion,eval=FALSE}
+```{r motion,eval=TRUE}
 fmri = antsImageRead( fmrifn )
-amc = antsMotionCalculation(fmri)
+amc = antsMotionCalculation(fmri,moreaccurate=0)
 ```
 
 * Will motion correct with affine map
@@ -154,7 +154,7 @@ We now have an "anatomical" image ... the average BOLD.
 
 Let's quickly map to T1.
 
-```{r distcor,eval=FALSE}
+```{r distcor,eval=TRUE}
 t1seg=paste(post,"PEDS012_20131101_BrainSegmentation.nii.gz",sep='')
 t1n4=paste(post,"PEDS012_20131101_BrainSegmentation0N4.nii.gz",sep='')
 if ( file.exists(t1seg)  )
@@ -220,11 +220,11 @@ Nick prepackaged a generic processor for this ...
 
 * We have a few methods but `compcor` is nice.
 
-```{r nickpro,eval=FALSE}
+```{r nickpro}
 boldpre=preprocessfMRI( fmri,
   numberOfCompCorComponents = 6,
-  doMotionCorrection = TRUE,
-  useMotionCorrectedImage = TRUE,
+  doMotionCorrection = 0,
+  useMotionCorrectedImage = 0,
   spatialSmoothingType='none',
   spatialSmoothingParameters =
   mean( antsGetSpacing(fmri)[1:3] ),

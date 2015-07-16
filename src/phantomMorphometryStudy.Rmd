@@ -21,6 +21,7 @@ output:
 # set this for your own compilation
 library(ANTsR)
 bd="/Users/stnava/data/ANTsTutorial/"
+bd="/home/socs/csuser74/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
   stop( paste( "no image", templatefn ) )

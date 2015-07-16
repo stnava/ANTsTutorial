@@ -16,7 +16,8 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd="/Users/stnava/data/ANTsTutorial/"
+bd="/home/socs/csuser74/ANTsTutorial/"
+bd2="/usr/local/pkgs/CREATE-MIA/"
 options(width=50)
 knitr::opts_chunk$set(fig.path='figure/antsr-',fig.align='center',fig.show='hold',size='footnotesize')
 ```
@@ -133,7 +134,7 @@ Data Analysis from an Elementary Point of View](http://www.stat.cmu.edu/~cshaliz
 Search "r-project.org $+$ medical $+$ imaging"
 
 ```{r rinmi}
-dd<-read.csv( paste(bd,'data/RMI.csv',sep='') )
+dd<-read.csv( paste(bd2,'data/RMI.csv',sep='') )
 mdl<-lm( NPublications ~ Year +I(Year^2), data = dd)
 ```
 
