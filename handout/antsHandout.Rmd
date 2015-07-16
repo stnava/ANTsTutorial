@@ -78,17 +78,24 @@ ANTsR gives some quick registration options.  One can achieve similar performanc
 ```{r reg, fig.cap='quick parameter free registration',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 fi <- antsImageRead(getANTsRData("r16") )
 mi <- antsImageRead(getANTsRData("r64") )
+mytxr <- antsRegistration(fixed=fi, moving=mi, typeofTransform = c('Rigid') )
+mywarpedimager <- antsApplyTransforms( fixed=fi, moving=mi,
+  transformlist=mytxr$fwdtransforms )
 mytx <- antsRegistration(fixed=fi, moving=mi, typeofTransform = c('SyN') )
 mywarpedimage <- antsApplyTransforms( fixed=fi, moving=mi,
   transformlist=mytx$fwdtransforms )
 ```
 
 ```{r reg0, fig.cap='initial relative image positions',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot(fi, mi %>% iMath("Canny",1,5,12) )
+invisible( plot(fi, mi %>% iMath("Canny",1,5,12) ) )
 ```
 
-```{r reg1, fig.cap='quick parameter free registration',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
-plot(fi, mywarpedimage %>% iMath("Canny",1,5,12) )
+```{r reg1, fig.cap='rigidly aligned image positions',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+invisible( plot(fi, mywarpedimager %>% iMath("Canny",1,5,12) ) )
+```
+
+```{r reg2, fig.cap='quick deformable registration',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
+invisible( plot(fi, mywarpedimage %>% iMath("Canny",1,5,12) ) )
 ```
 
 ## Low-dimensional
