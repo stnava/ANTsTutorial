@@ -19,6 +19,7 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
+set.seed(11)
 library(ANTsR)
 bd="/Users/stnava/data/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
@@ -237,9 +238,15 @@ sccan<-sparseDecom2(
   sparseness=c( 0.2, -1 ),
   nvecs=1, its=10,
   cthresh=c(50,0),
-  smooth=0.0, perms=200 )
-knitr::kable(sccan$ccasummary)
+  smooth=0.5, perms=200 )
 sccansol <- sccan$eig1[[1]] %>% iMath("Normalize")
+```
+
+
+##  Significance based on permutation testing ...
+
+```{r multivarsig,echo=FALSE}
+knitr::kable(sccan$ccasummary)
 ```
 Exercise: What happens to the permutation based significance
 when you vary parameters?
