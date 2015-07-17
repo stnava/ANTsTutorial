@@ -20,7 +20,6 @@ output:
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
 library(ANTsR)
-bd="/home/socs/csuser74/ANTsTutorial/"
 bd="/Users/stnava/data/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
@@ -195,7 +194,7 @@ implementation in `RcppEigen` or `RcppArmadillo`
 ## Look at results
 
 ```{r jaclmviz,echo=FALSE}
-plot( template, qvimg, window.overlay=c(0.99,1))
+plot( template, qvimg, window.overlay=c(0.95,1))
 ```
 
 
@@ -228,14 +227,16 @@ Do we believe that many aspects of cognition are fundamentally multivariate?
 ##  .... multivariate statistics in *R*
 
 ```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
-mypreds<-as.matrix( cbind( demog$vol*(-1), demog$vol*(-1) ) )
+mypreds<-scale( as.matrix( cbind( demog$vol*(-1) ) ) )
+scaledMatrix = scale( jmat )
+scaledMatrix = scaledMatrix - min( scaledMatrix)
 sccan<-sparseDecom2(
-  inmatrix  = list( jmat, mypreds ),
+  inmatrix  = list( scaledMatrix, mypreds ),
   inmask    = c( templatemask , NA ) ,
   mycoption = 1,
   sparseness=c( 0.2, -1 ),
   nvecs=1, its=10,
-  cthresh=c(10,0),
+  cthresh=c(50,0),
   smooth=0.0, perms=200 )
 knitr::kable(sccan$ccasummary)
 sccansol <- sccan$eig1[[1]] %>% iMath("Normalize")
