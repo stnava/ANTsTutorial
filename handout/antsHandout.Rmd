@@ -195,7 +195,7 @@ invisible( plot(  fik, axis=3 ) )
 
 ```{r shapeopViz2, fig.cap='shape operator selects sulci',fig.fullwidth = FALSE,message=FALSE,warning=FALSE}
 fisulc = antsImageClone( fik ) * 0
-selector = ( fiseg$segmentation == 2 & fik < 127.999 )
+selector = ( fiseg$segmentation == 2 & fik < 0 )
 fisulc[  selector ] = fik[ selector ]
 invisible( plot(  fi, fisulc, axis=3 ) )
 ```
