@@ -240,7 +240,7 @@ sccan<-sparseDecom2(
   cthresh=c(50,0),
   smooth=0.5, perms=200 )
 sccanimgs = matrixToImages( t(sccan$eig1) , templatemask )
-sccansol <- sccanimgs %>% iMath("Normalize")
+sccansol <- sccanimgs[[1]] %>% iMath("Normalize")
 ```
 
 
