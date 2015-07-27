@@ -47,7 +47,7 @@ simLesion<-function(  img, s , w, thresh=0.01, mask=NA, myseed )
   i<-smoothImage(i,w)
   i[ mask != 1  ] <- 0
   i[ 1:(dim(img)[1]/2), 1:(dim(img)[2]-1) ]<-0
-  limg<-antsImageClone(img)*iMath(i,"Neg")
+  limg<-( -antsImageClone(img) )
   return( list(limg=limg, lesion=i ) )
 }
 ```
@@ -140,7 +140,7 @@ for ( i in 1:2 )
   temp<-mrvnrfs( list(seg,seg1) , list(list(ll$limg), list(ll1$limg) ),
     seg, rad=rad, nsamples = 50, ntrees=1000, multiResSchedule=mr )
   for ( k in 1:length( mr ) )
-    if ( length( rfm$rflist[[k]]$classes  ) == 
+    if ( length( rfm$rflist[[k]]$classes  ) ==
          length( temp$rflist[[k]]$classes )   )
       newrflist[[k]]<-combine( rfm$rflist[[k]], temp$rflist[[k]] )
   rfm$rflist<-newrflist
@@ -171,7 +171,7 @@ invisible( plot( seg2, window.img=c(0,max(seg2) ) ) )
 ```
 
 
-## Lesion probability 
+## Lesion probability
 
 Take a quick look at the lesion probability.
 ```{r vizprob,echo=FALSE}
@@ -179,7 +179,7 @@ invisible( plot( mmseg$probs[[1]][[ max(mmseg$seg)  ]] ) )
 ```
 
 
-## Dice overlap 
+## Dice overlap
 
 Now we compute the overlap.
 ```{r eval}
