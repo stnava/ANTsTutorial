@@ -19,9 +19,7 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd="/Users/stnava/data/ANTsTutorial/"
-bd2="/usr/local/pkgs/CREATE-MIA/"
-bd="/home/socs/csuser74/ANTsTutorial/"
+bd=paste(getwd(),"/",sep='')
 ```
 
 # Overview and resources
@@ -118,7 +116,6 @@ install.packages( c( pkgmin, pkgxtra ) )
 library(ANTsR)
 csvlink="http://files.figshare.com/1699436/ptbp_summary_demographics.csv"
 tfn=tempfile(fileext='.csv')
-demog = read.csv( paste( bd2, "data/ptbp_summary_demographics.csv", sep='' ) )
 if ( ! exists("demog") )
   {
   demog=download.file(csvlink,tfn)
@@ -143,8 +140,8 @@ str(demog[,11:20])
 ## Read the structural PTBP template image
 
 ```{r readstruct, echo=TRUE}
-t1fn = paste(bd2,
-  "./data/template/PTBP_T1_BrainCerebellum.nii.gz",
+t1fn = paste(bd,
+  "../data/template/PTBP_T1_BrainCerebellum.nii.gz",
   sep='')
 t1tem = antsImageRead( t1fn )
 ```
@@ -158,7 +155,7 @@ plot(t1tem,dorot=1,slices=10)
 ## Plot the CBF PTBP template image
 
 ```{r plotcbf, echo=FALSE, warning=FALSE}
-cbftem = paste(bd2,"./data/template/PTBP_CBF.nii.gz",sep='')
+cbftem = paste(bd,"../data/template/PTBP_CBF.nii.gz",sep='')
 cbftem = antsImageRead( cbftem )
 plot(cbftem,dorot=1,slices=10)
 ```
@@ -175,7 +172,7 @@ exts=c( "mprage_t1.nii.gz" ,
         "CorticalThickness.nii.gz",
         "BrainSegmentation.nii.gz",
         "AAL.nii.gz" )
-pre=paste( bd2,"data/Subjects/",id,"/",dt,"/*",sep='')
+pre=paste( bd,"../data/Subjects/",id,"/",dt,"/*",sep='')
 fns=Sys.glob( paste( pre, exts , sep='') )
 ```
 
@@ -219,8 +216,9 @@ plot( antsImageRead( fns[1] ), aal, dorot=1, slices=10,
 
 ## Review each modality
 ```{r mod1b, echo=FALSE}
-fa=antsImageRead( fns[2] ) %>% iMath("Canny")
-plot( antsImageRead( fns[1] ), fa, dorot=1, slices=10 )
+fa=( antsImageRead( fns[2] ) %>% iMath("Normalize") ) * 255
+fa=iMath(fa,"Canny",1,5,12)
+plot( antsImageRead( fns[1] ), fa, dorot=1, window.overlay=c(0.5,1),slices=10 )
 ```
 
 ## Count complete subject images
@@ -231,7 +229,7 @@ for ( x in 1:nrow(demog) )
   {
   id = demog$SubID[x]
   dt = demog$ScanDate[x]
-  pre = paste( bd2,"data/Subjects/",id,"/",dt,"/*",sep='')
+  pre = paste( bd,"../data/Subjects/",id,"/",dt,"/*",sep='')
   fns = Sys.glob( paste( pre, exts , sep='') )
   if ( length( fns ) == 6 ) havecompletesubject[x]=TRUE
   }
@@ -280,7 +278,7 @@ for ( x in which( havecompletesubject )[1:60] )
   {
   id = demog$SubID[x]
   dt = demog$ScanDate[x]
-  pre = paste( bd2,"data/Subjects/",id,"/",dt,"/*",sep='')
+  pre = paste( bd,"../data/Subjects/",id,"/",dt,"/*",sep='')
   fns = Sys.glob( paste( pre, exts , sep='') )
   t1 = antsImageRead( fns[1] )
   mytx = antsRegistration( t1tem, t1, "SyN" )
@@ -344,10 +342,10 @@ The optimal voting weights are then $w_x = [0.2, 0.8]^t.$
 ```{r jlftem, echo=TRUE, eval=FALSE, warning=FALSE }
 if ( !exists("ilist") )
   ilist=imageFileNames2ImageList(
-    Sys.glob( paste(bd2,"data/JLF/ilist*.nii.gz",sep='')) )
+    Sys.glob( paste(bd,"../data/JLF/ilist*.nii.gz",sep='')) )
 if ( !exists("seglist") )
   seglist=imageFileNames2ImageList(
-    Sys.glob( paste(bd2,"data/JLF/slist*.nii.gz",sep='')) )
+    Sys.glob( paste(bd,"../data/JLF/slist*.nii.gz",sep='')) )
 mk=getMask(t1tem)
 jlf=jointIntensityFusion( t1tem, mk, ilist,
   labelList=seglist, rad=rep(3,3), rSearch=2,
@@ -369,7 +367,7 @@ for ( i in 1:length(jlf$probimgs) )
 
 ```{r temper,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 if ( ! exists("jlf") ) {
-tf=paste(bd2,"/data/JLF_out/jlfout_",sep='')
+tf=paste(bd,"../data/JLF_out/jlfout_",sep='')
 kk=Sys.glob( paste(tf,"prob*nii.gz",sep='') )
 segfn=paste( tf,"seg.nii.gz", sep='')
 jlf=list( segimg=antsImageRead(segfn),
