@@ -239,7 +239,8 @@ sccan<-sparseDecom2(
   nvecs=1, its=10,
   cthresh=c(50,0),
   smooth=0.5, perms=200 )
-sccansol <- sccan$eig1[[1]] %>% iMath("Normalize")
+sccanimgs = matrixToImage( sccan$eig1[[1]] , templatemask )
+sccansol <- sccanimgs %>% iMath("Normalize")
 ```
 
 
@@ -332,4 +333,3 @@ knitr::kable( gcoords$templatepoints  )
 * Statistics of two flavors ....
 
 * Mapping to MNI coordinates.
-
