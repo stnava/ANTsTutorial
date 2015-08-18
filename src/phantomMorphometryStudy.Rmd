@@ -228,9 +228,7 @@ Do we believe that many aspects of cognition are fundamentally multivariate?
 ##  .... multivariate statistics in *R*
 
 ```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
-mypreds<-scale(
-  cbind( as.matrix( cbind( demog$vol*(-1) ) ),
-         as.matrix( cbind( demog$vol*(-1) ) ) ) )
+mypreds<-scale( as.matrix( cbind( demog$vol*(-1) ) ) )
 scaledMatrix = scale( jmat )
 scaledMatrix = scaledMatrix - min( scaledMatrix)
 sccan<-sparseDecom2(
@@ -240,7 +238,7 @@ sccan<-sparseDecom2(
   sparseness=c( 0.2, -1 ),
   nvecs=1, its=10,
   cthresh=c(50,0),
-  smooth=0.5, perms=2 )
+  smooth=0.5, perms=200 )
 sccanimgs = matrixToImages( (sccan$eig1) , templatemask )
 sccansol <- sccanimgs[[1]] %>% iMath("Normalize")
 ```
@@ -251,6 +249,7 @@ sccansol <- sccanimgs[[1]] %>% iMath("Normalize")
 ```{r multivarsig,echo=FALSE}
 knitr::kable(sccan$ccasummary)
 ```
+
 Exercise: What happens to the permutation based significance
 when you vary parameters?
 
