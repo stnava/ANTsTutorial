@@ -3,8 +3,6 @@ title: 'The Pediatric Template of Brain Perfusion: Eigenanatomy with *ANTsR*'
 author: "Brian B. Avants et al."
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    highlight: tango
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -242,13 +240,14 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   mdl=lm( locform, data=mydf )
   voxlm=bigLMStats( mdl , 1.e-8 )
   print(paste("begin low",outprefix) )
-  lowmat = randwhiten( imgmat , 10 )
+  lowmat = scale( lowrankRowMatrix( imgmat , 10 ) )
+  lowmat = lowmat - min( lowmat )
   print(paste("begin eanat",outprefix) )
-  imgeanat=sparseDecom( lowmat, imgmask, nvecs=nv, smooth=0.5,
-    sparseness=0.05, cthresh=20000, mycoption=0, its=2 )
+  imgeanat=sparseDecom( lowmat , imgmask, nvecs=nv, smooth=0.0,
+    sparseness=0.05, cthresh=20000, mycoption=1, its=1 )
   rm( lowmat )
   print(paste("end eanat",outprefix) )
-  eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
+  eproj=abs(  imgeanat$eig  )
   eproj=( eproj/rowSums(eproj) )
   imgproj = imgmat %*% t( eproj  )
   mydf=data.frame( mydf, imgproj )
@@ -258,10 +257,10 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   mdl1=lm( formbase, data=mydf )
   mdl2=lm( formtest, data=mydf )
   eanatlm=bigLMStats( mdl2 , 1.e-6 )
-  eseg=eigSeg( mask=imgmask, imgeanat$eig, F  )
+  eseg=eigSeg( mask=imgmask, matrixToImages( imgeanat$eig, imgmask), F  )
   ofn=paste( outprefix, '_eseg.nii.gz', sep='' )
   antsImageWrite( eseg , ofn )
-  anv=anova( mdl1, mdl2)
+  anv=anova( mdl1, mdl2 )
   return( list(mydf=mydf,
                voxlm=voxlm,
                eanatlm=eanatlm,
@@ -384,7 +383,7 @@ eanatproj <- function( demog, imgmat,
   for ( kk in 2:ncol(mydf) ) mydf[,kk]=antsrimpute( mydf[,kk] )
   imgmats=imgmat[wp,]
   locform=formula( paste( "imgmats ~", formulabase ,"+", formulatest ) )
-  eproj=abs( imageListToMatrix( imgeanat$eig , imgmask )  )
+  eproj=imgeanat$eig
   eproj=( eproj/rowSums(eproj) )
   imgproj = imgmats %*% t( eproj  )
   mydf=data.frame( mydf, imgproj )
@@ -572,33 +571,64 @@ knitr::kable( anova(mdl1,mdl2) )
 
 ## A little bit of CCA ...
 
-First, thickness ...
+First, FA-based prediction ...
 
-```{r thkcca,eval=FALSE}
+* Use a couple of tricks
+
+* Imputation
+
+```{r facca,eval=TRUE}
 sdemog=antsrimpute( demog[haveAllMerge,c(7,8)] )
 # above is a bug sparseDecom/2 does not handle NAs well
-temp=thkmat[haveAllMerge,][traing,]
-inmatrix=list( scale(temp,scale=FALSE) ,
-  scale( data.matrix(sdemog[traing,]), scale=FALSE) )
-if ( ! exists("sccan") )
-  sccan=sparseDecom2(inmatrix, c(thkmask, NA),
-     sparseness = c( 0.005, 0.3 ),
-     nvecs = 2, its = 15, cthresh = c(5000, 0),
-     perms = 0, smooth = 0.5, mycoption = 1 )
+````
+
+* Residualization ... 
+
+```{r facca0,eval=TRUE}
+rmat=residuals(lm( famat[haveAllMerge,] ~ demog$AgeAtScan[haveAllMerge] ))
 ```
+
+* Why do we use these steps?
+
+## A little bit of CCA ...
+
+Now, run the decomposition - a "supervised PCA".
+
+```{r facca2,eval=TRUE}
+temp=rmat[traing,]
+inmatrix=list( temp ,
+  data.matrix( sdemog[traing,])  )
+if ( ! exists("sccan") )
+  sccan=sparseDecom2(inmatrix, c(famask, NA),
+     sparseness = c( 0.01, 0.3 ),
+     nvecs = 10, its = 30, cthresh = c(5000, 0),
+     perms = 0, smooth = 0.0, mycoption = 0 )
+```
+
+```{r faccalow,eval=FALSE}
+# need this direction due to dimensionality restrictions
+cog=antsrimpute( data.matrix( demog[haveAllMerge,c(3,6:12)]) )
+dr=randcca( cog[traing,],  rmat[traing,], 6, 1 )
+K = t(dr$u)
+lowmat = ( K %*% t(cog[traing,]) ) %*% rmat[traing, ] 
+if ( ! exists("sccan") )
+  sccan=sparseDecom( lowmat, famask, nvecs=2, smooth=0.0,
+    sparseness=0.05, cthresh=20000,  its=2 )
+```
+
 
 ## Check the CCA regions
 
-```{r thkcca4,eval=FALSE,echo=FALSE}
-ccaeseg=eigSeg( thkmask, sccan$eig1, FALSE  )
-plot( thkmask, ccaeseg, axis=3, nslices=16 )
+```{r thkcca4,eval=TRUE,echo=FALSE}
+ccaeseg=eigSeg( famask, sccan$eig1, FALSE  )
+plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
 ## Look over cca results
 
 Which demographic variables match which imaging variables?
 
-```{r thkcca2,eval=FALSE}
+```{r thkcca2,eval=TRUE}
 rownames( sccan$eig2 )=colnames( sdemog )
 knitr::kable( sccan$eig2 )
 ```
@@ -607,19 +637,19 @@ knitr::kable( sccan$eig2 )
 
 PIQ prediction ...
 
-```{r thkcca3,eval=FALSE,echo=FALSE}
-sccanmat=imageListToMatrix( sccan$eig1, thkmask)
+```{r thkcca3,eval=TRUE,echo=FALSE}
+sccanmat=imageListToMatrix( sccan$eig1, famask)
 sccanmat=sccanmat/rowSums(sccanmat)
-sccanproj = thkmat[haveAllMerge,] %*% t( sccanmat )
-ccadf=data.frame( sdemog, sccanproj,
+sccanproj = famat[haveAllMerge,] %*% t( sccanmat )
+ccadf=data.frame( sdemog, sccanproj[,-1], # look at mdl
   gender=demog$Sex[haveAllMerge],
   age=demog$AgeAtScan[haveAllMerge])
-mdl=randomForest( Performance.IQ ~ . ,
-  data=ccadf[traing,c(2,3:6)] )
-pviq = predict( mdl,
-  newdata=ccadf[ testg,c(2,3:6)] )
-print( mean( abs( pviq - ccadf[testg,]$Performance.IQ) ) )
-cor.test( pviq, ccadf[testg,]$Performance.IQ )
+mdl=lm( Performance.IQ ~ . ,
+  data=ccadf[traing,-1] )
+pviq = predict( mdl, newdata=ccadf[ testg,-1] )
+mycog=ccadf[testg,]$Performance.IQ
+print( mean( abs( pviq - mycog) ) )
+cor.test( pviq, mycog )
 ```
 
 
@@ -629,45 +659,67 @@ Second, FA and CBF ...
 
 These modalities relate strongly to age ... how do they covary?
 
-```{r faccacbf,eval=TRUE}
-
-stop("DERKADERKA")
-
+```{r faccacbf,eval=FALSE}
 sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8)] )
 temp=famat[haveAllMerge,][traing,]
-# for ( i in 1:nrow(temp) )
-#  temp[i,]=temp[i,]-mean(temp[i,])
-temp2=cbfmat[haveAllMerge,][traing,] 
-temp3=thkmat[haveAllMerge,]
-temp=famat[haveAllMerge,][traing,]
-# for ( i in 1:nrow(temp2) )
-#    temp2[i,]=temp2[i,]-mean(temp2[i,])
-ranker=40
-# tempw2=randcca( temp3, temp, ranker, 1 )
-# tempw=randcca( temp, temp3, ranker, 1 )
-# tempw2p=randcca( temp3, temp[ sample(1:nrow(temp)), ], ranker, 1 )
-tempw=randwhiten( temp, ranker, 1 )
-tempw2=randwhiten( temp2, ranker, 1 )
-inmatrix=list( scale(tempw) , scale( tempw2 ) )
+for ( i in 1:nrow(temp) )
+  temp[i,]=temp[i,]-mean(temp[i,])
+temp2=cbfmat[haveAllMerge,][traing,]
+for ( i in 1:nrow(temp2) )
+    temp2[i,]=temp2[i,]-mean(temp2[i,])
+inmatrix=list( temp , temp2 )
 if ( ! exists("fcsccan") )
   fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
-     sparseness = c( 0.05, -0.05 ), verbose=1,
-     nvecs = 3, its = 10, cthresh = c(5000, 5000),
-     perms = 0, smooth = 0.5, mycoption = 1 )
+     sparseness = c( 0.05, -0.05 ),
+     nvecs = 3, its = 2, cthresh = c(5000, 5000),
+     perms = 0, smooth = 0.5, mycoption = 0 )
 ```
 
+
+```{r faccacbflow,eval=TRUE}
+temp=scale( famat[haveAllMerge,][traing,] )
+for ( i in 1:nrow(temp) )
+  temp[i,]=temp[i,]-mean(temp[i,])
+temp2=scale( cbfmat[haveAllMerge,][traing,] )
+# for ( i in 1:nrow(temp2) )
+#  temp2[i,]=temp2[i,]-mean(temp2[i,])
+ranker=20
+dr=randcca( temp2,  temp, ranker, 1 )
+K = t(dr$u)
+lowmat = ( K %*% t(temp2) ) %*% temp
+s <- svd( temp, nu = 0, nv = ranker )$v
+s2 <- svd( temp2, nu = 0, nv = ranker )$v
+innermat <- t( temp2 %*% s2 ) %*% ( temp %*% s ) 
+if ( ! exists("fcsccan") )
+  fcsccan=sparseDecom(  lowmat, famask, cthresh = 5000,
+     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0.0 )
+if ( ! exists("ccsccan") ) {
+  dr=randcca( temp,  temp2, ranker, 1 )
+  K2 = t(dr$u)
+  lowmat2 =  ( K2 %*% t(temp) ) %*% temp2
+  ccsccan=sparseDecom( lowmat2, thkmask, cthresh = 5000,
+     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0. )
+  }
+
+inmatrix=list( lowmat , lowmat2 )
+fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
+     sparseness = c( 0.05, -0.05 ),
+     nvecs = 3, its = 2, cthresh = c(5000, 5000),
+     perms = 0, smooth = 0.5, mycoption = 0 )
+fcsccan$projections[,1]
+```
 
 ## Check the CCA regions:FA
 
 ```{r faccavfa,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( famask, fcsccan$eig1, FALSE  )
+ccaeseg=eigSeg( famask, fcsccan$eigenanatomyimages, FALSE  )
 plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
 ## Check the CCA regions:CBF
 
-```{r faccavcbf,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( thkmask, fcsccan$eig2, FALSE  )
+```{r faccavcbf,eval=FALSE,echo=FALSE}
+ccaeseg=eigSeg( thkmask, ccsccan$eig, FALSE  )
 plot( thkmask, ccaeseg, axis=3, nslices=16 )
 ```
 
@@ -680,13 +732,14 @@ fcsccanproj = famat[haveAllMerge,] %*% t( fcsccanmat )
 fcsccanmat2=imageListToMatrix( fcsccan$eig2, thkmask)
 fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)
 fcsccanproj2 = cbfmat[haveAllMerge,] %*% t( fcsccanmat2 )
-ccadf=data.frame( sdemog, fcsccanproj,fcsccanproj2,
+ccadf=data.frame( sdemog, fcsccanproj, fcsccanproj2,
   gender=demog$Sex[haveAllMerge] )
-mdl=randomForest( AgeAtScan ~., data=ccadf[traing,] )
-mdl=lm( AgeAtScan ~ ., data=ccadf[traing,] )
-pviq = predict( mdl, newdata=ccadf[ testg, ] )
+lmdl=lm( AgeAtScan ~ ., data=ccadf[traing,c(1,4:7)] )
+mdl=randomForest( AgeAtScan ~., data=ccadf[traing,c(1,4:7)] )
+pviq = predict( lmdl, newdata=ccadf[ testg,c(1,4:7) ] )
 print( mean( abs( pviq - ccadf[testg,]$AgeAtScan) ) )
 cor.test( pviq, ccadf[testg,]$AgeAtScan )
+cor( fcsccanproj , fcsccanproj2 )
 ```
 
 
