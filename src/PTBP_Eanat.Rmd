@@ -596,20 +596,20 @@ Now, run the decomposition - a "supervised PCA".
 
 ```{r facca2,eval=TRUE}
 temp=rmat[traing,]
-inmatrix=list( temp ,
-  data.matrix( sdemog[traing,])  )
+inmatrix=list( scale(temp) ,
+ scale( data.matrix( sdemog[traing,])  ) )
 if ( ! exists("sccan") )
   sccan=sparseDecom2(inmatrix, c(famask, NA),
-     sparseness = c( 0.01, 0.3 ),
-     nvecs = 10, its = 30, cthresh = c(5000, 0),
-     perms = 0, smooth = 0.0, mycoption = 0 )
+     sparseness = c( 0.01, 0.3 ), verbose=0,
+     nvecs = 3, its = 10, cthresh = c(5000, 0),
+     perms = 0, smooth = 0.5, mycoption = 1 )
 ```
 
 ```{r faccalow,eval=FALSE}
 # need this direction due to dimensionality restrictions
 cog=antsrimpute( data.matrix( demog[haveAllMerge,c(3,6:12)]) )
 dr=randcca( cog[traing,],  rmat[traing,], 6, 1 )
-K = t(dr$u)
+K = t(dr$svd$u)
 lowmat = ( K %*% t(cog[traing,]) ) %*% rmat[traing, ] 
 if ( ! exists("sccan") )
   sccan=sparseDecom( lowmat, famask, nvecs=2, smooth=0.0,
@@ -620,7 +620,7 @@ if ( ! exists("sccan") )
 ## Check the CCA regions
 
 ```{r thkcca4,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( famask, sccan$eig1, FALSE  )
+ccaeseg=eigSeg( famask, matrixToImages(t(sccan$eig1),famask), FALSE  )
 plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
@@ -638,9 +638,8 @@ knitr::kable( sccan$eig2 )
 PIQ prediction ...
 
 ```{r thkcca3,eval=TRUE,echo=FALSE}
-sccanmat=imageListToMatrix( sccan$eig1, famask)
-sccanmat=sccanmat/rowSums(sccanmat)
-sccanproj = famat[haveAllMerge,] %*% t( sccanmat )
+sccanmat=sccan$eig1
+sccanproj = famat[haveAllMerge,] %*% ( sccanmat )
 ccadf=data.frame( sdemog, sccanproj[,-1], # look at mdl
   gender=demog$Sex[haveAllMerge],
   age=demog$AgeAtScan[haveAllMerge])
@@ -659,7 +658,7 @@ Second, FA and CBF ...
 
 These modalities relate strongly to age ... how do they covary?
 
-```{r faccacbf,eval=FALSE}
+```{r faccacbf,eval=TRUE}
 sdemog=antsrimpute( demog[haveAllMerge,c(3,7,8)] )
 temp=famat[haveAllMerge,][traing,]
 for ( i in 1:nrow(temp) )
@@ -671,12 +670,12 @@ inmatrix=list( temp , temp2 )
 if ( ! exists("fcsccan") )
   fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
      sparseness = c( 0.05, -0.05 ),
-     nvecs = 3, its = 2, cthresh = c(5000, 5000),
-     perms = 0, smooth = 0.5, mycoption = 0 )
+     nvecs = 3, its = 10, cthresh = c(5000, 5000),
+     perms = 0, smooth = 0.5, mycoption = 1 )
 ```
 
 
-```{r faccacbflow,eval=TRUE}
+```{r faccacbflow,eval=FALSE}
 temp=scale( famat[haveAllMerge,][traing,] )
 for ( i in 1:nrow(temp) )
   temp[i,]=temp[i,]-mean(temp[i,])
@@ -685,53 +684,54 @@ temp2=scale( cbfmat[haveAllMerge,][traing,] )
 #  temp2[i,]=temp2[i,]-mean(temp2[i,])
 ranker=20
 dr=randcca( temp2,  temp, ranker, 1 )
-K = t(dr$u)
+K = t(dr$svd$u)
 lowmat = ( K %*% t(temp2) ) %*% temp
 s <- svd( temp, nu = 0, nv = ranker )$v
 s2 <- svd( temp2, nu = 0, nv = ranker )$v
 innermat <- t( temp2 %*% s2 ) %*% ( temp %*% s ) 
-if ( ! exists("fcsccan") )
-  fcsccan=sparseDecom(  lowmat, famask, cthresh = 5000,
-     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0.0 )
+# if ( ! exists("fcsccan") )
+#  fcsccan=sparseDecom(  lowmat, famask, cthresh = 5000,
+#     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0.0 )
 if ( ! exists("ccsccan") ) {
   dr=randcca( temp,  temp2, ranker, 1 )
-  K2 = t(dr$u)
+  K2 = t(dr$svd$u)
   lowmat2 =  ( K2 %*% t(temp) ) %*% temp2
-  ccsccan=sparseDecom( lowmat2, thkmask, cthresh = 5000,
-     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0. )
+#  ccsccan=sparseDecom( lowmat2, thkmask, cthresh = 5000,
+#     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0. )
   }
 
 inmatrix=list( lowmat , lowmat2 )
 fcsccan=sparseDecom2(inmatrix, c(famask, thkmask),
      sparseness = c( 0.05, -0.05 ),
-     nvecs = 3, its = 2, cthresh = c(5000, 5000),
-     perms = 0, smooth = 0.5, mycoption = 0 )
+     nvecs = 3, its = 10, cthresh = c(5000, 5000),
+     perms = 0, smooth = 0.5, mycoption = 1 )
 fcsccan$projections[,1]
 ```
 
 ## Check the CCA regions:FA
 
 ```{r faccavfa,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( famask, fcsccan$eigenanatomyimages, FALSE  )
-plot( famask, ccaeseg, axis=3, nslices=16 )
+# ccaeseg=eigSeg( famask, matrixToImages(t(sccan$eig1),famask), FALSE  )
+# ccaeseg=eigSeg( famask, fcsccan$eigenanatomyimages, FALSE  )
+# plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
 ## Check the CCA regions:CBF
 
 ```{r faccavcbf,eval=FALSE,echo=FALSE}
-ccaeseg=eigSeg( thkmask, ccsccan$eig, FALSE  )
-plot( thkmask, ccaeseg, axis=3, nslices=16 )
+# ccaeseg=eigSeg( thkmask, ccsccan$eig, FALSE  )
+# plot( thkmask, ccaeseg, axis=3, nslices=16 )
 ```
 
 ## Quick CCA-based prediction: FA and CBF
 
 ```{r facca3cbf,eval=TRUE,echo=FALSE}
-fcsccanmat=imageListToMatrix( fcsccan$eig1, famask)
-fcsccanmat=fcsccanmat/rowSums(fcsccanmat)
-fcsccanproj = famat[haveAllMerge,] %*% t( fcsccanmat )
-fcsccanmat2=imageListToMatrix( fcsccan$eig2, thkmask)
-fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)
-fcsccanproj2 = cbfmat[haveAllMerge,] %*% t( fcsccanmat2 )
+fcsccanmat=fcsccan$eig1
+# fcsccanmat=fcsccanmat/rowSums(fcsccanmat)
+fcsccanproj = famat[haveAllMerge,] %*% ( fcsccanmat )
+fcsccanmat2=fcsccan$eig2
+# fcsccanmat2=fcsccanmat2/rowSums(fcsccanmat2)
+fcsccanproj2 = cbfmat[haveAllMerge,] %*% ( fcsccanmat2 )
 ccadf=data.frame( sdemog, fcsccanproj, fcsccanproj2,
   gender=demog$Sex[haveAllMerge] )
 lmdl=lm( AgeAtScan ~ ., data=ccadf[traing,c(1,4:7)] )
