@@ -1,11 +1,22 @@
-# ANTs tutorial / workshop at MD Anderson
+# ANTs tutorial / workshop at MD Anderson: Aug 11-12, 2016
 
 ## Overview
   * Cooking show format
   * Using data described [here](http://www.nature.com/articles/sdata20153)
   * Supplemented with a couple of elderly subject datasets.
 
+## Software
+
+  * [ANTs](http://stnava.github.io/ANTs/)
+  * [ITKR](http://stnava.github.io/ITKR/)
+  * [ANTsR](http://stnava.github.io/ANTsR/)
+
+The above tools depend on [R](http://cran.r-project.org) and [cmake](http://www.cmake.org).
+
+Supported platforms include OSX and Linux variants.  These may work on windows but no promises.
+
 ## Visualization
+
   * [ITK-snap](http://www.itksnap.org/pmwiki/pmwiki.php) for images
   * [Rstudio](https://www.rstudio.com) for statistics and plotting
   * [antsSurf](https://github.com/stnava/antsSurf) for surfaces
@@ -26,17 +37,17 @@
 
 Day 1: Registration, segmentation and framework
 
-| Time             |     Activity                              | Presenter|
-|:----------------:|-------------------------------------------|----------|
-|  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT |
-| 10:00 - 10:30    | Coffee and questions/discussion           | -- |
-| 10:30 - 11:15    | Delving into ANTs Registration            | NT |
-| 11:15 - 12:00    | Introduction to ANTsR and PTBP data       | BA |
-| 12:00 -  1:00    | Lunch and questions/discussion            | -- |
-|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? |
-|  2:00 -  2:30    | Coffee and questions/discussion           | -- |
-|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT |
-|  3:00 -  4:00    | Research topics and/or discussion         | ?? |
+| Time             |     Activity                              | Presenter| Notes |
+|:----------------:|-------------------------------------------|----------|-------|
+|  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT | standard material |
+| 10:00 - 10:30    | Coffee and questions/discussion           | -- | |
+| 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | PTBPIntro (first half) |
+| 11:15 - 12:00    | Delving into ANTs Registration            | NT | standard material + wiki |
+| 12:00 -  1:00    | Lunch and questions/discussion            | -- | |
+|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github example, PTBPIntro (2nd half) |
+|  2:00 -  2:30    | Coffee and questions/discussion           | -- | |
+|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT | ?? |
+|  3:00 -  4:00    | Research topics and/or discussion         | ?? | context dependent |
 
 ### August 12
 
