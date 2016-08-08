@@ -26,6 +26,7 @@ distribute simple, reproducible examples.   We also provide a [wiki](https://git
 | regFAQ |  https://github.com/stnava/ANTs/wiki/Tips-for-improving-registration-results | Registration FAQ  |
 |  snap |  https://github.com/stnava/ANTs/wiki/Using-ITK-SNAP-with-ANTs |  ITK-snap suggestions  |
 | DTI |  https://github.com/stnava/ANTs/wiki/Warp-and-reorient-a-diffusion-tensor-image |  transform DTI |
+| RegMask | https://github.com/ntustison/antsRegistrationWithMaskExample/blob/master/antsRegistrationExampleCommand.sh | ``antsRegistration`` with mask |
 |  |   |   |
 
 
@@ -73,7 +74,6 @@ The repository will should you how to do this, otherwise search for the answer f
 | template | https://github.com/ntustison/TemplateBuildingExample | Template building examples (brain and faces) |
 | antsCT | https://github.com/ntustison/antsCorticalThicknessExample | 2-D ``antsCorticalThickness.sh`` examples. |
 | antsJLF | https://github.com/ntustison/MalfLabelingExample | joint label fusion example. |
-| RegMask | https://github.com/ntustison/antsRegistrationWithMaskExample/blob/master/antsRegistrationExampleCommand.sh | ``antsRegistration`` with mask |
 | antsBrainExtraction | https://github.com/ntustison/antsBrainExtractionExample | Example for ``antsBrainExtraction.sh`` |
 | antsAtroposN4 | https://github.com/ntustison/antsAtroposN4Example | Example for ``antsAtroposN4.sh`` |
 | lungReg | https://github.com/ntustison/antsCtLungRegistrationExample | Combine separate left/right lung registrations |
