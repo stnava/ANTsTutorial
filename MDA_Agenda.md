@@ -44,9 +44,9 @@ Day 1: Registration, segmentation and framework
 | 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | PTBPIntro (first half) |
 | 11:15 - 12:00    | Delving into ANTs Registration            | NT | standard material + wiki |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | |
-|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github example, PTBPIntro (2nd half) |
+|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | githubEx, antsmultimodality, PTBPIntro (2nd half) |
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | |
-|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT | ?? |
+|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT | could be research related, MRVNRF, WMH? |
 |  3:00 -  4:00    | Research topics and/or discussion         | ?? | context dependent |
 
 ### August 12
