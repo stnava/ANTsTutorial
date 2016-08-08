@@ -59,7 +59,7 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 |:----------------:|--------------------------------------|----|-------|
 |  9:00 - 10:00    | Review of previous day and address questions | NT + BA | modify as needed |
 | 10:00 - 10:30    | Coffee and questions/discussion      | -- | -- |
-| 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol |
+| 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol, CreateTiledMosaic  |
 | 11:00 - 12:00    | Let's perform a "real study"         | BA | PTBP and VBM results |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
 |  1:00 -  2:00    | Dimensionality reduction in ANTsR    | BA | or maybe something else here, perhaps keep this slot flexible - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
