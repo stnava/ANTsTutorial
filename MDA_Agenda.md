@@ -42,30 +42,29 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 
 | Time             |     Activity                              | Presenter| Notes |
 |:----------------:|-------------------------------------------|----------|-------|
-|  9:00 - 10:00    | Overview of 2014 Neuroimage paper         | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
+|  9:00 - 10:00    | Overview of tools and 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | Data organization, multiple modality philosophy, PTBPIntro (first half) |
-| 11:15 - 12:00    | ANTs Registration and applying transforms to other modalities | NT | standard material, cars, C, morpheus, [chicken](https://github.com/stnava/chicken) + wiki + something new? |
+| 10:30 - 12:00    | ANTs Registration                         | BA | define transforms, metrics, connect to cars, C, chicken, wiki?  base off of WBIR_2012.key? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
-|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github examples, antsmultimodality, PTBPIntro (2nd half) |
+|  1:00 -  2:00    | Template building and mapping multiple modalities (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities |
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
-|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | ?? | could be research related, MRVNRF, [rfLesionSeg.Rmd](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd), WMH? |
-|  3:00 -  4:00    | Research topics and/or discussion         | ?? | context dependent, or resting state e.g. RestingBold.Rmd |
+|  2:30 -  3:30    | ANTs Segmentation: JLF, MRVRNF, etc       | BA + NT | could be research related, MRVNRF, [rfLesionSeg.Rmd](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd), WMH? |
+|  3:30 -  4:00    | Research topics and/or discussion         | NT | context dependent, or resting state e.g. RestingBold.Rmd |
 
 ### August 12
 
-Day 2: Multivariate statistics, visualization and prediction
+Day 2: The ANTsR framework for multivariate statistics and prediction
 
 | Time             |     Activity                         |Presenter| Notes |
 |:----------------:|--------------------------------------|----|-------|
 |  9:00 - 10:00    | Review of previous day and address questions | NT + BA | modify as needed |
 | 10:00 - 10:30    | Coffee and questions/discussion      | -- | -- |
-| 10:30 - 11:30    | Let's perform a "real study"         | BA | VBM and Eigenanatomy in PTBP |
-| 11:30 - 12:00    | Research topics and/or discussion    | ?? | Eanat in AD? or Nick/Brian RF seg? |
+| 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol |
+| 11:00 - 12:00    | Let's perform a "real study"         | BA | PTBP and VBM results |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
-|  1:00 -  2:00    | Resting state fMRI in ANTsR          | ?? | or maybe something else here, perhaps keep this slot flexible - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
+|  1:00 -  2:00    | Dimensionality reduction in ANTsR    | BA | or maybe something else here, perhaps keep this slot flexible - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
 |  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
-|  2:30 -  3:00    | Prediction & visualization           | BA | could do brainAge vs PTBP stats or AD example |
+|  2:30 -  3:00    | Prediction & visualization           | NT | could do brainAge vs PTBP stats or AD example or HOME example |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
