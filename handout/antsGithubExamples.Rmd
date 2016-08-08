@@ -29,7 +29,7 @@ distribute simple, reproducible examples.   We also provide a [wiki](https://git
 | RegMask | https://github.com/ntustison/antsRegistrationWithMaskExample/blob/master/antsRegistrationExampleCommand.sh | ``antsRegistration`` with mask |
 |  |   |   |
 
-# ANTsR: reproducible statistical analyses with bioimaging data 
+# ANTsR: reproducible science with bioimaging data 
 
 [ANTsR](https://github.com/stnava/ANTsR) illustrates several use cases throughout its [vignettes and documentation](https://github.com/stnava/ANTsR/releases/tag/latest).  Built in the style of *R*, most if not all ANTsR functions are accompanied by reproducible examples.  See, for instance, `?antsRegistration` in ANTsR.
 

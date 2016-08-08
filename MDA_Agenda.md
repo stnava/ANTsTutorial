@@ -30,8 +30,8 @@ Day 1: Registration, segmentation and framework
 |:----------------:|-------------------------------------------|----------|
 |  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- |
-| 10:30 - 11:15    | Going deeper into ANTs Registration       | NT |
-| 11:15 - 12:00    | Introduction to ANTsR                     | BA |
+| 10:30 - 11:15    | Delving into ANTs Registration            | NT |
+| 11:15 - 12:00    | Introduction to ANTsR and PTBP data       | BA |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- |
 |  1:00 -  2:00    | Templates and prior-based segmentation    | ?? |
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- |
