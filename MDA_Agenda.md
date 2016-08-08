@@ -62,7 +62,7 @@ Day 2: Multivariate statistics, visualization and prediction
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
 |  1:00 -  2:00    | Resting state fMRI in ANTsR          | ?? | or maybe something else here, perhaps keep this slot flexible |
 |  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
-|  2:30 -  3:00    | Prediction & visualization           | BA | could do brainAge example vs PTBP stats |
+|  2:30 -  3:00    | Prediction & visualization           | BA | could do brainAge vs PTBP stats or AD example |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
