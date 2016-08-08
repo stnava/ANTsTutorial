@@ -21,7 +21,7 @@ output:
 # set this for your own compilation
 set.seed(11)
 library(ANTsR)
-bd="/Users/stnava/data/ANTsTutorial/"
+bd="/Users/bavants/data/antsExamples/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
   stop( paste( "no image", templatefn ) )
@@ -80,26 +80,26 @@ ilist=imageFileNames2ImageList( allfns )
 plist=imageFileNames2ImageList( allfns )
 for ( x in 1:length(ilist) )
   {
-  mask=getMask( ilist[[x]] )  %>% iMath("MD",1)
-  img = ilist[[ x ]]
-  km=kmeansSegmentation(  img, 3, mask ) # segment
-  gm=km$probabilityimages[[2]]
-  plist[[x]]=gm
+  mask = getMask( ilist[[ x ]] )  %>% iMath("MD",1)
+  img  = antsImageClone( ilist[[ x ]] )
+  km   = kmeansSegmentation(  img, k = 3, kmask = mask ) # segment
+  gm   = km$probabilityimages[[2]]
+  plist[[ x ]] = gm
   }
 ```
 
 ## Quick look at segmentation results
 
 ```{r segment1,echo=FALSE}
-plot( ilist[[1]])
+plot( ilist[[1]] )
 ```
 
 ## Quick look at segmentation results
 
 ```{r segment1b,echo=FALSE}
-mask=getMask( ilist[[1]] )  %>% iMath("MD",1)
-img = ilist[[ 1 ]]
-km=kmeansSegmentation(  img, 3, mask ) # segment
+mask = getMask( ilist[[1]] )  %>% iMath("MD",1)
+img  = ilist[[ 1 ]]
+km   = kmeansSegmentation(  img, 3, mask ) # segment
 plot( km$segmentation, window.img=c(0,3) )
 ```
 
@@ -109,15 +109,15 @@ plot( km$segmentation, window.img=c(0,3) )
 ## Second: register the images
 
 ```{r register}
-template=antsImageRead( templatefn )
-jlist=imageFileNames2ImageList( allfns )
+template = antsImageRead( templatefn )
+jlist = imageFileNames2ImageList( allfns )
 for ( x in 1:length(ilist) )
   {
-  gm=plist[[x]]
-  tx=antsRegistration( template, ilist[[x]], "SyNCC" )
-  gmw=antsApplyTransforms( template, gm, tx$fwdtransforms)
-  plist[[x]]=gmw
-  jlist[[x]]=createJacobianDeterminantImage( template,
+  gm = plist[[x]]
+  tx = antsRegistration( template, ilist[[x]], "SyNCC" )
+  gmw = antsApplyTransforms( template, gm, tx$fwdtransforms)
+  plist[[ x ]] = gmw
+  jlist[[ x ]] = createJacobianDeterminantImage( template,
     tx$fwdtransforms[1], 1) %>% smoothImage(1.5)
   }
 ```
@@ -228,9 +228,8 @@ Do we believe that many aspects of cognition are fundamentally multivariate?
 ##  .... multivariate statistics in *R*
 
 ```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
-mypreds<-scale( as.matrix( cbind( demog$vol*(-1) ) ) )
+mypreds<-scale( as.matrix( cbind( demog$vol * ( -1 ) ) ) )
 scaledMatrix = scale( jmat )
-scaledMatrix = scaledMatrix - min( scaledMatrix)
 sccan<-sparseDecom2(
   inmatrix  = list( scaledMatrix, mypreds ),
   inmask    = c( templatemask , NA ) ,

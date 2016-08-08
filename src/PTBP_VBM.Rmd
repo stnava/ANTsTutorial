@@ -19,7 +19,7 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd="/Users/stnava/data/ANTsTutorial/"
+bd=path.expand( "~/Downloads/PTBP_Data/" )
 ```
 
 # Voxel-based morphometry with ANTsR

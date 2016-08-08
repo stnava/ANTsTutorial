@@ -22,5 +22,29 @@ distribute simple, reproducible examples.
 | chicken  | https://github.com/stnava/chicken  |  mapping points and global optimization  |   
 | template  | https://github.com/ntustison/TemplateBuildingExample  |  build an optimal template as in many different <br> ants papers that allow large-scale brain mapping  |   
 | visualization  | https://github.com/ntustison/antsVisualizationExamples | volumetric and surface-based rendering for images and overlays |
-|  | | |
+| ICA-eigenanatomy | https://github.com/stnava/blindSourceSeparationInANTsR | Reproduces a classic example in blind source separation and shows how to link with eigenanatomy |
+| BBM | https://github.com/stnava/BasicBrainMapping |  A simple and "fast" brain registration example |
+| jacobian | https://github.com/stnava/jacobianTests |  very basic test of jacobian |
+| sccan | https://github.com/stnava/sccanTutorial | introduction to sparse canonical correlationa analysis statistical studies - may be slightly out of date |
+| RMI | https://github.com/stnava/RMI | R in medical imaging tutorial material |
+| RMID | https://github.com/stnava/RMI_Data |  data for RMI |
+| morphing | https://github.com/stnava/Morpheus | morphing example with antsRegistration |
+| ASL | https://github.com/stnava/antsASLProcessing |  arterial spin labeling (ASL) processing pipeline using ANTs.
+ |
+| ANTsDoc | https://github.com/stnava/ANTsDoc |  Documentation for ANTs |
+| ANTsMM | https://github.com/stnava/ANTS_MultiModality | older talk on multiple modality ANTs processing |
+| fMRIANTs | https://github.com/stnava/fMRIANTs |  Minimal fMRI pre-processing with ANTS, may be slightly out of date |
+| featureMatching | https://github.com/stnava/featureMatching | old example of SIFT-like feature matching, subsumed by antsAI |
+| NB | https://github.com/stnava/NeuroBattery |  Using ANTs to process multiple MR image types for a single subject
+ |
+| Eanat1 | https://github.com/stnava/eigenanatomy1 |  basic eigenanatomy example in aging |
+| Asym | https://github.com/stnava/asymmetry | asymmetry analysis with ANTs |
+| C | https://github.com/stnava/C |  "C"lassic large deformation example |
+| PTBP | https://github.com/stnava/PediatricTemplateOfBrainPerfusion |  analysis in PTBP paper |
+| butterfly | https://github.com/stnava/butterfly |  multi-start registration example |
+| Haxby | https://github.com/stnava/Haxby2001 | reproduce face recognition decoding results (may be out of date but could be revived with small efforts) |
+| rfmri | https://github.com/stnava/RfMRI |  fmri processing examples in ANTsR (may be out of date but could be revived with small efforts) |
+| cars | https://github.com/stnava/cars |  an old example mapping between an american and german vehicle |
+| antsTut | https://github.com/stnava/ANTsTutorial | evolving tutorial materials |
+| a | b |  c |
 

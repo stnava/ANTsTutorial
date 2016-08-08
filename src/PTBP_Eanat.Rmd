@@ -19,10 +19,10 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd="/Users/stnava/data/ANTsTutorial/"
-set.seed(11)
+bd = path.expand( "~/data/antsExamples/PTBP_Data" )
+set.seed( 11 )
 library( candisc )
-library(ggplot2)
+library( ggplot2 )
 ```
 
 # Classical multivariate methods updated for neuroimaging
@@ -61,7 +61,7 @@ columns of $U$.
 Easy solution in *R*
 (w/o penalties):
 ```bash
-mysolution=svd(X)
+mysolution = svd( X )
 # or prcomp(X) if X not centered
 ```
 
@@ -70,30 +70,11 @@ The $\ell_1$ penalty is useful if $p >> n$.
 
 
 ## Principal Component Analysis Example
-```{r,out.width='.8\\linewidth',eval=TRUE,show='hide',echo=FALSE}
-PCbiplot <- function(PC, x="PC1", y="PC2") {
-    # PC being a prcomp object
-    data <- data.frame(obsnames=row.names(PC$x), PC$x)
-    plot <- ggplot(data, aes_string(x=x, y=y)) + geom_text(alpha=.4, size=3, aes(label=obsnames))
-    plot <- plot + geom_hline(aes(0), size=.2) + geom_vline(aes(0), size=.2)
-    datapc <- data.frame(varnames=rownames(PC$rotation), PC$rotation)
-    mult <- min(
-        (max(data[,y]) - min(data[,y])/(max(datapc[,y])-min(datapc[,y]))),
-        (max(data[,x]) - min(data[,x])/(max(datapc[,x])-min(datapc[,x])))
-        )
-    datapc <- transform(datapc,
-            v1 = .7 * mult * (get(x)),
-            v2 = .7 * mult * (get(y))
-            )
-    plot <- plot + coord_equal() + geom_text(data=datapc, aes(x=v1, y=v2, label=varnames), size = 5, vjust=1, color="red")
-    plot <- plot + geom_segment(data=datapc, aes(x=0, y=0, xend=v1, yend=v2), alpha=0.75, color="red")
-    plot
-}
-fit <- prcomp(USArrests, scale=T)
-```
 
 ```{r,out.width='.85\\linewidth',dev='pdf',echo=FALSE,eval=TRUE}
-PCbiplot(fit)
+library(ggbiplot)
+fit <- prcomp( USArrests, scale=T )
+biplot( fit )
 ```
 
 
@@ -121,7 +102,6 @@ Also easy in *R*
 
 CCA is "symmetric" in that the sets X and Y have equivalent
 status.  A truly multivariate multiple regression.
-
 
 
 ## Canonical Correlation Analysis Visualization 1
@@ -157,7 +137,7 @@ previously highlighted in \textcolor{blue}{blue}.
 
 * Compare training/testing reliability wrt e.g. voxel-wise univariate feature selection
 
-* Problem: find  voxels in training that predict X in testing
+* Problem: find voxels in training that predict X in testing
 
 * A separate tutorial is here [sccan tutorial](http://stnava.github.io/sccanTutorial/) that uses the same data.
 
@@ -241,7 +221,6 @@ voxandeanatstudy <- function( demog, imgmat, imgmask,
   voxlm=bigLMStats( mdl , 1.e-8 )
   print(paste("begin low",outprefix) )
   lowmat = scale( lowrankRowMatrix( imgmat , 10 ) )
-  lowmat = lowmat - min( lowmat )
   print(paste("begin eanat",outprefix) )
   imgeanat=sparseDecom( lowmat , imgmask, nvecs=nv, smooth=0.0,
     sparseness=0.05, cthresh=20000, mycoption=1, its=1 )
