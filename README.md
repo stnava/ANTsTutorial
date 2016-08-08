@@ -45,9 +45,17 @@ numbering from the tens to tens of thousands.
 
 We will also entertain other requests.
 
+**Data sources**
+
+A complete multi-modality subject http://files.figshare.com/1701182/PEDS012_20131101.zip
+
+PTBP demographics [here](https://ndownloader.figshare.com/files/1699436)
+
+PTBP tutorial data [here](https://www.dropbox.com/s/5p0vlx8en9uzbge/ ants_tutorial_data.zip?dl=1)
+
 **Software dependencies**
 
-Core: [ANTs](http://stnava.github.io/ANTs/), [ANTsR](http://stnava.github.io/ANTsR/)
+Core: [ANTs](http://stnava.github.io/ANTs/), [ITKR](http://stnava.github.io/ITKR/),  [ANTsR](http://stnava.github.io/ANTsR/)
 
 Suggested: [Camino](http://cmic.cs.ucl.ac.uk/camino/index.php?n=Tutorials.DTI), [ITK-SNAP](http://www.itksnap.org/pmwiki/pmwiki.php)
 

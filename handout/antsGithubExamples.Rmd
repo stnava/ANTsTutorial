@@ -59,8 +59,7 @@ The repository will should you how to do this, otherwise search for the answer f
 | ANTsMM | https://github.com/stnava/ANTS_MultiModality | older talk on multiple modality ANTs processing |
 | fMRIANTs | https://github.com/stnava/fMRIANTs |  Minimal fMRI pre-processing with ANTS, may be slightly out of date |
 | featureMatching | https://github.com/stnava/featureMatching | old example of SIFT-like feature matching, subsumed by antsAI |
-| NB | https://github.com/stnava/NeuroBattery |  Using ANTs to process multiple MR image types for a single subject
- |
+| NB | https://github.com/stnava/NeuroBattery |  Using ANTs to process multiple MR image types for a single subject |
 | Eanat1 | https://github.com/stnava/eigenanatomy1 |  basic eigenanatomy example in aging |
 | Asym | https://github.com/stnava/asymmetry | asymmetry analysis with ANTs |
 | C | https://github.com/stnava/C |  "C"lassic large deformation example |
