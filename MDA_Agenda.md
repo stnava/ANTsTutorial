@@ -64,7 +64,7 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
 |  1:00 -  2:00    | Dimensionality reduction in ANTsR    | BA | or maybe something else here, perhaps keep this slot flexible - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
 |  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
-|  2:30 -  3:00    | Prediction & visualization           | NT | could do brainAge vs PTBP stats or AD example or HOME example |
+|  2:30 -  3:00    | Prediction & visualization           | NT + BA | Multiple modality age/cog prediction in PTBP |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
