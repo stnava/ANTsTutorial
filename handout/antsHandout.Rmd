@@ -1,7 +1,7 @@
 ---
 title: "Advanced Normalization Tools Quick Reference"
 author: "Brian B. Avants"
-date: "July 15, 2015"
+date: "`r Sys.Date()`"
 output: rmarkdown::tufte_handout
 ---
 

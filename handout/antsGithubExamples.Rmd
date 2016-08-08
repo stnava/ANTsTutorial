@@ -8,7 +8,7 @@ output: html_document
 # Introduction
 
 [Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and 
-distribute simple, reproducible examples.   We also provide a [wiki](https://github.com/stnava/ANTs/wiki).
+distribute simple, reproducible examples.   We also provide a [wiki](https://github.com/stnava/ANTs/wiki) and the indispensable [antsHandout](https://github.com/stnava/ANTsTutorial/raw/master/handout/antsHandout.pdf).  We also perform [tutorials](https://github.com/stnava/ANTsTutorial) when invited to do so.
 
 # Wiki examples
 
