@@ -19,8 +19,11 @@ Supported platforms include OSX and Linux variants.  These may work on windows b
 
   * [ITK-snap](http://www.itksnap.org/pmwiki/pmwiki.php) for images
   * [Rstudio](https://www.rstudio.com) for statistics and plotting
-  * [antsSurf](https://github.com/stnava/antsSurf) for surfaces
-  * [antsVol](https://github.com/ntustison/antsVisualizationExamples) for rendering
+
+  * ANTs programs
+      * [antsSurf](https://github.com/stnava/antsSurf) for surfaces
+      * [antsVol](https://github.com/ntustison/antsVisualizationExamples) for rendering
+      * [CreateTiledMosaic](https://github.com/ntustison/antsVisualizationExamples) for mosaic rendering
 
 ## Datasets
 
