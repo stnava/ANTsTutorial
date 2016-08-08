@@ -1,7 +1,7 @@
 ---
 title: "Advanced Normalization Tools: <br> Examples that answer FAQs"
 author: "Brian B. Avants"
-date: "July 15, 2015"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
