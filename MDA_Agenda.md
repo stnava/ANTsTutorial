@@ -46,7 +46,7 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
 |  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github examples, antsmultimodality, PTBPIntro (2nd half) |
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
-|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT | could be research related, MRVNRF, rfLesionSeg.Rmd, WMH? |
+|  2:30 -  3:30    | Segment new data with priors, RFs, etc    | ?? | could be research related, MRVNRF, rfLesionSeg.Rmd, WMH? |
 |  3:00 -  4:00    | Research topics and/or discussion         | ?? | context dependent, or resting state e.g. RestingBold.Rmd |
 
 ### August 12
@@ -60,10 +60,10 @@ Day 2: Multivariate statistics, visualization and prediction
 | 10:30 - 11:30    | Let's perform a "real study"         | BA | VBM and Eigenanatomy in PTBP |
 | 11:30 - 12:00    | Research topics and/or discussion    | ?? | Eanat in AD? or Nick/Brian RF seg? |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
-|  1:00 -  2:00    | Resting state fMRI in ANTsR          | BA | or maybe something else here, perhaps keep this slot flexible |
+|  1:00 -  2:00    | Resting state fMRI in ANTsR          | ?? | or maybe something else here, perhaps keep this slot flexible |
 |  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
-|  2:30 -  3:00    | Prediction & visualization           | ?? | could do brainAge example vs PTBP stats |
-|  3:00 -  4:00    | Individual/group discussion          | ?? | -- |
+|  2:30 -  3:00    | Prediction & visualization           | BA | could do brainAge example vs PTBP stats |
+|  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
 
