@@ -21,6 +21,7 @@ Supported platforms include OSX and Linux variants.  These may work on windows b
   * [Rstudio](https://www.rstudio.com) for statistics and plotting
   * [antsSurf](https://github.com/stnava/antsSurf) for surfaces
   * [antsVol](https://github.com/ntustison/antsVisualizationExamples) for rendering
+  * [CreateTiledMosaic](https://github.com/ntustison/antsVisualizationExamples) for mosaic rendering
 
 ## Datasets
 
