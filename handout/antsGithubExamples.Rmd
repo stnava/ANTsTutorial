@@ -5,11 +5,6 @@ date: "July 15, 2015"
 output: html_document
 ---
 
-```{r, echo=FALSE}
-library(ggplot2)
-library(ANTsR)
-```
-
 # Introduction
 
 [Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and 
