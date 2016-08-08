@@ -12,12 +12,12 @@ library(ANTsR)
 
 # Introduction
 
-\newthought{Advanced Normalization Tools}[^ants] uses [github](www.github.com) to organize and 
+[Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and 
 distribute simple, reproducible examples.
 
 # Links to examples with brief comments
 
-| Example short name |  link  |   Comments |
+| Short name |  link  |   Comments |
 |---|---|---|
 | chicken  | https://github.com/stnava/chicken  |  mapping points and global optimization  |   
 | template  | https://github.com/ntustison/TemplateBuildingExample  |  build an optimal template as in many different <br> ants papers that allow large-scale brain mapping  |   
@@ -25,7 +25,7 @@ distribute simple, reproducible examples.
 | ICA-eigenanatomy | https://github.com/stnava/blindSourceSeparationInANTsR | Reproduces a classic example in blind source separation and shows how to link with eigenanatomy |
 | BBM | https://github.com/stnava/BasicBrainMapping |  A simple and "fast" brain registration example |
 | jacobian | https://github.com/stnava/jacobianTests |  very basic test of jacobian |
-| sccan | https://github.com/stnava/sccanTutorial | introduction to sparse canonical correlationa analysis statistical studies - may be slightly out of date |
+| sccan | https://github.com/stnava/sccanTutorial | introduction to sparse canonical correlation analysis statistical studies - may be slightly out of date |
 | RMI | https://github.com/stnava/RMI | R in medical imaging tutorial material |
 | RMID | https://github.com/stnava/RMI_Data |  data for RMI |
 | morphing | https://github.com/stnava/Morpheus | morphing example with antsRegistration |
