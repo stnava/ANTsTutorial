@@ -1,5 +1,5 @@
 ---
-title: "Advanced Normalization Tools: <br> Quick Reference to Github Examples"
+title: "Advanced Normalization Tools: <br> Examples that answer FAQs"
 author: "Brian B. Avants"
 date: "July 15, 2015"
 output: html_document
@@ -13,9 +13,39 @@ library(ANTsR)
 # Introduction
 
 [Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and 
-distribute simple, reproducible examples.
+distribute simple, reproducible examples.   We also provide a [wiki](https://github.com/stnava/ANTs/wiki).
 
-# Links to examples with brief comments
+# Wiki examples
+
+| Short name |  link  |   Comments |
+|---|---|---|
+| antscall| https://github.com/stnava/ANTs/wiki/Anatomy-of-an-antsRegistration-call | details what the ants command line means |
+| antsvers |  https://github.com/stnava/ANTs/wiki/ANTs-version-information |  identify your ants version |
+| act |  https://github.com/stnava/ANTs/wiki/antsCorticalThickness-and-antsLongitudinalCorticalThickness-output |  what do these programs ants\*CorticalThickness.sh produce? |
+| build |  https://github.com/stnava/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS |  how do i build ants?   |
+| nifti |  https://github.com/stnava/ANTs/wiki/How-does-ANTs-handle-qform-and-sform-in-NIFTI-1-images%3F |  How does ANTs handle qform and sform in NIFTI 1 images? |
+| amzn |  https://github.com/stnava/ANTs/wiki/Install-ANTs-on-Amazon |  Can I install ANTs on Amazon? |
+| regerr |  https://github.com/stnava/ANTs/wiki/My-registration-fails-with-an-error | How do I interpret a registration error?  |
+| orient | https://github.com/stnava/ANTs/wiki/Output-images-have-incorrect-orientation-or-origin  |  Why is my image orientation incorrect? |
+| mmm |  https://github.com/stnava/ANTs/wiki/simple-case:-T1-to-MNI-mapping-for-both-structure-and-pre-registered-fMRI |  Brief multiple modality mapping of fMRI to a template space via transform concatenation |
+| regFAQ |  https://github.com/stnava/ANTs/wiki/Tips-for-improving-registration-results | Registration FAQ  |
+|  snap |  https://github.com/stnava/ANTs/wiki/Using-ITK-SNAP-with-ANTs |  ITK-snap suggestions  |
+| DTI |  https://github.com/stnava/ANTs/wiki/Warp-and-reorient-a-diffusion-tensor-image |  transform DTI |
+|  |   |   |
+
+
+# Links to github examples with brief comments
+
+These are different than wiki examples in that they come with data.
+
+A user interested in these examples should *clone* the repository via *git*.  
+
+```{bash,eval=FALSE}
+git clone reponame.git
+```
+
+The repository will should you how to do this, otherwise search for the answer from the cloud.
+
 
 | Short name |  link  |   Comments |
 |---|---|---|
@@ -29,8 +59,7 @@ distribute simple, reproducible examples.
 | RMI | https://github.com/stnava/RMI | R in medical imaging tutorial material |
 | RMID | https://github.com/stnava/RMI_Data |  data for RMI |
 | morphing | https://github.com/stnava/Morpheus | morphing example with antsRegistration |
-| ASL | https://github.com/stnava/antsASLProcessing |  arterial spin labeling (ASL) processing pipeline using ANTs.
- |
+| ASL | https://github.com/stnava/antsASLProcessing |  arterial spin labeling (ASL) processing pipeline using ANTs. |
 | ANTsDoc | https://github.com/stnava/ANTsDoc |  Documentation for ANTs |
 | ANTsMM | https://github.com/stnava/ANTS_MultiModality | older talk on multiple modality ANTs processing |
 | fMRIANTs | https://github.com/stnava/fMRIANTs |  Minimal fMRI pre-processing with ANTS, may be slightly out of date |
@@ -46,5 +75,5 @@ distribute simple, reproducible examples.
 | rfmri | https://github.com/stnava/RfMRI |  fmri processing examples in ANTsR (may be out of date but could be revived with small efforts) |
 | cars | https://github.com/stnava/cars |  an old example mapping between an american and german vehicle |
 | antsTut | https://github.com/stnava/ANTsTutorial | evolving tutorial materials |
-| a | b |  c |
+|  |   |   |
 
