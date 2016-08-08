@@ -44,12 +44,12 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 |:----------------:|-------------------------------------------|----------|-------|
 |  9:00 - 10:00    | Overview of tools and 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 12:00    | ANTs Registration                         | BA | define transforms, metrics, connect to cars, C, chicken, wiki?  base off of WBIR_2012.key? |
+| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, C, chicken, wiki?  base off of WBIR_2012 talk? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
-|  1:00 -  2:00    | Template building and mapping multiple modalities (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities |
+|  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example)|
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
-|  2:30 -  3:30    | ANTs Segmentation: JLF, MRVRNF, etc       | BA + NT | could be research related, MRVNRF, [rfLesionSeg.Rmd](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd), WMH? |
-|  3:30 -  4:00    | Research topics and/or discussion         | NT | context dependent, or resting state e.g. RestingBold.Rmd |
+|  2:30 -  3:30    | ANTs Segmentation: **Atropos**, [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed)  |
+|  3:30 -  4:00    | Research topics and/or discussion         | NT | continue segmentation discussion here: stroke, tumor, WMH? |
 
 ### August 12
 
@@ -59,12 +59,12 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 |:----------------:|--------------------------------------|----|-------|
 |  9:00 - 10:00    | Review of previous day and address questions | NT + BA | modify as needed |
 | 10:00 - 10:30    | Coffee and questions/discussion      | -- | -- |
-| 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol, CreateTiledMosaic, `plot.antsImage`  |
-| 11:00 - 12:00    | Let's perform a "real study"         | BA | PTBP and VBM results |
+| 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol, CreateTiledMosaic, [plot.antsImage](https://github.com/stnava/ANTsR/blob/master/man/plot.antsImage.Rd)  |
+| 11:00 - 12:00    | Let's perform a "real study"         | BA | PTBP and [VBM](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_VBM.Rmd) results |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
-|  1:00 -  2:00    | Dimensionality reduction in ANTsR    | BA | or maybe something else here, perhaps keep this slot flexible - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
-|  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
-|  2:30 -  3:00    | Prediction & visualization           | NT + BA | Multiple modality age/cog prediction in PTBP |
+|  1:00 -  2:00    | Dimensionality reduction in ANTsR    | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
+|  2:00 -  2:30    | Coffee and questions/discussion      | -- | -- |
+|  2:30 -  3:00    | **Prediction & visualization**       | NT + BA | Multiple modality age/cog prediction in PTBP |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
