@@ -79,7 +79,7 @@ The repository will show you how to do this, otherwise search for the answer fro
 | antsJLF | https://github.com/ntustison/MalfLabelingExample | joint label fusion example. |
 | antsBrainExtraction | https://github.com/ntustison/antsBrainExtractionExample | Example for ``antsBrainExtraction.sh`` |
 | antsAtroposN4 | https://github.com/ntustison/antsAtroposN4Example | Example for ``antsAtroposN4.sh`` |
+| makePriors | https://github.com/ntustison/antsCookTemplatePriorsExample | "Cook" template priors |
 | lungReg | https://github.com/ntustison/antsCtLungRegistrationExample | Combine separate left/right lung registrations |
 | lobeLungJLF | https://github.com/ntustison/LungAndLobeEstimationExample | Use JLF to estimate lung and lobes |
 | LungRegMask | https://github.com/ntustison/ProtonCtLungMaskRegistration | Register lung masks from CT and MRI |
-| | | |
