@@ -35,17 +35,17 @@ Supported platforms include OSX and Linux variants.  These may work on windows b
 
 ### August 11
 
-Day 1: Registration, segmentation and framework
+Day 1: The ANTs framework for adaptable registration and segmentation
 
 | Time             |     Activity                              | Presenter| Notes |
 |:----------------:|-------------------------------------------|----------|-------|
 |  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT | standard material |
-| 10:00 - 10:30    | Coffee and questions/discussion           | -- | |
+| 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
 | 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | PTBPIntro (first half) |
-| 11:15 - 12:00    | Delving into ANTs Registration            | NT | standard material + wiki |
-| 12:00 -  1:00    | Lunch and questions/discussion            | -- | |
-|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github template example, antsmultimodality, PTBPIntro (2nd half) |
-|  2:00 -  2:30    | Coffee and questions/discussion           | -- | |
+| 11:15 - 12:00    | ANTs Registration and applying transforms to other modalities | NT | standard material, cars, C, morpheus, chicken + wiki + something new? |
+| 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
+|  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github examples, antsmultimodality, PTBPIntro (2nd half) |
+|  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
 |  2:30 -  3:30    | Segment new data with priors, RFs, etc    | NT | could be research related, MRVNRF, rfLesionSeg.Rmd, WMH? |
 |  3:00 -  4:00    | Research topics and/or discussion         | ?? | context dependent, or resting state e.g. RestingBold.Rmd |
 
@@ -53,20 +53,19 @@ Day 1: Registration, segmentation and framework
 
 Day 2: Multivariate statistics, visualization and prediction
 
-| Time             |     Activity                         |Presenter|
-|:----------------:|--------------------------------------|----|
-|  9:00 - 10:00    | Review of previous day               | NT |
-| 10:00 - 10:30    | Coffee and questions/discussion      | -- |
-| 10:30 - 11:30    | Let's perform a "real study"         | BA |
-| 11:30 - 12:00    | Research topics and/or discussion    | ?? |
-| 12:00 -  1:00    | Lunch and questions/discussion       | -- |
-|  1:00 -  2:00    | Resting state fMRI in ANTsR          | BA |
-|  2:00 -  2:30    | Coffee and questions/discussion      | ?? |
-|  2:30 -  3:00    | Population statistics & visualization| ?? |
-|  3:00 -  4:00    | Individual/group discussion          | ?? |
+| Time             |     Activity                         |Presenter| Notes |
+|:----------------:|--------------------------------------|----|-------|
+|  9:00 - 10:00    | Review of previous day and address questions | NT + BA | modify as needed |
+| 10:00 - 10:30    | Coffee and questions/discussion      | -- | -- |
+| 10:30 - 11:30    | Let's perform a "real study"         | BA | VBM and Eigenanatomy in PTBP |
+| 11:30 - 12:00    | Research topics and/or discussion    | ?? | Eanat in AD? or Nick/Brian RF seg? |
+| 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
+|  1:00 -  2:00    | Resting state fMRI in ANTsR          | BA | or maybe something else here, perhaps keep this slot flexible |
+|  2:00 -  2:30    | Coffee and questions/discussion      | ?? | -- |
+|  2:30 -  3:00    | Prediction & visualization           | ?? | could do brainAge example vs PTBP stats |
+|  3:00 -  4:00    | Individual/group discussion          | ?? | -- |
 
-
-### August 11:  Registration, segmentation and framework
+### August 11:  The ANTs framework for adaptable registration and segmentation
 
 __Topics__
 
@@ -93,6 +92,7 @@ __Topics__
         * ImageMath
         * antsSurf/antsVol
         * antsAI
+        * antsJointFusion
     * Core scripts
         * antsRegistrationSyN(Quick).sh
         * antsBrainExtraction.sh

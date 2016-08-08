@@ -43,7 +43,7 @@ A user interested in these examples should *clone* the repository via *git*.
 git clone reponame.git
 ```
 
-The repository will should you how to do this, otherwise search for the answer from the cloud.
+The repository will show you how to do this, otherwise search for the answer from the cloud.
 
 
 | Short name |  link  |   Comments |
