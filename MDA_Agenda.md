@@ -41,7 +41,7 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 |:----------------:|-------------------------------------------|----------|-------|
 |  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT | standard material |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | PTBPIntro (first half) |
+| 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | Data organization, multiple modality philosophy, PTBPIntro (first half) |
 | 11:15 - 12:00    | ANTs Registration and applying transforms to other modalities | NT | standard material, cars, C, morpheus, chicken + wiki + something new? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
 |  1:00 -  2:00    | Templates and prior-based segmentation    | ?? | github examples, antsmultimodality, PTBPIntro (2nd half) |
