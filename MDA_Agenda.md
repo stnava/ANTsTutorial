@@ -39,7 +39,7 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 
 | Time             |     Activity                              | Presenter| Notes |
 |:----------------:|-------------------------------------------|----------|-------|
-|  9:00 - 10:00    | Introduction, set-up, and ANTs overview   | NT | standard material |
+|  9:00 - 10:00    | Overview of 2014 Neuroimage paper         | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
 | 10:30 - 11:15    | Introduction to ANTsR and PTBP data       | BA | Data organization, multiple modality philosophy, PTBPIntro (first half) |
 | 11:15 - 12:00    | ANTs Registration and applying transforms to other modalities | NT | standard material, cars, C, morpheus, [chicken](https://github.com/stnava/chicken) + wiki + something new? |
