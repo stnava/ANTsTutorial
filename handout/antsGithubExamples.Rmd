@@ -1,0 +1,26 @@
+---
+title: "Advanced Normalization Tools: <br> Quick Reference to Github Examples"
+author: "Brian B. Avants"
+date: "July 15, 2015"
+output: html_document
+---
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(ANTsR)
+```
+
+# Introduction
+
+\newthought{Advanced Normalization Tools}[^ants] uses [github](www.github.com) to organize and 
+distribute simple, reproducible examples.
+
+# Links to examples with brief comments
+
+| Example short name |  link  |   Comments |
+|---|---|---|
+| chicken  | https://github.com/stnava/chicken  |  mapping points and global optimization  |   
+| template  | https://github.com/ntustison/TemplateBuildingExample  |  build an optimal template as in many different <br> ants papers that allow large-scale brain mapping  |   
+| visualization  | https://github.com/ntustison/antsVisualizationExamples | volumetric and surface-based rendering for images and overlays |
+|  | | |
+
