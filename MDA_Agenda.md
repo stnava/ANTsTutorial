@@ -47,7 +47,7 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 |:----------------:|-------------------------------------------|----------|-------|
 |  9:00 - 10:00    | Overview of tools and 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, C, [chicken](https://github.com/stnava/chicken), wiki?  base off of WBIR_2012 talk? |
+| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, [C](https://github.com/stnava/C), [chicken](https://github.com/stnava/chicken), wiki?  base off of WBIR_2012 talk? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
 |  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example)|
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
