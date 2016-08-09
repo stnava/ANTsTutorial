@@ -47,12 +47,12 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 |:----------------:|-------------------------------------------|----------|-------|
 |  9:00 - 10:00    | Overview of tools and 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, C, chicken, wiki?  base off of WBIR_2012 talk? |
+| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, C, [chicken](https://github.com/stnava/chicken), wiki?  base off of WBIR_2012 talk? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
 |  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example)|
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
 |  2:30 -  3:30    | ANTs Segmentation: [Atropos](https://github.com/ntustison/antsAtroposN4Example), [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd)([2nd example](https://github.com/ntustison/MalfLabelingExample)), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed)  |
-|  3:30 -  4:00    | Research topics and/or discussion         | NT | continue segmentation discussion here: stroke, tumor, WMH? |
+|  3:30 -  4:00    | Research topics and/or discussion         | NT | continue segmentation discussion here: stroke, [tumor](https://github.com/ntustison/BRATS2013/tree/master/SimpleExample), [WMH](https://github.com/ntustison/WatchMeHyperventilate)? |
 
 ### August 12
 
