@@ -1,0 +1,442 @@
+---
+title: 'The Pediatric Template of Brain Perfusion: VBM with *ANTsR*'
+author: "Brian B. Avants et al."
+date: "`r Sys.Date()`"
+output:
+  ioslides_presentation:
+    highlight: orchid
+    incremental: yes
+  beamer_presentation:
+    colortheme: orchid
+    fonttheme: structurebold
+    highlight: tango
+    incremental: yes
+    theme: AnnArbor
+    includes:
+      in_header: mystyle.tex
+    toc: yes
+---
+
+```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
+library( ANTsR )
+# set this for your own compilation
+bd=path.expand( "~/Downloads/PTBP_Data/" )
+slnum = 8
+```
+
+# Voxel-based morphometry with ANTsR
+
+## Voxel-based morphometry with ANTsR
+
+Voxel-based morphometry is a classic approach to performing inferential brain mapping.
+
+VBM performs "mass univariate testing"
+
+* regression at each voxel while controlling for covariates
+
+* correction for multiple comparisons testing
+
+We present a rapid VBM approach in ANTsR that is flexible, powerful and 
+easily extensible to alternative testing scenarios.
+
+## Core Dataset
+
+We employ the PTBP dataset
+
+* thickness
+
+* FA
+
+* CBF
+
+
+## Organization of voxel data
+
+* image in standardized coordinate system
+
+* mask in the standardized space
+    * this is a powerful idea - very general
+    
+* smooth, etc and convert to a matrix 
+
+
+## Collect the demographic data first
+
+This is our *organizing principle* $\rightarrow$ **tidy neuroimaging data**
+
+If you do not know your subjects, you do not know their images.
+
+```{r demog}
+demog=read.csv(paste(bd,"data/ptbp_summary_demographics.csv",sep=''))
+demog=demog[ , 1:13 ] # keep only relevant data
+```
+
+
+## Quickly look at the demographic data 
+
+```{r demog2}
+str( demog )
+```
+
+## Investigate distributions
+
+FIXME
+
+## Building a matrix of thickness data
+
+```{r thkmatTry}
+# get files
+fns = Sys.glob( paste(bd,
+  "data/Subjects/PEDS*/*/*CorticalThickness.nii.gz",sep='')  )
+print( length( fns ) )
+print( nrow( demog ) )
+```
+
+but wait .... they may not all be in the demographics file
+
+## A more excruciating process required by longitudinal data
+
+Label the demographic data by whether it is or is not baseline.
+
+```{r isbase}
+isBase  = rep( FALSE, nrow( demog ) )
+uids = unique( demog$SubID )
+n    = length( uids )
+for ( i in 1:n ) {
+  locsel = demog$SubID == uids[ i ]
+  # works because of our date format
+  minAge = min( demog$ScanDate[ locsel ] ) 
+  locsel = demog$SubID == uids[ i ] & demog$ScanDate == minAge
+  if ( sum( locsel ) == 1 ) isBase[ locsel ] = TRUE else stop("Error - should have only one")
+  }
+if ( ("isBase" %in% names( demog )) == FALSE ) 
+  demog = cbind( demog, isBase=isBase )
+```
+
+## A more excruciating process required by longitudinal data
+
+```{r thkmat}
+extType = "CorticalThickness.nii.gz"
+extType = "MeanCBFWarpedToT1.nii.gz"
+fns  = rep( NA, nrow( demog ) )
+for ( i in 1:nrow( demog ) ) {
+  locfns = Sys.glob( paste(bd,"data/Subjects/",
+    demog$SubID[i],"/",demog$ScanDate[i],"/*", extType ,sep='')  )
+  if ( length( locfns ) > 1 ) stop( "error - should check the data" )
+  # take only baseline data
+  if ( demog$isBase[i] == TRUE ) fns[ i ] = locfns[ 1 ] 
+  }
+``` 
+
+## Create a sub-demographics file 
+
+Make a sensible data organization and check it.
+
+```{r subdemog}
+selTh = !is.na( fns )
+subdemog = cbind( demog[ selTh,  ] , thkFns=fns[ selTh ] )
+subdemog$thkFns = as.character( subdemog$thkFns )
+# throw in a logical check
+if ( ! all(  subdemog$isBase )  ) 
+  stop("Should have only baseline data")
+if ( any(  is.na(subdemog$thkFns )  ) ) 
+  stop("No filenames should be NA")
+```
+
+Now let us move on to doing the actual statistics.
+
+## General principles
+
+We denote a mass univariate test as:
+
+$$ X \approx age + gender $$ 
+
+where $X$ is the voxel matrix of dimension $n \times p$
+
+**vs** 
+
+$$ age \approx X_i + gender $$ 
+
+where $X_i$ denotes one column of the matrix $X$.
+
+Which is better?
+
+## Now we must define the mask
+
+This can be problematic but let us take a simple approach.
+
+```{r makeThMask}
+# load the images
+ilist = imageFileNames2ImageList( subdemog$thkFns )
+avgthk = antsAverageImages( ilist )
+# normalization is not great but let us go with it
+```
+
+We average.
+
+## Now we must define the mask: Plot average image
+
+
+```{r makeThMaskB}
+plot( avgthk, slices=slnum )
+```
+
+
+## Now we must define the mask: 2
+
+Use a canned function but check the result.
+
+```{r makeThMask2}
+mskthk = getMask( avgthk )
+plot( avgthk, mskthk, slices=slnum )
+# let's alter it some
+mskthk = getMask( avgthk, lowThresh = mean( avgthk )*5, cleanup=0 )
+plot( avgthk, mskthk, slices=slnum )
+```
+
+We should check the result and modify if needed.
+
+See `?getMask`.
+
+
+## Now we must define the mask: 3
+
+let's alter the mask some
+
+```{r makeThMask3}
+mskthk = getMask( avgthk, lowThresh = mean( avgthk )*5, cleanup=0 )
+plot( avgthk, mskthk, slices=slnum )
+```
+
+
+## Thickness matrix
+
+Finally!!
+
+```{r thkMat}
+voxmat = imageListToMatrix( ilist, mskthk )
+# or faster if you have the mask already ...
+voxmat = imagesToMatrix( subdemog$thkFns, mskthk )
+```
+
+Now that we've worked it all out, this is pretty easy.
+
+## review
+
+* Identified demographics file
+
+* Filtered and inspected the demographics file
+
+* Joined the appropriate images with the demographics
+
+* Identified the brain regions we wanted to test
+    * what if you wanted something different / very specific?
+    * how did we choose the mask?
+    
+* Converted the dataset to a matrix 
+
+* Did we forget something?
+    * should we have smoothed the data?
+    * should we have checked for outliers?
+    
+## Checking the imaging data
+
+This is a data-driven inspection process - needs the `moments` package.
+
+```{r imginspection}
+riid = rapidlyInspectImageData( subdemog$thkFns, 3 )
+print( colnames( riid ) )
+```
+
+## Checking the imaging data: 2
+
+This is a data-driven inspection process - needs `fpc`, `DMwR` packages.
+
+```{r imginspection2}
+if ( !usePkg("DMwR") | ! usePkg("fpc") )
+   { print("Need DMwR and fpc packages") } else {
+  pamres <- fpc::pamk( riid, 1:4 )
+  outlier.scores <- DMwR::lofactor( riid, k=2 )
+  outliers <- order( outlier.scores )
+  }
+```
+
+## Checking the imaging data: 3
+
+```{r imginspection3,echo=FALSE}
+if ( !usePkg("DMwR") | ! usePkg("fpc") )
+   { print("Need DMwR and fpc packages") } else {
+  hist( outlier.scores )
+  }
+```
+
+# Should we worry?
+
+Let us be conservative ...
+
+```{r imginspection4}
+olsel = outlier.scores < 3.0
+subdemog = subdemog[ olsel , ]
+ilist = ilist[ olsel ]
+voxmat = imagesToMatrix( subdemog$thkFns, mskthk )
+print( dim( voxmat ) )
+```
+
+## ok ... now we can actually do stats
+
+Thankfully, Ben Kandel implemented `?bigLMStats` to make this quick.
+
+```{r blmstats0}
+subdemog$BV = subdemog$BV / mean( subdemog$BV )
+myformula = 
+  as.formula( "voxmat ~ BV + stats::poly( AgeAtScan, 2 ) + Sex + 
+    antsrimpute( FullScaleIQ )" )
+mdl = lm( myformula, data = subdemog )
+bmdl = bigLMStats( mdl  )
+print( names( bmdl ) )
+```
+
+This also might answer our previous question regarding $X \approx ... $ covariates ...
+
+
+## bigLMStats
+
+The output `bmdl` is well-organized.  Let's take a quick look.
+
+```{r blmstats1}
+myBetas = bmdl$beta.t
+myPVs = bmdl$beta.pval
+for ( i in 1:nrow( myBetas ) )
+  print( paste( rownames( myBetas )[i], max(abs(myBetas[i,])), min( myPVs[i,]) ) )
+```
+
+## bigLMStats: Multiple comparisons corrected
+
+Let us use a default approach.
+
+```{r blmstats2}
+myQVs = myPVs
+for ( i in 1:nrow( myBetas ) )
+  {
+  myQVs[ i, ] = p.adjust(  myPVs[i,] )
+  if (  min( myQVs[i,]) <= 0.05 ) 
+    print( paste( rownames( myBetas )[i], min( myQVs[i,])  ) )
+  }
+mySurvivors = which( apply( myQVs, FUN=min, MARGIN=1 ) <= 0.05 )
+```
+
+## Plot the "interesting" results ...
+
+```{r pblmstats,echo=FALSE}
+pvimg1 = makeImage( mskthk, 1.0 - myQVs[ mySurvivors[1], ] )
+plot( avgthk, pvimg1, window.overlay = c(0.9,1), slice=slnum )
+```
+
+## Ummm ... Maybe we should have smoothed the data?
+
+Let us fix that.
+
+```{r smmat}
+s = 8.0
+silist = list( )
+for ( i in 1:length( ilist  ) )
+  silist[[ i ]] = smoothImage( ilist[[ i ]], c( s, 0.0, s ), FWHM=T )
+voxmat = imageListToMatrix( silist, mskthk )
+```
+
+## Revisit the statistical analysis
+
+```{r mysmoothstats,echo=FALSE}
+mdl = lm( myformula, data = subdemog )
+bmdl = bigLMStats( mdl  )
+myBetas = bmdl$beta.t
+myPVs = bmdl$beta.pval
+myQVs = myPVs
+for ( i in 1:nrow( myBetas ) )
+  {
+  myQVs[ i, ] = p.adjust(  myPVs[i,]  )
+  if (  min( myQVs[i,]) <= 0.1 ) 
+    print( paste( rownames( myBetas )[i], min( myQVs[i,]), sum(myQVs[i,]<=0.05)  ) )
+  }
+mySurvivors = which( apply( myQVs, FUN=min, MARGIN=1 ) <= 0.05 )
+betaimg1 = makeImage( mskthk, myBetas[ mySurvivors[1], ] * (-1) )
+plot( avgthk, betaimg1, window.overlay = c(6,max(betaimg1)), slice=slnum )
+```
+
+## Let's repeat this for another modality: FA
+
+```{r favox,eval=TRUE,echo=FALSE}
+extType = "30dir_fa_anatomical.nii.gz"
+fns  = rep( NA, nrow( demog ) )
+for ( i in 1:nrow( demog ) ) {
+  locfns = Sys.glob( paste(bd,"data/Subjects/",
+    demog$SubID[i],"/",demog$ScanDate[i],"/*", extType ,sep='')  )
+  if ( length( locfns ) > 1 ) stop( "error - should check the data" )
+  # take only baseline data
+  if ( demog$isBase[i] == TRUE ) fns[ i ] = locfns[ 1 ] 
+  }
+selFA = !is.na( fns )
+subdemog2 = cbind( demog[ selFA,  ] , faFns=fns[ selFA ] )
+subdemog2$faFns = as.character( subdemog2$faFns )
+```
+
+
+## Now we must define the FA mask
+
+This can be problematic but let us take a simple approach.
+
+```{r makeFAMask}
+# load the images
+ilist = imageFileNames2ImageList( subdemog2$faFns )
+avgthk = antsAverageImages( ilist )
+mskthk = getMask( avgthk, lowThresh = mean( avgthk )*5, cleanup=0 )
+s = 8.0
+silist = list( )
+for ( i in 1:length( ilist  ) )
+  silist[[ i ]] = smoothImage( ilist[[ i ]], c( s, 0.0, s ), FWHM=T )
+voxmat2 = imageListToMatrix( silist, mskthk )
+```
+
+## Plot the FA mask
+
+```{r}
+plot( avgthk, mskthk, slices=slnum )
+```
+
+## ok ... now we can actually do FA stats
+
+And the survivors are ... 
+
+```{r blmstatsFA,echo=FALSE}
+subdemog2$BV = subdemog2$BV / mean( subdemog2$BV )
+myformula = 
+  as.formula( "voxmat2 ~ BV + stats::poly( AgeAtScan, 1 ) + Sex + 
+    antsrimpute( FullScaleIQ )" )
+mdl2 = lm( myformula, data = subdemog2 )
+bmdl2 = bigLMStats( mdl2  )
+myBetas = bmdl2$beta.t
+myPVs = bmdl2$beta.pval
+myQVs = myPVs
+for ( i in 1:nrow( myBetas ) )
+  {
+  myQVs[ i, ] = p.adjust(  myPVs[i,], 'none' )
+  if (  min( myQVs[i,]) <= 0.05 ) 
+    print( paste( rownames( myBetas )[i], min( myQVs[i,])  ) )
+  }
+mySurvivors = which( apply( myQVs, FUN=min, MARGIN=1 ) <= 0.05 )
+```
+
+## Plot the "interesting" results in FA
+
+```{r pblmstatsFA,echo=FALSE}
+pvimg1 = makeImage( mskthk, 1.0 - myQVs[ mySurvivors[4], ] )
+plot( avgthk, pvimg1, window.overlay = c(0.95,1), slice=slnum )
+```
+
+## What could we do to make inference across these modalities?
+
+.... `?sparseDecom2`
+
+but we will deal with that later - ok?
+
+ok!
