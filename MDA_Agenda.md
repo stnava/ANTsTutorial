@@ -1,7 +1,10 @@
 # ANTs tutorial / workshop at MD Anderson: Aug 11-12, 2016
 
 ## Overview
-  * Cooking show format
+  * Discussion and demonstration format:
+      * We would like to promote as much interaction as possible.
+      * The content can easily be adapted "on the fly" depending on audience
+      interest and participation.
   * Using data described [here](http://www.nature.com/articles/sdata20153)
   * Supplemented with a couple of elderly subject datasets.
 
