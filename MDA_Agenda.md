@@ -63,12 +63,19 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 |  9:00 - 10:00    | Review of previous day and address questions | NT + BA | modify as needed |
 | 10:00 - 10:30    | Coffee and questions/discussion      | -- | -- |
 | 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol, CreateTiledMosaic, [plot.antsImage](https://github.com/stnava/ANTsR/blob/master/man/plot.antsImage.Rd)  |
-| 11:00 - 12:00    | [ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes). Let's perform a ["real study"](https://github.com/stnava/ANTsTutorial/blob/master/src/phantomMorphometryStudy.Rmd)         | BA | PTBP and [VBM](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_VBM.Rmd) results |
+| 11:00 - 12:00    | Let's perform a ["real study"](https://github.com/stnava/ANTsTutorial/blob/master/src/phantomMorphometryStudy.Rmd)         | BA | PTBP and [VBM](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_VBM.Rmd) results |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
-|  1:00 -  2:00    | Dimensionality reduction in ANTsR  *or* Resting State fMRI   | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
+|  1:00 -  2:00    | Dimensionality reduction in ANTsR | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
 |  2:00 -  2:30    | Coffee and questions/discussion      | -- | -- |
 |  2:30 -  3:00    | **Prediction & visualization**       | NT + BA | *BrainAge* ... Multiple modality age/cog prediction in PTBP |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
+
+
+**Backup topics**
+
+* [Amyloid PET with ANTsR](https://github.com/stnava/petSUVR)
+* [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd)
+* [Other ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
 
