@@ -49,9 +49,9 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
 | 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, [C](https://github.com/stnava/C), [chicken](https://github.com/stnava/chicken), wiki?  base off of WBIR_2012 talk? |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
-|  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example)|
+|  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example or the petSUVR example below)|
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
-|  2:30 -  3:30    | ANTs Segmentation: [Atropos](https://github.com/ntustison/antsAtroposN4Example), [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd)([2nd example](https://github.com/ntustison/MalfLabelingExample)), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed)  |
+|  2:30 -  3:30    | ANTs Segmentation: [Atropos](https://github.com/ntustison/antsAtroposN4Example), [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd)([2nd example](https://github.com/ntustison/MalfLabelingExample)), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed), perhaps use PTBP_Intro  |
 |  3:30 -  4:00    | Research topics and/or discussion         | NT | continue segmentation discussion here: stroke, [tumor](https://github.com/ntustison/BRATS2013/tree/master/SimpleExample), [WMH](https://github.com/ntustison/WatchMeHyperventilate)? |
 
 ### August 12
@@ -67,7 +67,7 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
 |  1:00 -  2:00    | Dimensionality reduction in ANTsR | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
 |  2:00 -  2:30    | Coffee and questions/discussion      | -- | -- |
-|  2:30 -  3:00    | **Prediction & visualization**       | NT + BA | *BrainAge* ... Multiple modality age/cog prediction in PTBP |
+|  2:30 -  3:00    | **Prediction & visualization**       | NT | *BrainAge* ... Multiple modality age/cog prediction in PTBP |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
 
 
@@ -76,6 +76,11 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 * [Amyloid PET with ANTsR](https://github.com/stnava/petSUVR)
 * [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd)
 * [Other ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
+* [ASL to CBF](https://github.com/stnava/antsASLProcessing)
+* [Anything from the FAQ pages](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd)
+* Explore the MMM subject: process each modality ....
+* Longitudinal prediction/visualization (more complex .... probably not in this tutorial!) but we
+could discuss recent work on predicting cognitive change from baseline data.
 
 **TODO**
 
@@ -85,7 +90,9 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 
 * BA: dimRed examples (use basic presentation, then follow with ANTsR examples)
 
-* BA: brainAge implementation across modalities and with sparseness
+* BA: brainAge implementation across modalities with and without sparseness
+
+* BA: process the MMM subject in ANTsR
 
 
 ### August 11:  The ANTs framework for adaptable registration and segmentation
