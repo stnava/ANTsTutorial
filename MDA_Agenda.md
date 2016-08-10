@@ -77,19 +77,22 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 * [ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
 * [Anything from the FAQ pages](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd)
 * [Amyloid PET with ANTsR](https://github.com/stnava/petSUVR)
-* [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd)
+* [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd) and/or PTBP_RSF
 * [ASL to CBF](https://github.com/stnava/antsASLProcessing)
 * Explore the MMM subject: process each modality ....
 * Longitudinal prediction/visualization (more complex .... probably not in this tutorial!) but we
 could discuss recent work on predicting cognitive change from baseline data.
+* Revisit relevant components of RMI.
 
 **TODO**
 
 * BA: antsRegistration (should be fun): generality (species, organs), priors, framework, command line
 
-* BA: rsf examples (briefly: alff, correlations, motion, nuisance)
+* BA: rsf examples (briefly: alff, correlations, motion, nuisance) + get data!
 
-* BA: dimRed examples (use basic presentation, then follow with ANTsR examples)
+* BA: test ASL example and add data
+
+* BA: dimRed examples (use basic presentation, then follow with ANTsR examples, take some content from RMI)
 
 * BA: brainAge implementation across modalities with and without sparseness
 
