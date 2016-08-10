@@ -33,7 +33,7 @@ Supported platforms include OSX and Linux variants.  These may work on windows b
   * A complete multi-modality subject http://files.figshare.com/1701182/PEDS012_20131101.zip
   * PTBP demographics [here](https://ndownloader.figshare.com/files/1699436)
   * PTBP tutorial data [here](https://www.dropbox.com/s/5p0vlx8en9uzbge/ ants_tutorial_data.zip?dl=1)
-  * Elderly subject data [here (FIXME)](notyet)
+  * Elderly subject data [here](https://github.com/stnava/petSUVR/elderly)
 
 -----------------------------------------------------------------
 
