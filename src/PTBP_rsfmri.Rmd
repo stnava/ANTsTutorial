@@ -20,10 +20,10 @@ output:
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 library(ANTsR)
 # set this for your own compilation
-dd="/Users/stnava/data/NeuroBattery/"
-pre=paste(dd,"/data/input/PEDS012/20131101/",sep='')
-post=paste(dd,"/data/output/PEDS012/20131101/",sep='')
-fmrifn=paste(pre,"BOLD/PEDS012_20131101_bold_fc_1.nii.gz",sep='')
+dd=path.expand( "~/data/antsExamples/ANTsTutorial/data/" )
+pre=paste(dd,"101_",sep='')
+post=paste('/tmp/test_')
+fmrifn=paste(pre,"pcasl.nii.gz",sep='')
 if ( ! file.exists(fmrifn) ) stop(paste("No",fmri))
 ```
 
@@ -154,8 +154,8 @@ We now have an "anatomical" image ... the average BOLD.
 Let's quickly map to T1.
 
 ```{r distcor,eval=TRUE}
-t1seg=paste(post,"PEDS012_20131101_BrainSegmentation.nii.gz",sep='')
-t1n4=paste(post,"PEDS012_20131101_BrainSegmentation0N4.nii.gz",sep='')
+t1seg=paste(pre,"seg.nii.gz",sep='')
+t1n4=paste(pre,"t1.nii.gz",sep='')
 if ( file.exists(t1seg)  )
   {
   t1seg=antsImageRead( t1seg )
@@ -201,10 +201,18 @@ Exercise?
 We already did this so let's just read the labels.
 
 ```{r aal}
-aalfn=paste(post,"BOLD/aal.nii.gz",sep='')
+aalfn=paste(pre,"aal.nii.gz",sep='')
 if ( file.exists(aalfn) ) {
   aalimg = antsImageRead( aalfn )
-  } else stop("No aal labels")
+} else {
+  mni = antsImageRead( getANTsRData( "mni" ) )
+  mnia = antsImageRead( getANTsRData( "mnia" ) )
+  areg = antsRegistration( disco$warpedmovout, mni, typeofTransform = 'SyN' )
+  aalimg = antsApplyTransforms( disco$warpedmovout, mnia, transformlist = areg$fwdtransforms,
+                              interpolator = 'nearestneighbor' )
+  plot( bavgn3, aalimg, window.overlay=c(0,max(aalw)), axis=3 )
+  # how can we improve on this?  composition? better reference?
+  }
 ```
 
 ## View the labels
@@ -310,7 +318,7 @@ Now we can estimate connectivity from the BOLD data.
 We'll use some nice *ANTsR* tricks for this.
 
 ```{r getgraphs,eval=TRUE}
-gmet <- makeGraph(tsavgcor, graphdensity = 0.1 )
+gmet <- makeGraph( tsavgcor, graphdensity = 0.1, communityMethod = 'greedy' )
 ```
 
 Outputs
@@ -340,6 +348,13 @@ plot( gmet$community, gmet$mygraph)
 ```
 
 
+## Look at the connection matrix
+
+```{r connmat}
+ metweights=gmet$adjacencyMatrix[1:90,1:90]
+ image(metweights)
+```
+
 ## Network visualization in brain space
 
 This is something we have to run "by hand"
@@ -350,8 +365,8 @@ This is something we have to run "by hand"
  brain<-renderSurfaceFunction( surfimg=
    list( boldpre$maskImage ) , alphasurf=0.1,
    smoothsval = 1.5 )
- metweights=gmet$adjacencyMatrix[1:90,1:90]
- plotBasicNetwork( centroids = aalcnt, brain, weights=metweights, scaling=c(1,2) )
+ metweights[ metweights < 0.01 ] = 0
+ plotBasicNetwork( centroids = aalcnt, brain, weights=metweights )
 ```
 
 ## Discussion
