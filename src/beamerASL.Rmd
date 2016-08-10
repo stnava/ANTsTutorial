@@ -1,0 +1,316 @@
+---
+title: "Arterial Spin Labeling Processing with ANTsR"
+author: "Benjamin M. Kandel"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+# MRI-based quantification of cerebral blood flow (CBF)
+
+## Arterial Spin Labeling (ASL)
+
+* functional MRI technique that measures brain perfusion without using a radioactive tracer.  
+
+* ASL works by inverting, or ``tagging'', the spin in the blood traveling into the brain.  
+
+* By subtracting the observed signal when inverting the inflowing blood from the uninverted, natural-state blood, it is possible to obtain an estimate of how much of the MR signal inside the brain is due to inflowing blood.
+
+
+## Arterial Spin Labeling (ASL)
+
+* Perfusion changes due to both acute and chronic causes, and quantifying perfusion can lead to insights into neural functioning and biomarkers for tracking diseases.
+
+* ASL signal --- very low signal-to-noise ratio (SNR) of the images: on the order of 1%.  
+
+* To counteract the low SNR, most ASL acquisitions take many tag-control acquisitions, averaging the observed differences and relying on the Law of Large Numbers to obtain an accurate estimate of the mean tag-control difference.
+
+
+## ASL Noise sources
+
+
+* simple averaging of the tag-control difference may be confounded by significant noise and outliers.
+
+* Outliers may be caused by motion artifacts, random fluctuations in the signal due to low SNR, machine drift, and other undetermined causes.
+
+* *R* provides easy access to advanced statistical techniques for dealing with these issues, and as such ASL processing is an ideal test case to highlight what can be achieved by integrating the sophisticated image processing tools from `ANTs`  with the strong statistical libraries available in *R*.
+
+
+## Overview of Processing
+
+1. Motion correction
+2. Noise reduction (optional).  This involves two steps:
+ + Minimization of machine drift and physiological noise
+ + Rejection of outlier volumes
+3. Calculating average difference between tag and control images
+
+
+##  ANTsR ASL processing and denoising
+
+Processing in a step-by-step manner.
+
+```{r, echo=FALSE}
+library(knitr)
+bd = path.expand( "~/Downloads/ANTsTutorial/" )
+#setup
+opts_chunk$set(dev = 'pdf')
+```
+
+## Step 1: Motion correction
+```{r, fig.show='hold', fig.width=14}
+library(ANTsR)
+library(ggplot2)
+library(RColorBrewer)
+library(grid)
+library(reshape2)
+```
+
+## Step 1: Motion correction
+```{r, fig.show='hold', fig.width=14}
+pcasl <- antsImageRead(
+  paste(bd,'data/101_pcasl.nii.gz',sep=''))
+probs.t1 <- imageFileNames2ImageList(
+  list.files(
+    paste(bd,'data',sep=''),
+    'prob', full.names=T))
+moco <- antsMotionCalculation(pcasl)
+```
+
+## Step 1: Motion correction
+```{r, fig.show='hold', fig.width=14}
+tsdat <- timeseries2matrix(moco$moco_img, moco$moco_mask)
+moco.names <- grep("MOCO", names(moco$moco_params))
+mocoparams <- moco$moco_params[, moco.names]
+timepoints <- 1:nrow(tsdat)
+```
+
+## Step 1: Motion correction
+```{r, fig.show='hold', fig.width=14,echo=FALSE}
+# Look at translation of head
+mocomeans <- matrix( rep(colMeans(mocoparams)[1:3], nrow(mocoparams)),
+      nrow=nrow(mocoparams), byrow=T)
+trans <- mocoparams[, 1:3] - mocomeans
+names(trans) <- c("X", "Y", "Z")
+mydf <- cbind(data.frame(timepoints=timepoints), trans)
+mydf.m <- melt(mydf, id.vars='timepoints')
+names(mydf.m)[2] <- "Direction"
+ggplot(mydf.m, aes(timepoints, value)) + geom_line(aes(colour=Direction)) +
+  labs(title="Displacement vs. Timepoint", x = "Time", y = "Displacement")
+```
+
+
+## Motion: Big problem for ASL
+
+* Motion in 2D ASL acquisitions is particularly pernicious because of the
+necessity of taking tens of sets of tag-control pairs.  
+
+* Movement invalidates
+the assumption of spatial stability necessary for meaningful averaging of
+multiple tag-control pairs and must be corrected for.
+
+
+## ASL: Average Signal post-Averaging
+
+Once we have the motion-corrected time series, we can plot the average signal
+to get a sense of the structure of the data and noise.
+```{r}
+tpoints <- data.frame(Timepoint=1:nrow(tsdat), Value=rowMeans(tsdat))
+ggplot(tpoints, aes(Timepoint, Value)) + geom_line() +
+  geom_smooth(method='loess')
+```
+
+* The jagged line indicates the whole time-series, whereas the smoothed
+trendline indicates the amount of machine and physiological drift.  
+
+* If the
+physiological drift is not removed from the calculation of perfusion, the
+effect of tagging blood will be conflated with the drift, leading to a decrease
+in accuracy of perfusion calculation.
+
+
+## Tissue maps in ASL space
+
+To enable segmentation of the ASL images, we must register the ASL image to the T1 structural image.
+```{r}
+t1 <- antsImageRead(
+  paste(bd,'data/101_t1.nii.gz',sep=''))
+avg.asl <- getAverageOfTimeSeries(pcasl)
+plot(t1)
+plot(avg.asl)
+reg <- antsRegistration(avg.asl, t1, 'SyNBold')
+```
+
+## Tissue maps in ASL space
+
+```{r}
+
+seg.t1 <- antsImageRead(
+  paste(bd,'data/101_seg.nii.gz',sep=''))
+seg.asl <- antsApplyTransforms(
+  avg.asl, seg.t1, reg$fwdtransforms, interpolator='MultiLabel')
+probs <- list()
+for(ii in 1:length(probs.t1)){
+  probs[[ii]] <- antsApplyTransforms(avg.asl, probs.t1[[ii]], reg$fwdtransforms)
+}
+gm <- thresholdImage(seg.asl, 2, 2) + thresholdImage(seg.asl, 4, 4)
+gmdat <- timeseries2matrix(moco$moco_img, gm)
+gmpoints <- data.frame(Volume=1:nrow(gmdat), Value=rowMeans(gmdat))
+ggplot(gmpoints, aes(Volume, Value)) + geom_line()
+```
+
+## Signal in ASL
+
+* despite strong signal in the gray matter, the noise in individual voxels can outweigh the signal.
+
+* Timeseries plots for a few randomly chosen points in the gray matter:
+```{r}
+nvox <- 4
+myvox <- sample(ncol(gmdat), nvox)
+df.samp <- data.frame(matrix(rep(NA, nvox*nrow(gmdat)), nrow=nvox))
+rownames(df.samp) <- paste('Voxel', 1:nvox)
+#colnames(df.samp) <- paste('Volume', 1:nrow(gmdat))
+df.samp <- rbind(df.samp, 1:nrow(gmdat))
+rownames(df.samp)[nrow(df.samp)] <- 'Volume'
+df.samp <- t(df.samp)
+df.samp <- NULL
+for (ii in 1:length(myvox)){
+  df.samp <- rbind(df.samp, data.frame(
+    Voxel=as.factor(rep(ii, nrow(gmdat))), Value=gmdat[, myvox[ii]], Volume=1:nrow(gmdat)))
+}
+ggplot(df.samp, aes(x=Volume, y=Value, colour=Voxel, group=Voxel)) +
+  geom_point() + geom_line()
+```
+
+
+## ASL Signal
+
+Noise patterns are not homogeneous throughout the gray matter, and have significant impact on the observed values.  To account for this, we need a way to account for noise in the data.
+
+## Noise Correction
+
+* Noise calculation is inherently an uncertain enterprise.  Establishing what constitutes noise and what constitutes signal is difficult in most circumstances, and is even more so in the case of ASL where there is no established ground truth to predict.
+
+* A popular method for noise reduction in BOLD (Blood Oxygen Level Dependent) fMRI imaging is known as ``CompCor.'' CompCor finds the region in the image with the greatest amount of temporal variance and assumes that the temporal signal in that region corresponds to the noise signal in the rest of the brain.  When it comes to ASL, however, the assumption that regions with high temporal variance are primarily noise-driven may not hold.
+
+*  Because the signal in ASL is itself the sawtooth pattern of the tag-control pairs, a region with high temporal variance may actually be a region with good signal-to-noise ratio.  Therefore, to establish noise patterns, we instead aim to uncover regions with unstable relationships between the observed time-series and the tag-control pattern.  
+
+* Using a cross-validation scheme, we train a model predicting the tag-control pattern from a subsection the ASL time-series and observe how well this model holds up when predicting the tag-control pattern using the rest of the time-series.  Regions of the brain with low cross-validation values are assumed to represent noisy regions in the image.  
+
+
+## Noise Correction
+
+```{r}
+tc <- (rep(c(0, 1), dim(tsdat)[1])[1:dim(tsdat)[1]] - 0.5) # tag-control sawtooth
+nuisance <- getASLNoisePredictors(tsdat, tc, polydegree='loess')
+nuis.samp <- scale(nuisance[, 1])
+tc.scale <- scale(tc)
+df.nuis <- data.frame(
+  Signal=c(rep('Nuisance', length(nuis.samp)), rep('TagControl', length(nuis.samp))),
+  Value=c(nuis.samp, tc.scale),
+  Timepoint=rep(1:length(nuis.samp), 2))
+ggplot(df.nuis, aes(x=Timepoint, y=Value, colour=Signal)) +
+  geom_point() +  geom_line()
+```
+
+##  Success?
+
+Clearly, there is little correlation between the tag-control pattern and the nuisance time-series signal.  In addition, the nuisance signal is separate from the overall drift signal.  The overall drift is encoded in the `polydegree` argument; here, we use a LOESS kernel regression spline to fit the overall time-series drift.
+
+## Instability due to "big" noise model
+
+* One concern with generation of motion and nuisance covariates is the instability generated by having too many covariates.  Motion is parameterized by a 12-dimensional vector, and the nuisance parameters contribute another several parameters.  To help ameliorate the effect of such overfitting, we can combine the extracted nuisance variables into a smaller number of variables.
+
+*  The best way to do this combination is not totally clear.  We provide two alternatives for performing the combination:
+
+  + Singular value decomposition (SVD)-based dimensionality reduction and cross-validation-based selection.  The primary difference between these two methods is that an SVD incorporates contributions from each nuisance covariate, whereas the cross-validation approach selects individual nuisance parameters.  
+
+  + The cross-validation approach selects the variates that, when accounted for, most improve the correlation between the time-series and the tag-control pattern.
+
+
+## Use cross-valdiation to get nuisance variables
+
+```{r}
+noise.all <- cbind(moco$moco_params, nuisance)
+noise.combined <- as.matrix(
+  combineNuisancePredictors(tsdat, tc, noise.all, method='cv'))
+```
+
+## Outlier Rejection
+In addition to nuisance trends that are present across the entire brain and time-series, some volumes or tag-control pairs are usually so far outside the normal range that they can interfere with the time-series averaging for the whole brain.
+
+## Outlier Rejection
+
+```{r}
+ts.mean <- rowMeans(tsdat)
+ts.diff <- diff(ts.mean)
+diff.evens <- ts.diff[seq(1, length(ts.diff), by=2)]
+diff.odds <- ts.diff[seq(2, length(ts.diff), by=2)]
+df.diff <- data.frame(Differences=c(diff.evens, diff.odds),
+                      Direction=c(rep('Control - tag', length(diff.evens)),
+                                  rep('Tag - control', length(diff.odds))))
+ggplot(df.diff, aes(Direction, Differences)) + geom_jitter()
+```
+
+
+## Outlier Rejection: Methods
+
+We provide two methods for rejection of outlier images.  
+
+* The first is the outlier rejection method of Tan et al. (JMRI 2009), which rejects images if either the mean of the tag-control difference image is too far from the mean of the other images in the sequence or if the variance of the image is too far from the variances of the other images.  
+
+* The second method is based on the principles of robust statistics using the `lmrob` function from the `robustbase` package, which has stronger theoretical backing and is somewhat more stable with regard to parameter choice.
+
+
+## Outlier Rejection: Censoring
+
+```{r}
+censored <- aslCensoring(pcasl, moco$moco_mask, nuis=noise.combined, method='robust')
+noise.censored <- noise.combined[-censored$which.outliers, ]
+tc <- tc[-censored$which.outliers]
+```
+
+## Outlier Rejection: Censoring
+
+Once we have the nuisance-corrected and cleaned ASL time-series, we are ready to calculate the average tag-control difference.  This has traditionally been done by simply averaging the tag-control differences.  A drawback to this method is that it does not allow for incorporation of nuisance variables, as a regression typically would.  Therefore, we will use a regression-based approach to estimate the effect of tagging on the image values.  
+
+```{r}
+perf <- aslAveraging(censored$asl.inlier, mask=moco$moco_mask,
+    tc=tc, nuisance=noise.censored, method='regression')
+```
+
+## From perfusion to CBF
+
+Finally, we convert the perfusion image into a quantitative blood flow image.  To calculate the blood flow image, we must first calculate the blood flow.  Blood flow is calculated as:
+$$
+f = \frac{\lambda \cdot \Delta M}{2 \alpha \cdot M_0 \cdot T_{1b} \cdot \left( e^{-w/T_{1b}} - e^{-(\tau +w)/T_{1b}}\right)},
+$$
+where $f$ is the perfusion in physiological units (mL/100g/min); $\lambda$ is the blood-tissue water partition coefficient (0.9 g/mL); $\Delta M$ is the mean difference between control and tagged images; $\alpha$ is the tagging efficiency (0.85); $M_0$ is the equilibrium brain tissue magnetization, approximated by the mean of the control (non-tagged) images; $T_{1b}$ is the blood T1 value, modified for each subject based on gender and age, as below; $w$ is the postlabeling delay (1 second); and $\tau$ is labeling duration (1.5 seconds).  
+
+
+We calculate the M0 image by averaging the control images:
+
+```{r}
+mvals2 <- apply(tsdat[tc == 0.5, ], 2, mean)
+mvals1 <- apply(tsdat[tc == -0.5, ], 2, mean)
+# mean control should exceed mean tag
+if (mean(mvals2) > mean(mvals1)) {
+  m0vals<-mvals2
+  m1vals<-mvals1
+} else {
+  m0vals<-mvals1
+  m1vals<-mvals2
+}
+
+m0 <- antsImageClone(moco$moco_mask)
+
+m0[moco$moco_mask == 0] <- 0
+m0[moco$moco_mask == 1] <- m0vals
+m0<-n3BiasFieldCorrection(m0,4)
+m0<-n3BiasFieldCorrection(m0,2)
+parameters = list(sequence="pcasl", m0=antsImageClone(m0))
+cbf <- quantifyCBF(perf, mask=moco$moco_mask, parameters=parameters)
+plot(cbf$meancbf,axis=3)
+```
