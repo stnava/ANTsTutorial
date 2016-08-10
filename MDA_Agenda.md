@@ -73,11 +73,12 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 
 **Backup topics**
 
+* [The ANTsR manual](https://github.com/stnava/ANTsR/releases)
+* [ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
+* [Anything from the FAQ pages](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd)
 * [Amyloid PET with ANTsR](https://github.com/stnava/petSUVR)
 * [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd)
-* [Other ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
 * [ASL to CBF](https://github.com/stnava/antsASLProcessing)
-* [Anything from the FAQ pages](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd)
 * Explore the MMM subject: process each modality ....
 * Longitudinal prediction/visualization (more complex .... probably not in this tutorial!) but we
 could discuss recent work on predicting cognitive change from baseline data.
