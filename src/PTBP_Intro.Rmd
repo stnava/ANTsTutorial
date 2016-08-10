@@ -1,25 +1,28 @@
 ---
 title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTsR*'
 author: "Brian B. Avants et al."
-date: "`r Sys.Date()`"
+date: '`r Sys.Date()`'
 output:
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
     highlight: tango
-    incremental: yes
-    theme: AnnArbor
     includes:
       in_header: mystyle.tex
+    incremental: yes
+    theme: AnnArbor
     toc: yes
   ioslides_presentation:
+    highlight: tango
+    incremental: yes
+  slidy_presentation:
     highlight: tango
     incremental: yes
 ---
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd=path.expand(("~/"))
+bd = path.expand( "~/" )
 ```
 
 # Overview and resources
@@ -102,10 +105,17 @@ install.packages( c( pkgmin, pkgxtra ) )
 ```bash
    R CMD INSTALL filename.tar.gz
 ```
+
+## Test [*ANTsR*](http://stnava.github.io/ANTsR/)
+
 * Test via ( in `R` ) calling:
 ```r
   library(ANTsR)
+  ?antsRegistration
 ```
+* then run the example (successfully?)
+* just to be sure, run some of the vignettes 
+* ... (break here?)
 * Done!
 
 # Quick Look
@@ -232,7 +242,8 @@ for ( x in 1:nrow(demog) )
   {
   id = demog$SubID[x]
   dt = demog$ScanDate[x]
-  pre = paste( bd,"data/antsExamples/ANTsTutorial/data/Subjects/",id,"/",dt,"/*",sep='')
+  pre = paste( bd,"data/antsExamples/ANTsTutorial/data/Subjects/",
+               id,"/",dt,"/*",sep='')
   fns = Sys.glob( paste( pre, exts , sep='') )
   if ( length( fns ) == 6 ) havecompletesubject[x]=TRUE
   }
@@ -246,9 +257,7 @@ and to analyze.
 
 We will use them to:
 
-* Build a template
-
-* Construct template priors with [joint label fusion](http://www.ncbi.nlm.nih.gov/pubmed/22732662)
+* Build a template with priors via [joint label fusion](http://www.ncbi.nlm.nih.gov/pubmed/22732662)
 
 * Normalize, segment, compute thickness
 
@@ -281,12 +290,14 @@ for ( x in which( havecompletesubject ) )
   {
   id = demog$SubID[x]
   dt = demog$ScanDate[x]
-  pre = paste( bd,"data/antsExamples/ANTsTutorial/data/Subjects/",id,"/",dt,"/*",sep='')
+  pre = paste( bd,"data/antsExamples/ANTsTutorial/data/Subjects/",
+               id,"/",dt,"/*",sep='')
   fns = Sys.glob( paste( pre, exts , sep='') )
   t1 = antsImageRead( fns[1] )
   mytx = antsRegistration( t1tem, t1, "SyN" )
   seg = antsImageRead( fns[5] )
-  segw = antsApplyTransforms( t1tem, seg, mytx$fwd, interpolator="NearestNeighbor"  )
+  segw = antsApplyTransforms( t1tem, seg, mytx$fwd, 
+                              interpolator="NearestNeighbor"  )
   ilist = lappend( ilist, mytx$warpedmovout )
   seglist = lappend( seglist, segw )
   }

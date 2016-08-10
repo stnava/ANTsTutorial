@@ -77,6 +77,17 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 * [Resting State fMRI processing with ANTsR](https://github.com/stnava/ANTsR/vignettes/RestingBOLD.Rmd)
 * [Other ANTsR vignettes](https://github.com/stnava/ANTsR/tree/master/vignettes)
 
+**TODO**
+
+* BA: antsRegistration (should be fun): generality (species, organs), priors, framework, command line
+
+* BA: rsf examples (briefly: alff, correlations, motion, nuisance)
+
+* BA: dimRed examples (use basic presentation, then follow with ANTsR examples)
+
+* BA: brainAge implementation across modalities and with sparseness
+
+
 ### August 11:  The ANTs framework for adaptable registration and segmentation
 
 __Topics__
