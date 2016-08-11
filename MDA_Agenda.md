@@ -67,7 +67,7 @@ Day 2: The ANTsR framework for multivariate statistics and prediction
 | 10:30 - 11:00    | Visualization of surfaces or volumes | NT | antsSurf, antsVol, CreateTiledMosaic, [plot.antsImage](https://github.com/stnava/ANTsR/blob/master/man/plot.antsImage.Rd)  |
 | 11:00 - 12:00    | Let's perform a ["real study"](https://github.com/stnava/ANTsTutorial/blob/master/src/phantomMorphometryStudy.Rmd)         | BA | PTBP and [VBM](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_VBM2.Rmd) results |
 | 12:00 -  1:00    | Lunch and questions/discussion       | -- | -- |
-|  1:00 -  2:00    | Dimensionality reduction in ANTsR | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
+|  1:00 -  2:00    | Functional MRI *or* Dimensionality reduction in ANTsR | BA | [Eigenanatomy](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Eanat.Rmd) - could do ICA/[blindsource](https://github.com/stnava/blindSourceSeparationInANTsR) |
 |  2:00 -  2:30    | Coffee and questions/discussion      | -- | -- |
 |  2:30 -  3:00    | **Prediction & visualization**       | NT | *BrainAge* ... Multiple modality age/cog prediction in PTBP |
 |  3:00 -  4:00    | Individual/group discussion          | NT + BA | review, prepare for after party? |
