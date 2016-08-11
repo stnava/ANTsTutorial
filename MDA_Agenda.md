@@ -45,13 +45,15 @@ Day 1: The ANTs framework for adaptable registration and segmentation
 
 | Time             |     Activity                              | Presenter| Notes |
 |:----------------:|-------------------------------------------|----------|-------|
-|  9:00 - 10:00    | Overview of tools and 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
+|  9:00 - 9:15     | Setup      | NT | --|
+|  9:15 - 10:00    | Overview of 2014 Nimg paper     | NT | see [associated paper](http://www.ncbi.nlm.nih.gov/pubmed/24879923) |
 | 10:00 - 10:30    | Coffee and questions/discussion           | -- | -- |
-| 10:30 - 12:00    | **ANTs Registration**                     | BA | define transforms, metrics, connect to cars, [C](https://github.com/stnava/C), [chicken](https://github.com/stnava/chicken), wiki?  base off of WBIR_2012 talk? |
+| 10:30 - 12:00    | ANTs Registration                     | BA | define transforms, metrics, connect to cars, [C](https://github.com/stnava/C), [chicken](https://github.com/stnava/chicken) |
 | 12:00 -  1:00    | Lunch and questions/discussion            | -- | -- |
 |  1:00 -  2:00    | Template building and **mapping multiple modalities** (MMM) | NT | github examples, antsmultimodality, and applying transforms to other modalities (maybe use PTBP full MM subject as example or the petSUVR example below)|
 |  2:00 -  2:30    | Coffee and questions/discussion           | -- | -- |
-|  2:30 -  3:30    | ANTs Segmentation: [Atropos](https://github.com/ntustison/antsAtroposN4Example), [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd)([2nd example](https://github.com/ntustison/MalfLabelingExample)), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed), perhaps use PTBP_Intro  |
+|  2:30 -  3:00    | PTBP and Joint Label Fusion / building priors              | BA | [Joint Label Fusion (JLF)](https://github.com/stnava/ANTsTutorial/blob/master/src/PTBP_Intro.Rmd) |
+|  3:00 -  3:30    | ANTs Segmentation: [Atropos](https://github.com/ntustison/antsAtroposN4Example), [2nd JLF example](https://github.com/ntustison/MalfLabelingExample), [Multi-Resolution Voxelwise Neighborhood Random Forest (MRVNRF)/rfLesionSeg](https://github.com/stnava/ANTsR/blob/master/vignettes/rfLesionSeg.Rmd) | BA + NT | setup research talk (if needed), perhaps use PTBP_Intro  |
 |  3:30 -  4:00    | Research topics and/or discussion         | NT | continue segmentation discussion here: stroke, [tumor](https://github.com/ntustison/BRATS2013/tree/master/SimpleExample), [WMH](https://github.com/ntustison/WatchMeHyperventilate)? |
 
 ### August 12
