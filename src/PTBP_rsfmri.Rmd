@@ -302,8 +302,9 @@ tsmatpre = timeseries2matrix( fmri,
   boldpre$maskImage )
 tsmat = timeseries2matrix( boldpre$cleanBoldImage,
   boldpre$maskImage )
+tsmatff = frequencyFilterfMRI( tsmat, tr = 4, freqLo = 0.01, freqHi = 0.1  )
 plot( ts( cbind( rowMeans(tsmatpre) ,
-  rowMeans(tsmat) ) ) )
+  rowMeans(tsmatff) ) ) )
 ```
 
 ## Nuisance modeling: a little detail ...
@@ -343,8 +344,8 @@ plot( ts( cbind( rowMeans( csfmat ),
 * Advantages: automated, fast, principled, validated with physiological measurements
 
 ```{r compcorEx}
-ccmat = timeseries2matrix( amc$moco_img, amc$moco_mask )
-mycompcor = compcor( ccmat, 4 )
+# ccmat = timeseries2matrix( amc$moco_img, amc$moco_mask )
+mycompcor = compcor( tsmatff, 10 )
 print( colnames( mycompcor ) )
 ```
 
@@ -368,7 +369,8 @@ Just use matrix multiplication.
 data("aal")
 labmat = labels2matrix( aalimg,  boldpre$maskImage, 
                         targetLabels = aal$label_num )
-tsavg = tsmat %*% t(labmat)
+residmat = residuals( lm( tsmatff ~ mycompcor  ) )
+tsavg = residmat %*% t(labmat)
 tsavgcor = antsrimpute( cor(tsavg) )
 rownames( tsavgcor ) = aal$label_name
 colnames( tsavgcor ) = aal$label_name
