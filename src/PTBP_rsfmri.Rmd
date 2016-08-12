@@ -300,7 +300,7 @@ plot( ts( cbind( boldpre$FD, boldpre$DVARSpostCleaning ) ) )
 ```{r glob,echo=FALSE}
 tsmatpre = timeseries2matrix( fmri,
   boldpre$maskImage )
-tsmat = timeseries2matrix( boldpre$cleanBoldImage,
+tsmat = timeseries2matrix( amc$moco_img,
   boldpre$maskImage )
 tsmatff = frequencyFilterfMRI( tsmat, tr = 4, freqLo = 0.01, freqHi = 0.1  )
 plot( ts( cbind( rowMeans(tsmatpre) ,
@@ -345,7 +345,7 @@ plot( ts( cbind( rowMeans( csfmat ),
 
 ```{r compcorEx}
 # ccmat = timeseries2matrix( amc$moco_img, amc$moco_mask )
-mycompcor = compcor( tsmatff, 10 )
+mycompcor = compcor( tsmatff, 6 )
 print( colnames( mycompcor ) )
 ```
 
