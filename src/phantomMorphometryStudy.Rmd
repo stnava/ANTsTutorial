@@ -38,7 +38,7 @@ sccansig=0
 
 ## Phantom Morphometry Study
 
-* Manually drawn three tissue images
+* Manually drawn three tissue images with one group intentionally created to have a thicker "cortex"
 
 * Brain-like, two-dimensional slices
 
