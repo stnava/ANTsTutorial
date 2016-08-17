@@ -117,7 +117,8 @@ jlist = imageFileNames2ImageList( allfns )
 for ( x in 1:length(ilist) )
   {
   gm = plist[[x]]
-  tx = antsRegistration( template, ilist[[x]], "SyNCC" )
+  tx = antsRegistration( template, ilist[[x]], "SyNCC", 
+                         regIterations = c(100,50,40) )
   gmw = antsApplyTransforms( template, gm, tx$fwdtransforms)
   plist[[ x ]] = gmw
   jlist[[ x ]] = createJacobianDeterminantImage( template,
