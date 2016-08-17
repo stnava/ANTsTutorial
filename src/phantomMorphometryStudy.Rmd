@@ -19,14 +19,17 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-set.seed(11)
-library(ANTsR)
+set.seed( 11 )
+library( ANTsR )
+library( visreg )
 bd="/Users/bavants/data/antsExamples/ANTsTutorial/"
 templatefn=paste(bd,"phantomData/phantomtemplate.jpg",sep='')
 if ( ! file.exists(templatefn) )
   stop( paste( "no image", templatefn ) )
 allfns=Sys.glob( paste(bd,"phantomData/ph*wmgm.jpg",sep='')  )
 demog=read.csv(paste(bd,'phantomData/phantpredictors.csv',sep=''))
+demog$vol[ demog$vol == 1 ] = "Smaller"
+demog$vol[ demog$vol == 0 ] = "Bigger"
 ilist=imageFileNames2ImageList( allfns )
 sccansig=0
 ```
@@ -174,25 +177,49 @@ Look at the demographics file ...
 knitr::kable(demog)
 ```
 
-## Let's do a quick test on the jacobian
+## Let's do a quick t-test on the jacobian
+
+```{r jactt}
+templatemask=getMask( template )
+jmat=imageListToMatrix( jlist, templatemask )
+# simple t-test to look at overall trends
+rjmeans = rowMeans( jmat )
+g1 = demog$vol == "Bigger"
+g2 = demog$vol == "Smaller"
+print( t.test( rjmeans[g1], rjmeans[g2] , paired=FALSE ) ) 
+```
+
+
+## Let's do a quick voxel-wise test on the jacobian
 
 Check out `bigLMStats`. It is a great little function for
 large (on the left) statistical studies ...
 
 ```{r jaclm}
-templatemask=getMask( template )
-jmat=imageListToMatrix( jlist, templatemask )
-mdl=lm( jmat ~ vol + gender, data=demog )
-mdl=bigLMStats( mdl )
-volstats=mdl$beta.pval[ "vol", ]
+demog$vol = factor( demog$vol )
+umdl=lm( jmat ~ vol + gender, data=demog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "volSmaller", ]
 qv=p.adjust(volstats,'BH')
-qvimg=makeImage( templatemask, 1-qv )
+qvimg=makeImage( templatemask, 1 - qv )
 ```
 
 for large on the right studies, use a quick
 implementation in `RcppEigen` or `RcppArmadillo`
 
-## Look at results
+
+## Look at results at one voxel
+
+Use `visreg` to see the regression at the voxel with the maximum 
+significant difference.
+
+```{r vizjac,echo=FALSE}
+vdemog = data.frame( demog, voxel = jmat[,which.min(qv)])
+vmdl=lm( voxel ~ vol + gender, data=vdemog )
+visreg::visreg( vmdl, "vol", main="Regression at a voxel" )
+```
+
+## Look at results in the image space
 
 ```{r jaclmviz,echo=FALSE}
 plot( template, qvimg, window.overlay=c(0.95,1))
@@ -207,7 +234,7 @@ plot( template, qvimg, window.overlay=c(0.95,1))
 gmat=imageListToMatrix( plist, templatemask )
 mdl=lm( gmat ~ vol + gender, data=demog )
 mdl=bigLMStats( mdl )
-gmstats=mdl$beta.pval[ "vol", ]
+gmstats=mdl$beta.pval[ "volSmaller", ]
 gqv=p.adjust(gmstats,'BH')
 gqvimg=makeImage( templatemask, 1-gqv )
 ```
@@ -228,16 +255,17 @@ Do we believe that many aspects of cognition are fundamentally multivariate?
 ##  .... multivariate statistics in *R*
 
 ```{r,multivar,echo=TRUE,eval=TRUE,results='hide',warning=FALSE}
-mypreds<-scale( as.matrix( cbind( demog$vol * ( -1 ) ) ) )
+volClasses = c( rep( 1, 4 ), rep(0, 4 ) )
+mypreds<-scale( as.matrix( cbind( volClasses, as.numeric( demog$gender ) ) ) )
 scaledMatrix = scale( jmat )
 sccan<-sparseDecom2(
   inmatrix  = list( scaledMatrix, mypreds ),
   inmask    = c( templatemask , NA ) ,
   mycoption = 0,
-  sparseness=c( 0.2, -1 ),
+  sparseness=c( 0.2, 0.5 ),
   nvecs=1, its=10,
   cthresh=c(50,0),
-  smooth=0.5, perms=200 )
+  smooth=0.5, perms=100 )
 sccanimgs = matrixToImages( (sccan$eig1) , templatemask )
 sccansol <- sccanimgs[[1]] %>% iMath("Normalize")
 ```
