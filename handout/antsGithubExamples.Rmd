@@ -18,6 +18,7 @@ distribute simple, reproducible examples.   We also provide a [wiki](https://git
 | antsvers |  http://bit.ly/2h3FN9M |  identify your ants version |
 | act |  http://bit.ly/2hR4giy |  what do these programs ants\*CorticalThickness.sh produce? |
 | build |  http://bit.ly/2gEkDOo |  how do i build ants?   |
+| win-build | http://bit.ly/2holAP2 | how do i build ants on windows?   |
 | nifti |  http://bit.ly/2hongIt |  How does ANTs handle qform and sform in NIFTI 1 images? |
 | amzn |  http://bit.ly/2gOmHqt |  Can I install ANTs on Amazon? |
 | regerr | http://bit.ly/2hRcOGm | How do I interpret a registration error?  |
