@@ -7,31 +7,31 @@ output: html_document
 
 # Introduction
 
-[Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and 
+[Advanced Normalization Tools](https://github.com/stnava/ANTs) uses [github](www.github.com) to organize and
 distribute simple, reproducible examples.   We also provide a [wiki](https://github.com/stnava/ANTs/wiki) and the indispensable [antsHandout](https://github.com/stnava/ANTsTutorial/raw/master/handout/antsHandout.pdf).  We also perform [tutorials](https://github.com/stnava/ANTsTutorial) when invited to do so.
 
 # Wiki examples
 
 | Short name |  link  |   Comments |
 |---|---|---|
-| antscall| https://github.com/stnava/ANTs/wiki/Anatomy-of-an-antsRegistration-call | details what the ants command line means |
-| antsvers |  https://github.com/stnava/ANTs/wiki/ANTs-version-information |  identify your ants version |
-| act |  https://github.com/stnava/ANTs/wiki/antsCorticalThickness-and-antsLongitudinalCorticalThickness-output |  what do these programs ants\*CorticalThickness.sh produce? |
-| build |  https://github.com/stnava/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS |  how do i build ants?   |
-| nifti |  https://github.com/stnava/ANTs/wiki/How-does-ANTs-handle-qform-and-sform-in-NIFTI-1-images%3F |  How does ANTs handle qform and sform in NIFTI 1 images? |
-| amzn |  https://github.com/stnava/ANTs/wiki/Install-ANTs-on-Amazon |  Can I install ANTs on Amazon? |
-| regerr |  https://github.com/stnava/ANTs/wiki/My-registration-fails-with-an-error | How do I interpret a registration error?  |
-| orient | https://github.com/stnava/ANTs/wiki/Output-images-have-incorrect-orientation-or-origin  |  Why is my image orientation incorrect? |
-| mmm |  https://github.com/stnava/ANTs/wiki/simple-case:-T1-to-MNI-mapping-for-both-structure-and-pre-registered-fMRI |  Brief multiple modality mapping of fMRI to a template space via transform concatenation |
-| regFAQ |  https://github.com/stnava/ANTs/wiki/Tips-for-improving-registration-results | Registration FAQ  |
-|  snap |  https://github.com/stnava/ANTs/wiki/Using-ITK-SNAP-with-ANTs |  ITK-snap suggestions  |
-| DTI |  https://github.com/stnava/ANTs/wiki/Warp-and-reorient-a-diffusion-tensor-image |  transform DTI |
-| RegMask | https://github.com/ntustison/antsRegistrationWithMaskExample/blob/master/antsRegistrationExampleCommand.sh | ``antsRegistration`` with mask |
+| antscall| http://bit.ly/2hzISPF | details what the ants command line means |
+| antsvers |  http://bit.ly/2h3FN9M |  identify your ants version |
+| act |  http://bit.ly/2hR4giy |  what do these programs ants\*CorticalThickness.sh produce? |
+| build |  http://bit.ly/2gEkDOo |  how do i build ants?   |
+| nifti |  http://bit.ly/2hongIt |  How does ANTs handle qform and sform in NIFTI 1 images? |
+| amzn |  http://bit.ly/2gOmHqt |  Can I install ANTs on Amazon? |
+| regerr | http://bit.ly/2hRcOGm | How do I interpret a registration error?  |
+| orient | http://bit.ly/2hR4oP4  |  Why is my image orientation incorrect? |
+| mmm |  http://bit.ly/2h3DsMa |  Brief multiple modality mapping of fMRI to a template space via transform concatenation |
+| regFAQ | http://bit.ly/2hojxe1 | Registration FAQ  |
+|  snap |  http://bit.ly/2hJcTzK |  ITK-snap suggestions  |
+| DTI | http://bit.ly/2h3KS1P |  transform DTI |
+| RegMask | http://bit.ly/2hRcNlD | ``antsRegistration`` with mask |
 |  |   |   |
 
-# ANTsR: reproducible science with bioimaging data 
+# ANTsR: reproducible science with bioimaging data
 
-[ANTsR](https://github.com/stnava/ANTsR) illustrates several use cases throughout its [vignettes and documentation](https://github.com/stnava/ANTsR/releases/tag/latest).  Built in the style of *R*, most if not all ANTsR functions are accompanied by reproducible examples.  See, for instance, `?antsRegistration` in ANTsR.
+[ANTsR](https://github.com/stnava/ANTsR) illustrates several use cases throughout its [vignettes and documentation](https://github.com/stnava/ANTsR/releases/tag/latest).  Built in the style of *R*, most if not all ANTsR functions are accompanied by reproducible examples.  See, for instance, `?antsRegistration` in ANTsR.   Soon, [*Neuroconductor*](https://neuroconductor.org/) will also be a source of help.
 
 # Links to github examples with brief comments
 
