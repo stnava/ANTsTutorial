@@ -1,0 +1,392 @@
+---
+title: "ANTs registration notebook"
+author: "Brian B. Avants"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+---
+
+We first load the library and example images.
+
+```{r}
+knitr::opts_chunk$set(fig.width=12, fig.height=8) 
+library( ANTsR )
+library( pander )
+r16 = antsImageRead( getANTsRData( "r16" ) )
+r64 = antsImageRead( getANTsRData( "r64" ) )
+```
+
+
+As always, it is important to look at the data.
+
+```{r}
+plot( r16 )
+plot( r64 )
+plot( r16, r64, color.overlay='magma', doCropping = F, window.overlay = quantile( r64, c(0.72,1) ) )
+```
+
+We are concerned about how similar images are *in physical space*.
+
+Why?
+
+* resolution can be different but content "the same"
+
+* patient may be the same but in different position
+
+* image orientation can vary
+
+* need to compute physical regularization and transformation parameters
+
+* we ultimately want to label images and do consistent statistical computations
+
+* i.e. "computational anatomy" or metric-based brain mapping
+
+We need a way to measure this - so let us write some quick similarity metrics.
+
+```{r msq}
+# msq fuction
+msq <-function( x, y ) {
+  mean( ( x - y )^2 )
+}
+```
+
+```{r corr}
+# corr fuction
+icor <-function( x, y ) {
+  # will not work unless images are in same space
+  cor.test( as.numeric(x), as.numeric(y) )$est
+}
+```
+
+```{r ncc}
+# ncc fuction
+# ... too tricky for now but can be implemented by using getNeighborhoodInMask and apply functions or for loops
+```
+
+Let us translate these images to get them in the same space (up to translation).
+
+```{r}
+treg = antsRegistration( r16, r64, typeofTransform = 'Translation' )
+plot( r16, treg$warpedmov, color.overlay='jet', doCropping = F, alpha=0.5,
+      window.overlay = quantile( r64, c(0.72,1) ) )
+```
+
+How about a similarity transform?
+
+```{r}
+sreg = antsRegistration( r16, r64, typeofTransform = 'Similarity', verbose=F )
+plot( r16, sreg$warpedmov, color.overlay='jet', doCropping = F, alpha=0.5,
+      window.overlay = quantile( r64, c(0.72,1) ) )
+```
+
+
+Or an affine transformation?  Note - verbosity is on here.  We can look at the output and peek under the hood a bit.
+
+```{r}
+areg = antsRegistration( r16, r64, typeofTransform = 'Affine', verbose=T  )
+plot( r16, areg$warpedmov, color.overlay='jet', doCropping = F, alpha=0.5,
+      window.overlay = quantile( r64, c(0.72,1) ) )
+```
+
+
+The image subtraction highlights differences perhaps a bit easier.
+
+```{r}
+asub = r16 / mean( r16 ) - areg$warpedmov / mean( areg$warpedmov )
+plot( asub )
+plot( r16, abs(asub), color.overlay='jet', doCropping = T, alpha=0.8,
+      window.overlay = c(0.5,5 ) )
+```
+
+Or maybe looking at a canny filter overlay.
+
+```{r}
+mycan = iMath( areg$warpedmov, "Canny", 1, 5, 12 )
+plot( r16, mycan, color.overlay='jet', doCropping = T, alpha=0.8,
+      window.overlay = c(0.5,5 ) )
+```
+
+Of course - this is the whole purpose of similarity metrics.  We use MI here ...
+
+```{r}
+mysimilarity = c(
+  antsImageMutualInformation( r16, r64), 
+  antsImageMutualInformation( r16, treg$warpedmovout), 
+  antsImageMutualInformation( r16, sreg$warpedmovout),
+  antsImageMutualInformation( r16, areg$warpedmovout) )
+```
+
+*deformable* registration adds even more value
+
+```{r}
+dreg = antsRegistration( r16, r64, typeofTransform = 'SyN', verbose = F  )
+creg = antsRegistration( r16, r64, typeofTransform = 'SyNCC', verbose = F  )
+mysimilarity[ 5 ] = antsImageMutualInformation( r16, dreg$warpedmovout)
+mysimilarity[ 6 ] = antsImageMutualInformation( r16, creg$warpedmovout)
+nparameters = c( 0, 2, 4, 8, 16, 32 )
+plot( nparameters, mysimilarity, type='l', main='Similarity vs number of parameters' )
+```
+
+did anyone notice how long (compute time) each of these takes?
+
+sidenote:  `export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4`
+
+we will see later how to get the real number of parameters for the transformation objects above.
+
+clearly, deformable registration does "best."   but does it produce meaningful results?
+
+depends on how you do it:
+
+* [CURT](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3274625/)
+
+* [SyN](https://www.ncbi.nlm.nih.gov/pubmed/17659998)
+
+* [ITK](https://www.ncbi.nlm.nih.gov/pubmed/24817849)
+
+SyN / ITK produces differentiable maps with differentiable inverse.
+
+Results from the "SyN" algorithm which uses mutual information as a metric.
+
+```{r, out.width = '100%'}
+gridf = createWarpedGrid( r16, fixedReferenceImage = r16, transform = dreg$fwdtransforms[1] )
+gridb = createWarpedGrid( r16, fixedReferenceImage = r16, transform = dreg$invtransforms[2] )
+plot( gridf )
+plot( gridb )
+```
+
+Results from the "SyNCC" algorithm which uses NCC as a metric.
+
+```{r,out.width = '100%'}
+cgridf = createWarpedGrid( r16, fixedReferenceImage = r16, transform = dreg$fwdtransforms[1] )
+cgridb = createWarpedGrid( r16, fixedReferenceImage = r16, transform = dreg$invtransforms[2] )
+plot( cgridf )
+plot( cgridb )
+```
+
+What does "differentiable map with differentiable inverse" mean?  The diffeomorphism is like a 
+road between the two images - we can go back and forth along it.
+
+```{r }
+plot( dreg$warpedfixout )
+plot( r64 )
+```
+
+It also means that if we compose the mapping from A to B with the mapping from B to A, we get the identity.
+
+We can check this by looking at the result of the composition of SyN's forward and inverse maps.
+
+
+```{r}
+emptygrid = createWarpedGrid( r16, fixedReferenceImage = r16 )
+invidmap = antsApplyTransforms( r16, emptygrid, 
+   c( dreg$invtransforms, dreg$fwdtransforms ), 
+   whichtoinvert = c( T,F,F,F ))  # tricky stuff here
+plot( invidmap )
+```
+
+This "inverse identity" constraint is built into SyN such that
+we enforce consistency in the digital domain.
+
+What this means is - any "shape change" is encoded *losslessly* into the deformation field.
+
+Non-diffeomorphic maps may *lose* information or may be completely uninterpretable, statistically.
+
+One way to check this is to investigate the jacobian.  They should be positive which indicates that the topology of the image space is preserved ( no folding and no holes or tears are created ).
+
+```{r}
+djac = createJacobianDeterminantImage( r16, dreg$fwdtransforms[1], geom = TRUE )
+print( range( djac ) )
+cjac = createJacobianDeterminantImage( r16, creg$fwdtransforms[1], geom = TRUE )
+print( range( cjac ) )
+```
+
+Is there a difference between the two jacobians?  Paired t-test.
+
+```{r}
+mask = getMask( r16 ) %>% morphology("dilate",3)
+print( t.test( cjac[ mask == 1 ], djac[ mask == 1], paired=TRUE  ) )
+# cjac looks a little "larger" ... but is that the right way to ask this question?
+djac = ( createJacobianDeterminantImage( r16, dreg$fwdtransforms[1], geom = TRUE, doLog = T ) )
+cjac = ( createJacobianDeterminantImage( r16, creg$fwdtransforms[1], geom = TRUE, doLog = T ) )
+print( t.test( cjac[ mask == 1 ], djac[ mask == 1], paired=TRUE  ) )
+```
+
+Look at some histograms.
+
+```{r,fig.height=4,fig.width=8}
+library( ggplot2 )
+n = sum( mask == 1)
+mydf = data.frame( 
+  registration = c( rep( "cc", n ) , rep("mi", n ) ),
+  jacobian = c( cjac[ mask == 1 ], djac[ mask == 1] ) )
+ggplot( mydf, aes(jacobian, fill=registration )) + geom_density(alpha = 0.2)
+```
+
+SyN is among the best performing registration methods so this additional information
+stored in the jacobian is likely to be valid, assuming that one knows what to do with it.
+
+```{r}
+plot( r16, list( cjac, cjac * (-1) ), doCropping = F, alpha = 0.85,
+      color.overlay  = c( 'red', 'blue' ),
+      window.overlay = c( 0.2, max( abs( cjac ) ) ) )
+```
+
+Look at the canny result using the diffeomorphism.
+
+```{r}
+mycan = iMath( creg$warpedmov, "Canny", 1, 5, 12 )
+plot( r16, mycan, color.overlay='jet', doCropping = T, alpha=0.8,
+      window.overlay = c(0.5,5 ) )
+```
+
+This is a good registration result ... and such results can be gained not only in simple 2D examples but also in many other cases: healthy aging, neurodegerative disorders, TBI, stroke, non-human, non-brain, etc.
+
+It's not wise to just eyeball images as a validation.  Much better to do landmarking or labeling as in [this publication](https://www.ncbi.nlm.nih.gov/pubmed/28656622) and [many others](http://www.sciencedirect.com/science/article/pii/S1053811908012974).
+
+## How do we use landmarks/labels to evaluate?
+
+Let's just use a trivial example based on left / right hemisphere labels.
+
+```{r leftright}
+library( ANTsR )
+r16 = antsImageRead( getANTsRData( "r16" ) )
+r64 = antsImageRead( getANTsRData( "r64" ) )
+# symmetrize the image
+symimg <- function( x, gs = 0.25 ) {
+  xr = reflectImage( x, axis = 0 )
+  xavg = xr * 0.5 + x
+  for ( i in 1:5 ) {
+    w1 = antsRegistration( xavg, x, typeofTransform = 'SyN' )
+    w2 = antsRegistration( xavg, xr, typeofTransform = 'SyN' )
+    xavg = w1$warpedmovout * 0.5 + w2$warpedmovout * 0.5
+    nada1 = antsApplyTransforms(  x, x, w1$fwdtransforms, compose = w1$fwdtransforms[1] )
+    nada2 = antsApplyTransforms(  x, x, w2$fwdtransforms, compose = w2$fwdtransforms[1] )
+    wavg = ( antsImageRead( nada1 ) + antsImageRead( nada2 ) ) * ( -0.5 )
+    wavgfn = tempfile( fileext='.nii.gz' )
+    antsImageWrite( wavg, wavgfn )
+    xavg = antsApplyTransforms( x, xavg, wavgfn )
+    }
+  return( xavg )
+  }
+r16symm = symimg( r16 )
+plot( r16symm )
+################################################################
+r16lrmask = getMask( r16symm )
+r16lrmaskcrop = cropImage( r16lrmask )
+r16lrmaskcrop[ 1:round(dim(r16lrmaskcrop)[1]/2), 1:round(dim(r16lrmaskcrop)[2]) ] = 2
+r16lrmask = decropImage( r16lrmaskcrop, r16 ) * r16lrmask
+plot( r16symm, r16lrmask, alpha=0.5 )
+################################################################
+r64symm = symimg( r64 )
+r64lrmask = getMask( r64symm )
+r64lrmaskcrop = cropImage( r64lrmask )
+r64lrmaskcrop[ 1:round(dim(r64lrmaskcrop)[1]/2), 1:round(dim(r64lrmaskcrop)[2]) ] = 2
+r64lrmask = decropImage( r64lrmaskcrop, r64 ) * r64lrmask
+plot( r64symm, r64lrmask, alpha=0.5 )
+```
+
+We symmetrized the images and labeled left and right. 
+
+In theory, we must transfer the labels back to original space.  But for this example, we can simply compare the overlap of the labels, post-registration.
+
+```{r symmol}
+plot( r16symm, r64symm, alpha = 0.5 )
+quickreg = antsRegistration( r16symm, r64symm, typeofTransform = 'SyN' )
+lr64to16 = antsApplyTransforms( r16symm, r64lrmask, quickreg$fwdtransforms, 
+                                interpolator = 'genericLabel' )
+plot( r16symm, lr64to16, alpha=0.5 )
+pander( table( lr64to16[ r16lrmask == 1 ] == r16lrmask[ r16lrmask == 1 ] ) )
+pander( table( lr64to16[ r16lrmask == 2 ] == r16lrmask[ r16lrmask == 2 ] ) )
+```
+
+We will revisit some of these concepts in more detail later when we discuss template building.
+
+## This seems really easy - doesn't registration have "lots of parameters?"
+
+There are many parameter choices.  We've eliminated some of them via heurisitics:
+
+* automatic parameter scaling for manifold transformations (rigid, affine)
+* step sizes are automatically adjusted (for the most part)
+* bins in mutual information selected based on experience
+* convergence is setup ahead of time
+* standard procedures are available that work most of the time
+    * cannot rely on these if your problem is not the "most of the time" type
+
+Things one might want to toy with:
+
+* multiresolution strategy
+* smoothing strategy 
+* interaction of smoothing and multi-resolution
+    * pyramid vs
+    * scalespace
+* multiple metrics / different metrics
+* different features combined with different metrics
+    * curvature images
+    * edge images
+    * label maps
+* transformation models
+    * syn
+    * bspline syn
+    * time varying velocity field
+    * gaussian displacement field ( demons style )
+* point and image features together
+* multiple modality guidance e.g. T1 and T2 or T1 and DTI
+
+
+**Exercise** Take a look at:
+
+```{r}
+?antsRegistration
+args( antsRegistration )
+```
+
+Why or how would we modify the following parameters?
+
+* initialTransform - one may use an initializer (see ?affineInitializer) or some other method to get an initial transform
+
+* outprefix - saves transforms to a file location
+
+* mask - will only use in-mask features to guide the registration
+
+* gradStep - not common to change this but may do so in conjunction with totalSigma adjustments
+
+* flowSigma - this will regularize the similarity metric graident, which we follow to get a good registration .... higher sigma focuses on coarser features
+
+* totalSigma - this will regularize the total deformation field.  usually zero, higher values will restrict the amount of deformation allowed
+
+* affMetric - changes the metric used for rigid/affine stage of registration
+
+* affSampling - used to control the metric parameters, changes the sampling frequency
+
+* synMetric - changes the similarity metric for the deformation stage of registration
+
+* synSampling - used to control the metric parameters, as in affSampling
+
+* regIterations - controls the multi-resolution strategy.  more entries leads to more downsampling.
+
+Also, we might compare to antsRegistration -- the command line C++ version -- which allows even greater flexibility.
+
+We recommend the command line version for "non-standard" use cases and/or multiple similarity metrics to be used in parallel ... ( TODO: implement multimetrics in ANTsR )
+
+## What other metrics are there for registration quality?
+
+* one can compare (across different methods):
+    * prediction accuracy for independent data as in [this paper](https://www.ncbi.nlm.nih.gov/pubmed/24879923)
+    * biological validity of results as in [this effort](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4889433/)
+    * assumptions of the similarity metrics, transforms, etc
+    * ability to:
+        * handle point, curve, surface, volume data
+        * merge point and image modality data together
+        * implement multivariate similarity measurements
+        * compute statistical operations on mappings
+        * handle vector, tensor data
+* computation time versus accuracy - tradeoff between quality and speed
+* statistical bias and performance on multiple site data
+* longitudinal smoothness / bias / biological plausibility of deformation maps
+* generality vs specificity - this is the 'no free lunch theorem'
+* types of transformations that can be captured ( see the aperture problem )
+* sparsity versus density of the maps ( e.g. SIFT, HOGG vs  SyN, FFD, Demons/optical flow )
+* probably many more options ...
+
