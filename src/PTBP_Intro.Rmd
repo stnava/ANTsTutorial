@@ -3,6 +3,12 @@ title: 'The Pediatric Template of Brain Perfusion: Quick introduction with *ANTs
 author: "Brian B. Avants et al."
 date: '`r Sys.Date()`'
 output:
+  slidy_presentation:
+    highlight: tango
+    incremental: yes
+  ioslides_presentation:
+    highlight: tango
+    incremental: yes
   beamer_presentation:
     colortheme: dolphin
     fonttheme: structurebold
@@ -12,12 +18,6 @@ output:
     incremental: yes
     theme: AnnArbor
     toc: yes
-  ioslides_presentation:
-    highlight: tango
-    incremental: yes
-  slidy_presentation:
-    highlight: tango
-    incremental: yes
 ---
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
@@ -363,7 +363,7 @@ if ( !exists("seglist") )
 mk=getMask(t1tem)
 jlf=jointIntensityFusion( t1tem, mk, ilist,
   labelList=seglist, rad=rep(3,3), rSearch=2,
-  computeProbs=TRUE, includezero=TRUE)
+  computeProbs=TRUE, nonnegative=TRUE )
 # write out results
 if ( ! exists("tf") ) tf=tempfile()
 antsImageWrite( jlf$segimg, paste(tf,'seg.nii.gz',sep='') )

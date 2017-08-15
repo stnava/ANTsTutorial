@@ -19,7 +19,7 @@ output:
 
 ```{r setup,eval=TRUE,results='hide',warning=FALSE,echo=FALSE}
 # set this for your own compilation
-bd = path.expand( "~/data/antsExamples/PTBP_Data" )
+bd = path.expand( "~/Downloads/PTBP_Data/" )
 set.seed( 11 )
 library( candisc )
 library( ggplot2 )
@@ -53,6 +53,7 @@ $$
 \|  X  - U V^T \|^2   +  \textcolor{blue}{\sum_k \lambda_k \| V_k
 \|_1}
 $$
+
 Each of the columns of $X$ is a linear combination of the
 columns of $U$.
 
@@ -164,10 +165,10 @@ the impact of parameter choice ...
 library(ANTsR)
 library(visreg)
 neanatvecs=2
-thkmask=antsImageRead( paste(bd,"data/ptbp_mask_thickness.nii.gz",sep='') )
+thkmask=antsImageRead( paste(bd,"/data/ptbp_mask_thickness.nii.gz",sep='') )
 qth=0.05
 mth='BH'
-demog=read.csv(paste(bd,"data/ptbp_summary_demographics.csv",sep='') )
+demog=read.csv(paste(bd,"/data/ptbp_summary_demographics.csv",sep='') )
 demog=demog[ , 1:19 ]
 ```
 
@@ -561,7 +562,7 @@ sdemog=antsrimpute( demog[haveAllMerge,c(7,8)] )
 # above is a bug sparseDecom/2 does not handle NAs well
 ````
 
-* Residualization ... 
+* Residualization ...
 
 ```{r facca0,eval=TRUE}
 rmat=residuals(lm( famat[haveAllMerge,] ~ demog$AgeAtScan[haveAllMerge] ))
@@ -577,11 +578,11 @@ Now, run the decomposition - a "supervised PCA".
 temp=rmat[traing,]
 inmatrix=list( scale(temp) ,
  scale( data.matrix( sdemog[traing,])  ) )
-if ( ! exists("sccan") )
-  sccan=sparseDecom2(inmatrix, c(famask, NA),
-     sparseness = c( 0.01, 0.3 ), verbose=0,
-     nvecs = 3, its = 10, cthresh = c(5000, 0),
-     perms = 0, smooth = 0.5, mycoption = 1 )
+if ( ! exists("sccanfaccax") )
+  sccanfaccax=sparseDecom2(inmatrix, c(famask, NA),
+     sparseness = c( 0.01, 0.3 ), verbose=1,
+     nvecs = 3, its = 3, cthresh = c(5000, 0),
+     perms = 0, smooth = 0.5, mycoption = 0 )
 ```
 
 ```{r faccalow,eval=FALSE}
@@ -589,9 +590,9 @@ if ( ! exists("sccan") )
 cog=antsrimpute( data.matrix( demog[haveAllMerge,c(3,6:12)]) )
 dr=randcca( cog[traing,],  rmat[traing,], 6, 1 )
 K = t(dr$svd$u)
-lowmat = ( K %*% t(cog[traing,]) ) %*% rmat[traing, ] 
-if ( ! exists("sccan") )
-  sccan=sparseDecom( lowmat, famask, nvecs=2, smooth=0.0,
+lowmat = ( K %*% t(cog[traing,]) ) %*% rmat[traing, ]
+if ( ! exists("sccanfaccax") )
+  sccanfaccax=sparseDecom( lowmat, famask, nvecs=2, smooth=0.0,
     sparseness=0.05, cthresh=20000,  its=2 )
 ```
 
@@ -599,7 +600,8 @@ if ( ! exists("sccan") )
 ## Check the CCA regions
 
 ```{r thkcca4,eval=TRUE,echo=FALSE}
-ccaeseg=eigSeg( famask, matrixToImages(t(sccan$eig1),famask), FALSE  )
+m2i = matrixToImages((sccanfaccax$eig1),famask)
+ccaeseg = eigSeg( famask, m2i, FALSE  )
 plot( famask, ccaeseg, axis=3, nslices=16 )
 ```
 
@@ -608,8 +610,8 @@ plot( famask, ccaeseg, axis=3, nslices=16 )
 Which demographic variables match which imaging variables?
 
 ```{r thkcca2,eval=TRUE}
-rownames( sccan$eig2 )=colnames( sdemog )
-knitr::kable( sccan$eig2 )
+rownames( sccanfaccax$eig2 )=colnames( sdemog )
+knitr::kable( sccanfaccax$eig2 )
 ```
 
 ## Quick CCA-based prediction
@@ -617,14 +619,14 @@ knitr::kable( sccan$eig2 )
 PIQ prediction ...
 
 ```{r thkcca3,eval=TRUE,echo=FALSE}
-sccanmat=sccan$eig1
+sccanmat=sccanfaccax$eig1
 sccanproj = famat[haveAllMerge,] %*% ( sccanmat )
-ccadf=data.frame( sdemog, sccanproj[,-1], # look at mdl
+ccadf=data.frame( sdemog[,-c(2)], sccanproj, # look at mdl
   gender=demog$Sex[haveAllMerge],
   age=demog$AgeAtScan[haveAllMerge])
 mdl=lm( Performance.IQ ~ . ,
-  data=ccadf[traing,-1] )
-pviq = predict( mdl, newdata=ccadf[ testg,-1] )
+  data=ccadf[traing,] )
+pviq = predict( mdl, newdata=ccadf[ testg,] )
 mycog=ccadf[testg,]$Performance.IQ
 print( mean( abs( pviq - mycog) ) )
 cor.test( pviq, mycog )
@@ -667,7 +669,7 @@ K = t(dr$svd$u)
 lowmat = ( K %*% t(temp2) ) %*% temp
 s <- svd( temp, nu = 0, nv = ranker )$v
 s2 <- svd( temp2, nu = 0, nv = ranker )$v
-innermat <- t( temp2 %*% s2 ) %*% ( temp %*% s ) 
+innermat <- t( temp2 %*% s2 ) %*% ( temp %*% s )
 # if ( ! exists("fcsccan") )
 #  fcsccan=sparseDecom(  lowmat, famask, cthresh = 5000,
 #     sparseness = 0.05, nvecs = 2, its = 2, smooth = 0.0 )

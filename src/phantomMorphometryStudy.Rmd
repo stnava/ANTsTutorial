@@ -91,7 +91,9 @@ for ( x in 1:length(ilist) )
   img  = antsImageClone( ilist[[ x ]] )
   km   = kmeansSegmentation(  img, k = 3, kmask = mask ) # segment
   gm   = km$probabilityimages[[2]]
-  plist[[ x ]] = gm
+  thk<-kellyKapowski( s=km$segmentation, g=km$probabilityimages[[2]],
+    w=km$probabilityimages[[3]], its=45, r=0.25, m=3 )
+  plist[[ x ]] = thk
   }
 ```
 
@@ -132,7 +134,7 @@ for ( x in 1:length(ilist) )
   gmw = antsApplyTransforms( template, gm, tx$fwdtransforms)
   plist[[ x ]] = gmw
   jlist[[ x ]] = createJacobianDeterminantImage( template,
-    tx$fwdtransforms[1], 1, 0 ) %>% smoothImage(1.5)
+    tx$fwdtransforms[1], 1, 0 )
   txList[[ x ]] = composeTransformsToField( template, tx$fwdtransforms )
   jList2[[ x ]] = createJacobianDeterminantImage(  template, txList[[ x ]] , FALSE, TRUE )
   lo = 120
@@ -207,7 +209,7 @@ pander( demog )
 
 ```{r jactt}
 templatemask=getMask( template )
-jmat=imageListToMatrix( jlist, templatemask )
+jmat=imageListToMatrix( jList2, templatemask )
 # simple t-test to look at overall trends
 rjmeans = rowMeans( jmat )
 g1 = demog$vol == "Bigger"
@@ -263,7 +265,7 @@ mdl=lm( gmat ~ vol + gender, data=demog )
 mdl=bigLMStats( mdl )
 gmstats=mdl$beta.pval[ "volSmaller", ]
 gqv=p.adjust(gmstats,'BH')
-gqvimg=makeImage( templatemask, 1-gqv )
+gqvimg=makeImage( templateCortexMask, 1-gqv )
 ```
 
 
@@ -289,10 +291,10 @@ sccan<-sparseDecom2(
   inmatrix  = list( scaledMatrix, mypreds ),
   inmask    = c( templatemask , NA ) ,
   mycoption = 0,
-  sparseness=c( 0.25, 0.5 ),
+  sparseness=c( 0.1, -0.9 ),
   nvecs=3, its=5,
   cthresh=c(50,0),
-  smooth=0.5, perms=200, robust=1 ) # might increase perms to be > 100
+  smooth=0.0, perms=200, robust=1 ) # might increase perms to be > 100
 sccanimgs = matrixToImages( t(sccan$eig1) , templatemask )
 sccansol <-  abs(sccanimgs[[1]]) %>% iMath("Normalize")
 sccansol2 <- abs(sccanimgs[[2]]) %>% iMath("Normalize")
@@ -319,20 +321,20 @@ plot( template, sccansol2, window.overlay=c(0.1,1.01) )
 
 No explicit use of demographics here ....
 
-```{r,multivar2,echo=TRUE,eval=TRUE,warning=FALSE}
+```{r,multivar2,echo=TRUE,eval=FALSE,warning=FALSE}
 spatmat = t( imageDomainToSpatialMatrix( templatemask, templatemask ) )
 smoomat = knnSmoothingMatrix( spatmat, k = 27, sigma = 25 )
 spatmat = t( imageDomainToSpatialMatrix( templateCortexMask, templateCortexMask ) )
-smoomat2 = knnSmoothingMatrix( spatmat, k = 27, sigma = 100 )
+smoomat2 = knnSmoothingMatrix( spatmat, k = 100, sigma = 100 )
 # map these - via matrix - to observed features
 params = matrix( nrow = 2, ncol = 3 )
 params[1,] = c(1,2,1)
 params[2,] = c(2,1,1)
-x = list( scale( jmat, scale = F ), scale( gmat, scale = F ) )
+x = list( scale( jmat, scale = F ), scale( gmat * (-1), scale = F ) )
 jj = jointSmoothMatrixReconstruction( x, 2, params,
-  gamma = 0.01, sparsenessQuantile=0.66, iterations=25,
+  gamma = 0.001, sparsenessQuantile=0.75, iterations=25,
   subIterations=20, positivity = TRUE,
-  smoothingMatrix = list(smoomat2,smoomat), verbose=F )
+  smoothingMatrix = list(smoomat2,smoomat), verbose=T )
 p1 = jmat %*% jj$v[[2]]
 p2 = gmat  %*% jj$v[[1]]
 diag( cor( p1, p2 ) )
@@ -346,9 +348,10 @@ pander( mdllist[[4]] )
 # look at the predictor image
 temp = makeImage( templatemask, abs(jj$v[[2]][,1]) ) %>% iMath( "Normalize" )
 plot( template, temp, window.overlay = c( 0.1, 1 ) )
-temp = makeImage( templateCortexMask, abs(jj$v[[1]][,2]) ) %>% iMath( "Normalize" )
+temp = makeImage( templateCortexMask, abs(jj$v[[1]][,1]) ) %>% iMath( "Normalize" )
 plot( template, temp, window.overlay = c( 0.1, 1 ) )
 ```
+
 
 # And MNI space ....
 

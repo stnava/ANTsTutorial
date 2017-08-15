@@ -2,7 +2,10 @@
 title: "Advanced Normalization Tools Quick Reference"
 author: "Brian B. Avants"
 date: "`r Sys.Date()`"
-output: rmarkdown::tufte_handout
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
 ---
 
 ```{r, echo=FALSE}
