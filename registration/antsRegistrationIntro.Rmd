@@ -13,7 +13,7 @@ We first load the library and example images.
 ```{r}
 knitr::opts_chunk$set(fig.width=12, fig.height=8) 
 library( ANTsR )
-library( pander )
+# library( pander )
 r16 = antsImageRead( getANTsRData( "r16" ) )
 r64 = antsImageRead( getANTsRData( "r64" ) )
 ```
@@ -76,7 +76,7 @@ plot( r16, treg$warpedmov, color.overlay='jet', doCropping = F, alpha=0.5,
 How about a similarity transform?
 
 ```{r}
-sreg = antsRegistration( r16, r64, typeofTransform = 'Similarity', verbose=F )
+sreg = antsRegistration( r16, r64, typeofTransform = 'Rigid', verbose=F )
 plot( r16, sreg$warpedmov, color.overlay='jet', doCropping = F, alpha=0.5,
       window.overlay = quantile( r64, c(0.72,1) ) )
 ```
@@ -127,6 +127,16 @@ mysimilarity[ 5 ] = antsImageMutualInformation( r16, dreg$warpedmovout)
 mysimilarity[ 6 ] = antsImageMutualInformation( r16, creg$warpedmovout)
 nparameters = c( 0, 2, 4, 8, 16, 32 )
 plot( nparameters, mysimilarity, type='l', main='Similarity vs number of parameters' )
+```
+
+```{r sidebyside}
+layout( matrix( 1:6, nrow=1, byrow=F) )
+plot( r16 )
+plot( creg$warpedmovout )
+plot( dreg$warpedmovout )
+plot( areg$warpedmovout )
+plot( sreg$warpedmovout )
+plot( treg$warpedmovout )
 ```
 
 did anyone notice how long (compute time) each of these takes?
@@ -231,6 +241,7 @@ stored in the jacobian is likely to be valid, assuming that one knows what to do
 plot( r16, list( cjac, cjac * (-1) ), doCropping = F, alpha = 0.85,
       color.overlay  = c( 'red', 'blue' ),
       window.overlay = c( 0.2, max( abs( cjac ) ) ) )
+plot( cjac )
 ```
 
 Look at the canny result using the diffeomorphism.
@@ -285,6 +296,10 @@ r64lrmaskcrop = cropImage( r64lrmask )
 r64lrmaskcrop[ 1:round(dim(r64lrmaskcrop)[1]/2), 1:round(dim(r64lrmaskcrop)[2]) ] = 2
 r64lrmask = decropImage( r64lrmaskcrop, r64 ) * r64lrmask
 plot( r64symm, r64lrmask, alpha=0.5 )
+```
+
+```{r qu}
+plot( r16symm )
 ```
 
 We symmetrized the images and labeled left and right. 

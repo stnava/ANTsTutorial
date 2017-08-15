@@ -1,0 +1,207 @@
+---
+title: "Example neurodegeneration study with tensor based morphometry"
+author: "Brian B. Avants"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# example human brain study of neurodegeneration
+
+
+Preprocessing.
+
+```{r ndgen}
+library( ANTsR )
+rdir = "/Users/bavants/Box Sync/Mice_FAS_study/Workshop_Related/"
+fns = Sys.glob( paste( rdir, "data/neurodegen/ndgen*png", sep='' ) )
+layout( matrix( 1:length(fns), ncol=2, byrow=T) )
+layout( matrix( 1:length(fns), nrow=2, byrow=F) )
+template = antsImageRead( paste( rdir,"data/neurodegen/template2.png", sep='' ) )
+templateMask = thresholdImage( template, 1, Inf ) %>% iMath( "FillHoles" )
+templateMask = thresholdImage( kmeansSegmentation( template, 3 )$segmentation, 2, 2 )
+rlist = list( )
+jlist = list( )
+plist = list( )
+for ( i in 1:length( fns ) ) {
+  tar = antsImageRead( fns[ i ] )
+  tarseg = kmeansSegmentation( tar, 3 )
+  plot( tar )
+#  affreg = antsRegistration(  template, tar, typeofTransform = "Affine" )
+  rlist[[ i ]] = antsRegistration(  template, tar, typeofTransform = "SyNCC" )
+#                                    initialTransform = affreg$fwd )
+  plot(  rlist[[ i ]]$warpedmovout )
+  jlist[[ i ]] = createJacobianDeterminantImage( template,
+    rlist[[ i ]]$fwdtransforms[1], 1, 1 )
+  plist[[ i ]] = antsApplyTransforms( template, tarseg$probabilityimages[[2]], 
+                                      transformlist = rlist[[ i ]]$fwdtransforms )
+  }
+```
+
+
+## how do we assess registration quality? (beyond inspection)
+
+Look at distributions - find outliers ( standard stuff ) - in addition to `StackSlices` in ANTs for 3D data ...
+
+```{r quality}
+oqual = rep( NA, length( rlist ) )
+fqual = rep( NA, length( rlist ) )
+for ( i in 1:length( rlist ) ) {
+  tar = antsImageRead( fns[ i ] )
+  oqual[ i ] = antsImageMutualInformation( template, tar )
+  fqual[ i ] = antsImageMutualInformation( template, rlist[[ i ]]$warpedmovout )
+  }
+library( ggplot2 )
+n = length( rlist )
+mydf = data.frame( 
+  registration = c( rep( "initial", n ) , rep("result", n ),  rep("result-initial", n ) ),
+  similarity = c( oqual, fqual, fqual - oqual ) )
+ggplot( mydf, aes(similarity, fill=registration )) + geom_density(alpha = 0.2) + 
+  ggtitle( "Mutual information: before and after registration")
+```
+
+
+## Voxel-based mass univariate statistics
+
+```{r stats}
+layout( matrix( 1:6, nrow=2, byrow=F) )
+jmat = imageListToMatrix( plist, templateMask )
+ndemog = read.csv( paste( rdir,"data/neurodegen/demog.csv", sep='' ) )
+ndemog$dx = factor( ndemog$dx )
+umdl=lm( jmat ~ . , data=ndemog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "dx1", ]
+qv=p.adjust(volstats,'BH')
+print( range( qv ) )
+ndemog$globalMean = rowMeans( jmat )
+umdl=lm( jmat ~ . , data=ndemog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "dx1", ]
+qv=p.adjust(volstats,'BH')
+qvimg=makeImage( templateMask, 1 - qv )
+print( range( qv ) )
+timg=makeImage( templateMask, mdl$beta.t[ "dx1", ] )
+timgMap = timg * thresholdImage( timg, 2, Inf )
+plot( template, timgMap, window.overlay = range( timgMap )  )
+timgMap = ( timg * (-1) ) * thresholdImage( timg * (-1), 2, Inf )
+plot( template, timgMap, window.overlay = range( timgMap )  )
+spatmat = t( imageDomainToSpatialMatrix( templateMask, templateMask ) )
+smoomat = knnSmoothingMatrix( spatmat, k = 100, sigma = 10 )
+sjmat = as.matrix( jmat %*% smoomat )
+plot( makeImage( templateMask, jmat[1,] ) )
+plot( makeImage( templateMask, sjmat[1,] ) )
+umdl=lm( sjmat ~ . , data=ndemog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "dx1", ]
+qv=p.adjust(volstats,'BH')
+timg=makeImage( templateMask, mdl$beta.t[ "dx1", ] )
+timgMap =  thresholdImage( timg * (1), 2, 100 ) * timg
+plot( template, timgMap, window.overlay = c( 0, max(timgMap) )  )
+timgMap = ( timg * (-1) ) * thresholdImage( timg * (-1), 2, 100 )
+plot( template, timgMap, window.overlay = c( 0, max(timgMap) )  )
+```
+
+
+
+
+## Eigenanatomy statistics
+
+```{r eanat1}
+spatmat = t( imageDomainToSpatialMatrix( templateMask, templateMask ) )
+smoomat = knnSmoothingMatrix( spatmat, k = 100, sigma = 2 )
+rjmat = as.matrix( jmat %*% smoomat )
+nc = 10
+eanatStruct <- sparseDecom( 
+  inmatrix   = rjmat,
+  inmask     = templateMask,
+  sparseness = 0.1, # set this explicitly, negative
+  # values allow signed pseudo-eigenvectors in results
+  nvecs      = nc,
+  smooth     = 0.5,  # components will be smooth
+  # negative values use edge-preserving methods (WIP)
+  cthresh    = 50,  # get large components
+  its        = 3,   # optimize for a "long" time
+  mycoption  = 0)   # this controls orthogonality constraints
+eimgs = matrixToImages( eanatStruct$eigenanatomyimages, templateMask )
+eseg = eigSeg( templateMask, eimgs, FALSE )
+plot( template, eseg, window.overlay = c( 0, max(eseg) )  )
+proj = jmat %*% t( eanatStruct$eigenanatomyimages )
+umdl=lm( proj ~ . , data=ndemog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "dx1", ]
+print( min( volstats ) )
+wm = which.min( volstats )
+plot( template, eimgs[[wm]], window.overlay = c( 0, max( eimgs[[wm]]) )  )
+```
+
+```{r eanat2}
+
+smoomat = knnSmoothingMatrix( spatmat, k = 27, sigma = 20 )
+mysvd <- fastICA::fastICA( t( jmat ), n.comp = nc, verbose = F )
+tdf = data.frame( mysvd$K )
+tdf = data.frame(  jmat %*% t( icawhiten( jmat, nc )) )
+# tdf = data.frame(  irlba::partial_eigen( jmat )$vec )
+names( tdf ) = colnames( tdf ) = paste("u",1:ncol(tdf),sep='')
+myform =  as.formula( paste( "x~",paste( colnames( tdf ), collapse='+' ) ))
+x = whiten( scale( jmat ) )
+smoo = smoothMatrixPrediction( x=x,
+    basisDf = tdf, myform,  positivity = T,
+    verbose = F, gamma = 0.01, iterations = 50, 
+    sparsenessQuantile = 0.95,
+    smoothingMatrix = smoomat  )
+nms =  colnames( smoo$v )
+proj = jmat %*% ( smoo$v  )
+umdl=lm( proj ~ . , data=ndemog )
+mdl=bigLMStats( umdl )
+volstats=mdl$beta.pval[ "dx1", ]
+print( min( volstats ) )
+wm = which.min( volstats )
+temp = makeImage( templateMask, abs( smoo$v[,wm] ) ) %>% iMath( "Normalize" )
+plot( template, temp, window.overlay = c( 0.1, max( temp ) )  )
+# temp = makeImage( templateMask, abs( mysvd$S[,wm] ) ) %>% iMath( "Normalize" )
+# plot( template, temp, window.overlay = c( 0.1, max( temp ) )  )
+
+```
+
+
+## multi-channel PCA
+
+```{r mcpca}
+templateMask = thresholdImage( template, 1, Inf ) %>% iMath( "FillHoles" )
+# templateMask = thresholdImage( kmeansSegmentation( template, 3 )$segmentation, 2, 2 )
+wlist = list( )
+for ( i in 1:length( rlist ) ) 
+  wlist[[ i ]] = antsImageRead( rlist[[i]]$fwdtransforms[1] )
+dpca = multichannelPCA( wlist, templateMask, pcaOption='randPCAw', verbose=TRUE )
+pcamdl=lm( dpca$pca$u ~ . , data=ndemog )
+pcamdl=bigLMStats( pcamdl )
+volstats=pcamdl$beta.pval[ "dx1", ]
+print( min( volstats ) )
+ww = which.min( volstats )
+myw = dpca$pcaWarps[[ww]] * 0.25 / max( abs( dpca$pcaWarps[[ww]]  ) )
+myw = smoothImage( myw, antsGetSpacing( template ) * 3 )
+warpTx = antsrTransformFromDisplacementField(  myw  )
+wtxlong = list( ) ; for ( i in 1:20 ) wtxlong[[i]]=warpTx
+warped = applyAntsrTransform( wtxlong, data = template,
+  reference = template )
+for ( kk in 1:1 ) {
+  plot( template, doCropping=F )
+  Sys.sleep( 0.5 )
+  plot( warped, doCropping=F  )
+  Sys.sleep( 0.5 )
+  }
+  # look at the magnitude ...
+splt = splitChannels( dpca$pcaWarps[[ww]]  )
+mgntd = iMath( abs( splt[[1]] ) + abs( splt[[2]] ), "Normalize" )
+plot( template, mgntd, window.overlay=c(0.1,1) )
+pcaJac = createJacobianDeterminantImage( templateMask, tx = dpca$pcaWarps[[ww]] )
+plot( pcaJac )
+```
+
