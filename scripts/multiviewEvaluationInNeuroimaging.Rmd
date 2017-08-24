@@ -1,0 +1,262 @@
+---
+title: "Evaluation strategies for multi-view dimensionality reduction in neuroimaging"
+author: "Nicholas Cullen and Brian B. Avants"
+date: "August 22, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+set.seed( 9 )
+library( ANTsR )
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+
+
+## algorithms 
+
+0. PCA and variants eg joint PCA
+1. CCA - we dont use traditional CCA because $n << p$
+2. sCCA
+3. kCCA - discuss only
+4. multiview generalizations of above - dean foster - discuss only
+5. deep CCA 
+6. dual regression / joint ICA
+7. prior knowledge - collect ROIS for each modality
+
+## hypothetical multiview data
+
+```{r view3}
+n = 100
+education = rnorm( n )
+age = rnorm( n )
+apoe = factor( sample( rep( 0:2 , n/2 ) )[1:n] )
+dmat = cbind( education, age, apoe )
+nk = 3
+groundTruthKMeans = kmeans( dmat, nk  ) # data driven clustering
+groundTruth = groundTruthKMeans$cluster # classes
+# create a modality mixture based on these 3 groups that combine the above factors
+modalities = dmat * 0
+modalities[ , 1 ] = education + age * 2 + scale( as.numeric(apoe) ) * 0.5
+modalities[ , 2 ] = education * age * as.numeric(apoe) # interactions
+modalities[ apoe == 0, 3 ] = ( education - age )[ apoe == 0 ]
+modalities[ apoe != 0, 3 ] = ( education * age )[ apoe != 0 ]
+# modalities[ , 3 ] = education + age + as.numeric(apoe) # interactions
+# now generate images based on the above modalities
+simpleImage = kmeansSegmentation( antsImageRead( getANTsRData("simple") ), 3 )$segmentation
+baseImage1 = ( makeImage( c(32,32) ) * 0 + 1 ) %>% iMath("PadImage",5)
+baseImage2 = thresholdImage( simpleImage, 2, 2 ) 
+baseImage3 = thresholdImage( simpleImage, 3, 3 ) 
+signalImg1 = ( randomMask( baseImage1, 1 ) %>% morphology("dilate",9) ) * baseImage1
+signalImg2 = ( randomMask( baseImage2, 3 ) %>% morphology("dilate",15) ) * baseImage2
+signalImg3 = ( randomMask( baseImage2, 2 ) %>% morphology("dilate",14) ) * baseImage3
+plot( baseImage1, list( signalImg1 ), color.overlay=c("red","blue"), doCropping=F )
+plot( simpleImage, list( signalImg2, signalImg3 ), color.overlay=c("red","blue") )
+```
+
+```{r fireandfury}
+# now generate n instances of these images based on the modalities matrix
+# the images reflect the modalities true signal but adds noise
+mod1 = list()
+mod2 = list()
+mod3 = list()
+for ( i in 1:n  ) {
+  mod1[[ i ]] = smoothImage(
+    makeImage(  baseImage1, rnorm( sum( baseImage1 ), 1, 1 )  ) +
+    makeImage(  signalImg1, modalities[ i, 1 ] * rnorm( sum( signalImg1 ), 1, 1 )  ), 1 )
+  mod2[[ i ]] = smoothImage(
+    makeImage(  baseImage2, rnorm( sum( baseImage2 ), 1, 1 )  ) +
+    makeImage(  signalImg2, modalities[ i, 1 ] * rnorm( sum( signalImg2 ), 1, 1 )  ), 1 )
+  mod3[[ i ]] = smoothImage(
+    makeImage(  baseImage3, rnorm( sum( baseImage3 ), 1, 1 )  ) +
+    makeImage(  signalImg3, modalities[ i, 1 ] * rnorm( sum( signalImg3 ), 1, 1 )  ), 1 )
+  }
+mat1 = imageListToMatrix( mod1, baseImage1 )
+mat2 = imageListToMatrix( mod2, baseImage2 )
+mat3 = imageListToMatrix( mod3, baseImage3 )
+```
+
+
+
+```{r fireandfury2}
+###
+nk = 15
+spatmat = t( imageDomainToSpatialMatrix( baseImage1, baseImage1 ) )
+smoomat = knnSmoothingMatrix( spatmat, k = nk, sigma = 100.0 )
+spatmat2 = t( imageDomainToSpatialMatrix( baseImage2, baseImage2 ) )
+smoomat2 = knnSmoothingMatrix( spatmat2, k = nk, sigma = 100.0 )
+spatmat3 = t( imageDomainToSpatialMatrix( baseImage3, baseImage3 ) )
+smoomat3 = knnSmoothingMatrix( spatmat3, k = nk, sigma = 100.0 )
+params = matrix( nrow = 6, ncol = 3 )
+params[1,] = c(1,2,1)
+params[2,] = c(2,1,1)
+params[3,] = c(1,3,1)
+params[4,] = c(3,1,1)
+params[5,] = c(2,3,1)
+params[6,] = c(3,2,1)
+scl=F
+myscale <- function( x ) {
+  temp = scale( x, scale = FALSE )
+  temp # - min( temp )
+}
+x = list( myscale( mat1 ), myscale( mat2 ), myscale( mat3 ) )
+slist = list(smoomat2,smoomat,smoomat3,smoomat,smoomat3,smoomat2)
+##### the algorithm
+its = c( 15, 8 )
+jj = jointSmoothMatrixReconstruction( x, 4, params, positivity=F,
+ gamma = 1e-6, sparsenessQuantile=0.25, iterations=its[1], subIterations = its[2],
+ smoothingMatrix = slist, verbose=TRUE )
+mm=makeImage( baseImage1, abs(jj$v[[2]][,1])*1e5 ) %>% iMath("Normalize")
+plot( baseImage1, mm, doCropping=F, window.overlay=c(0.05,1) )
+mm=makeImage( baseImage2, abs(jj$v[[1]][,1]) ) %>% iMath("Normalize")
+plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+mm=makeImage( baseImage3, abs(jj$v[[3]][,1]) ) %>% iMath("Normalize")
+plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+mm=makeImage( baseImage3, abs(jj$v[[3]][,2]) ) %>% iMath("Normalize")
+plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+mm=makeImage( baseImage3, abs(jj$v[[3]][,3]) ) %>% iMath("Normalize")
+plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+mm=makeImage( baseImage3, abs(jj$v[[3]][,4]) ) %>% iMath("Normalize")
+plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+p1 = mat2 %*% jj$v[[1]]
+p2 = mat1 %*% jj$v[[2]]
+p3 = mat3 %*% jj$v[[3]]
+p4 = mat1 %*% jj$v[[4]]
+p5 = mat3 %*% jj$v[[5]]
+p6 = mat2 %*% jj$v[[6]]
+print( summary( lm( p2 ~ ( education+age ) * apoe ) ) )
+######################
+```
+
+#  Strategies
+
+
+## 1. performance on a prediction task
+
+Both examples below test the ability of the algorithm to extract low-dimensional features from data that is expected to covary with outcomes of interest.  The ability to predict this data from the low-dimensional features is what we test.
+
+### unsupervised
+
+Example:  Compute a SCCA decomposition based on covariance between thickness and another modality e.g. resting BOLD connectivity ( see the recently submitted paper ).  Use the low-dimensional representation to predict age via linear regression as in Kandel 2015.  Here, we may also just report the p-values of the low-dimensional data as a final result.
+
+### supervised
+
+Example:  In training data, use SCCA to learn the relationship between cortical thickness and an age and gender matrix.  Verify the relationship, and report p-values, in testing data.
+
+
+## 2. accuracy of known correlation and localization of factors
+
+We use data that is reflected about the axis of symmetry to identify whether the methods extract the right spatial location.  the "ground truth" result will reveal a pair of eigenvectors that are, like the main signal in the data, reflected about the axis of symmetric.  other eigenvectors will identify covariation that is not due to symmetry.
+
+This tests: 1. whether the correlation approaches 1.0 (which the study is designed to allow); 2. whether the identified spatial vectors are indeed reflections.
+
+```{r symref,eval=T,echo=FALSE}
+r16 = antsImageRead( getANTsRData( "r16" ) )
+symimg <- function( x, gs = 0.25 ) {
+  xr = reflectImage( x, axis = 0 )
+  xavg = xr * 0.5 + x
+  for ( i in 1:5 ) {
+    w1 = antsRegistration( xavg, x, typeofTransform = 'SyN' )
+    w2 = antsRegistration( xavg, xr, typeofTransform = 'SyN' )
+    xavg = w1$warpedmovout * 0.5 + w2$warpedmovout * 0.5
+    nada1 = antsApplyTransforms(  x, x, w1$fwdtransforms, compose = w1$fwdtransforms[1] )
+    nada2 = antsApplyTransforms(  x, x, w2$fwdtransforms, compose = w2$fwdtransforms[1] )
+    wavg = ( antsImageRead( nada1 ) + antsImageRead( nada2 ) ) * ( -0.5 )
+    wavgfn = tempfile( fileext='.nii.gz' )
+    antsImageWrite( wavg, wavgfn )
+    xavg = antsApplyTransforms( x, xavg, wavgfn )
+    }
+  return( xavg )
+  }
+ref = symimg( r16 )
+```
+
+Reflected features lead to reflected evecs.
+
+```{r symm,eval=T,echo=FALSE}
+# a 2nd example with 3 modalities
+imageIDs <- c( "r16", "r27", "r30", "r62", "r64", "r85" )
+images <- list()
+feature1Images <- list()
+feature2Images <- list()
+for( i in 1:length( imageIDs ) )
+  {
+  areg = antsRegistration( ref, antsImageRead( getANTsRData( imageIDs[i] ) ),
+    typeofTransform='Affine' )
+  tar = areg$warpedmov
+  images[[i]] <- areg$warpedmovout
+  feature1Images[[i]] <- areg$warpedmovout
+    # createJacobianDeterminantImage( ref, areg$fwdtransforms[1], T, T ) 
+  sreg = antsRegistration( ref, 
+    reflectImage( antsImageRead( getANTsRData( imageIDs[i] ) ), axis=0 ),
+    typeofTransform='Affine' )
+  feature2Images[[i]] <- sreg$warpedmovout
+#  feature2Images[[i]] <- iMath( areg$warpedmovout, "Grad", 1 )  #  sreg$warpedmovout
+    # createJacobianDeterminantImage( ref, sreg$fwdtransforms[1], T, T ) 
+  }
+```
+
+We print pairs of solution vectors, $u_1, v_1, \cdots, u_n, v_n$ in that order in the image layout below.
+
+```{r symm2,eval=T,echo=FALSE,message=F,warning=F}
+i = 1
+mask = getMask( ref )
+mask2 = mask
+spatmat = t( imageDomainToSpatialMatrix( mask, mask ) )
+smoomat = knnSmoothingMatrix( spatmat, k = 5, sigma = 1 )
+spatmat2 = t( imageDomainToSpatialMatrix( mask2, mask2 ) )
+smoomat2 = knnSmoothingMatrix( spatmat2, k = 5, sigma = 1 )
+params = matrix( nrow = 2, ncol = 3 )
+params[1,] = c(1,2,1)
+params[2,] = c(2,1,1)
+mat = imageListToMatrix( feature1Images, mask )
+mat2 = imageListToMatrix( feature2Images, mask2 )
+scl=F
+x = list( scale(mat, scale=scl), scale(mat2, scale=scl ) )
+slist = list(smoomat2,smoomat )
+nv = 3
+jj = jointSmoothMatrixReconstruction( x, nv, params, positivity=F,
+ gamma = 1e-8, sparsenessQuantile=0.5, iterations=44,
+ subIterations = 10,
+ smoothingMatrix = slist, verbose=T )
+layout( matrix( 1:(nv * length( jj$v )), ncol = nv * length( jj$v ) ) )
+for ( j in 1:nv )
+for ( k in 1:length( jj$v ) ) {
+    vecp = (jj$v[[k]][,j])
+    vecn = vecp * (-1)
+    vecp[ vecp < 0 ] = 0
+    vecn[ vecn < 0 ] = 0
+    mmP=makeImage( mask, vecp ) %>% iMath("Normalize")
+    mmN=makeImage( mask, vecn ) %>% iMath("Normalize")
+    if ( max( mmP ) > 0 &  max( mmN ) > 0 )
+      plot( ref, list(mmP,mmN), doCropping=T, window.overlay=c(0.1,1), color.overlay=c("red",'blue') )
+    if ( max( mmP ) == 0 &  max( mmN ) > 0 )
+      plot( ref, list(mmN), doCropping=T, window.overlay=c(0.1,1), color.overlay=c('blue') )
+    if ( max( mmN ) == 0 &  max( mmP ) > 0 )
+      plot( ref, list(mmP), doCropping=T, window.overlay=c(0.1,1), color.overlay=c("red") )
+    Sys.sleep( 1 )
+  }
+p1 = mat %*% jj$v[[2]]
+p2 = mat2  %*% jj$v[[1]]
+diag( cor( p1, p2 ) )
+
+```
+
+
+## 3. biological plausibility and interpretability of extracted predictors
+
+This approach uses prior scientific knowledge to evaluate the plausibility, validity and/or interpretability of the results.
+
+Example: Variation in default mode network (DMN) relates to AD stage.  Thus, data-driven approaches should extract components that reflect DMN-centered patterns.
+
+## 4. finding true latent factors: recovery of a hidden basis 
+
+We employ data simulation to determine whether a method can identify known latent factors given different levels of noise and different approaches to combining signal from different modalities.
+
+# Comparison of three algorithms given the above tasks
+
+We employ preprocessed data from the HCP to demonstrate the performance of these different methods.
