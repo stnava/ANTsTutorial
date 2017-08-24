@@ -109,15 +109,15 @@ slist = list(smoomat2,smoomat,smoomat3,smoomat,smoomat3,smoomat2)
 its = c( 8, 5 )
 nv = 2
 jj = jointSmoothMatrixReconstruction( x, nv, params, positivity=T,
- gamma = 1e-8, sparsenessQuantile=0.75, iterations=its[1], subIterations = its[2],
+ gamma = 1e-8, sparsenessQuantile=0.65, iterations=its[1], subIterations = its[2],
  smoothingMatrix = slist, verbose=TRUE )
 vizimgs = list( baseImage1, simpleImage, simpleImage )
 mskimgs = list( baseImage1, baseImage2, baseImage3 )
+layout( matrix( 1:(nv * length( jj$v )), ncol = length( jj$v ) ) )
 for ( i in 1:nrow( params) ) {
   for ( k in 1:nv ) {
   mm = makeImage( mskimgs[[  params[i,2]   ]], abs(jj$v[[ i ]][,k])*1e3 ) %>% iMath("Normalize")
   plot( vizimgs[[  params[i,2]   ]], mm, doCropping=T, window.overlay=c(0.05,1) )
-  Sys.sleep( 1 )
   }
 }
 p1 = mat2 %*% jj$v[[1]]
@@ -126,7 +126,7 @@ p3 = mat3 %*% jj$v[[3]]
 p4 = mat1 %*% jj$v[[4]]
 p5 = mat3 %*% jj$v[[5]]
 p6 = mat2 %*% jj$v[[6]]
-print( summary( lm( p2 ~ ( education+age ) * apoe ) ) )
+print( summary( lm( p1 ~ ( education+age ) * apoe ) ) )
 ######################
 ```
 
