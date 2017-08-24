@@ -106,22 +106,20 @@ myscale <- function( x ) {
 x = list( myscale( mat1 ), myscale( mat2 ), myscale( mat3 ) )
 slist = list(smoomat2,smoomat,smoomat3,smoomat,smoomat3,smoomat2)
 ##### the algorithm
-its = c( 15, 8 )
-jj = jointSmoothMatrixReconstruction( x, 4, params, positivity=F,
- gamma = 1e-6, sparsenessQuantile=0.25, iterations=its[1], subIterations = its[2],
+its = c( 8, 5 )
+nv = 2
+jj = jointSmoothMatrixReconstruction( x, nv, params, positivity=T,
+ gamma = 1e-8, sparsenessQuantile=0.75, iterations=its[1], subIterations = its[2],
  smoothingMatrix = slist, verbose=TRUE )
-mm=makeImage( baseImage1, abs(jj$v[[2]][,1])*1e5 ) %>% iMath("Normalize")
-plot( baseImage1, mm, doCropping=F, window.overlay=c(0.05,1) )
-mm=makeImage( baseImage2, abs(jj$v[[1]][,1]) ) %>% iMath("Normalize")
-plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
-mm=makeImage( baseImage3, abs(jj$v[[3]][,1]) ) %>% iMath("Normalize")
-plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
-mm=makeImage( baseImage3, abs(jj$v[[3]][,2]) ) %>% iMath("Normalize")
-plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
-mm=makeImage( baseImage3, abs(jj$v[[3]][,3]) ) %>% iMath("Normalize")
-plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
-mm=makeImage( baseImage3, abs(jj$v[[3]][,4]) ) %>% iMath("Normalize")
-plot( simpleImage, mm, doCropping=T, window.overlay=c(0.1,1) )
+vizimgs = list( baseImage1, simpleImage, simpleImage )
+mskimgs = list( baseImage1, baseImage2, baseImage3 )
+for ( i in 1:nrow( params) ) {
+  for ( k in 1:nv ) {
+  mm = makeImage( mskimgs[[  params[i,2]   ]], abs(jj$v[[ i ]][,k])*1e3 ) %>% iMath("Normalize")
+  plot( vizimgs[[  params[i,2]   ]], mm, doCropping=T, window.overlay=c(0.05,1) )
+  Sys.sleep( 1 )
+  }
+}
 p1 = mat2 %*% jj$v[[1]]
 p2 = mat1 %*% jj$v[[2]]
 p3 = mat3 %*% jj$v[[3]]
