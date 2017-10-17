@@ -77,8 +77,8 @@ OPTIONS:
 
      -p, --print-similarity-measure-interval <unsignedIntegerValue>
           Prints out the CC similarity metric measure between the full-size input fixed
-          and the transformed moving images at each iteration a value of 0 (the default)
-          indicates that the full scale computation should not take placeany value greater
+          and the transformed moving images at each iteration. A value of 0 (the default)
+          indicates that the full scale computation should not take place. Any value greater
           than 0 represents the interval of full scale metric computation.
           <VALUES>: 0
 
