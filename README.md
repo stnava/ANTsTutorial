@@ -1,5 +1,5 @@
 # ANTsTutorial
-Guide to tutorial materials for ANTs/R/py
+Guide to tutorial materials for ANTs/R/py --- targeting Dartmouth context.
 
 ## Overview
 
