@@ -3,7 +3,11 @@ Guide to tutorial materials for ANTs/R/py
 
 ## Overview
 
-The goal of this tutorial is to preview ANTs, ANTsR *or* ANTsPy.  
+The goal of this tutorial is to preview ANTs, ANTsR *or* ANTsPy.  We have fairly limited time so will have to restrict to:
+
+* Q/A session
+* running some github examples using core C++/bash ANTs
+* poking around some of the new ANTsX environments where X=py or X=R .
 
 The "home" for ANTs tutorial material is [here](https://github.com/stnava/ANTsTutorial) but, honestly, there is tons of information spread across many places.  I will try to index the main locations below.
 
