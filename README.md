@@ -42,7 +42,7 @@ To install:
 
 * the "easiest" (but slowest) installation is through devtools.
 
-To **try out ANTsR** without much work (sign in via google), visit the [cloud version](https://rstudio.cloud/project/38492) ( very limited memory ):
+To **try out ANTsR** without much work (sign in via google), visit the [cloud version](https://rstudio.cloud/project/38492) ( very limited memory ) and do:
 
 ```
 .libPaths('/cloud/project/RL/')
