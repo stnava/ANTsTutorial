@@ -57,7 +57,7 @@ Many ANTsR examples are also [here](https://rpubs.com/antsr)
 
 * [fmri tutorial](https://github.com/ntustison/ANTsRfMRITutorial/blob/master/tutorial.pdf) - these are constantly evolving with data types and such.
 
-* there is HCP example data [here](https://figshare.com/articles/hcpLSDataANTs/6399935) that matches what is needed for these illustrations:
+* there is HCP example data [here](https://figshare.com/articles/hcpLSDataANTs/6399935) that matches what is needed for these fMRI illustrations:
     * [https://stnava.github.io/distortionCorrectionWithANTs/](https://stnava.github.io/distortionCorrectionWithANTs/)
     * [https://stnava.github.io/structuralFunctionalJointRegistration/](https://stnava.github.io/structuralFunctionalJointRegistration/)
 
@@ -68,7 +68,7 @@ ANTsPy is very closely tied to ANTsR. We believe that, in the relatively near fu
 
 Installation instructions are [here](https://github.com/ANTsX/ANTsPy#installation)
 
-OSX releases are very up to date but LINUX users may need to install an older version.  Then we can play with [this ipython notebook](https://github.com/ANTsX/ANTsPy/blob/master/tutorials/10minTutorial.ipynb).
+OSX releases are very up to date but LINUX users may need to install an older version.  Then we can play with [this ipython notebook](https://github.com/ANTsX/ANTsPy/blob/master/tutorials/10minTutorial.ipynb) and poke around the `ants.plot...` functionality.
 
 
 ### Other information
