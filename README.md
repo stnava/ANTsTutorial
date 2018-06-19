@@ -3,13 +3,25 @@ Guide to tutorial materials for ANTs/R/py --- targeting Dartmouth context.
 
 ## Overview
 
-The goal of this tutorial is to preview ANTs, ANTsR *or* ANTsPy.  We have fairly limited time so will have to restrict to:
+The goal of this tutorial is to preview ANTs, ANTsR *or* ANTsPy.  
+
+We have fairly limited time so will have to restrict to:
 
 * Q/A session
 * running some github examples using core C++/bash ANTs
 * poking around some of the new ANTsX environments where X=py or X=R .
 
+Other possibilities:
+
+* update view on overall framework esp antsr & antspy ( 1/2 hour )
+* fmri/ASL, if of interest  ( 30 to 90 minutes depending on interest level, topics )
+* machine learning methods in antsr ( 30 to 60 minutes )
+* deep learning / antsrnet  ( 30 to 60 minutes )
+* open discussion / questions
+
 The "home" for ANTs tutorial material is [here](https://github.com/stnava/ANTsTutorial) but, honestly, there is tons of information spread across many places.  I will try to index the main locations below.
+
+
 
 ## Installation
 
@@ -29,7 +41,7 @@ General instructions are below:
 
 Tutorial topics that can use proper ANTs installs:
 
-* [https://stnava.github.io/fMRIANTs/](https://stnava.github.io/fMRIANTs/) - not recommended but shows some basic stuff and hints at 4D registration possibilities.
+* [https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsGithubExamples.Rmd) - an overview of most of the example locations.
 
 * overview collection of programs described in latter parts of the [ants handout](https://github.com/stnava/ANTsTutorial/blob/master/handout/antsHandout.pdf)
 
@@ -78,7 +90,7 @@ ANTsPy is very closely tied to ANTsR. We believe that, in the relatively near fu
 
 Installation instructions are [here](https://github.com/ANTsX/ANTsPy#installation)
 
-OSX releases are very up to date but LINUX users may need to install an older release version.  Then we can play with [this ipython notebook](https://github.com/ANTsX/ANTsPy/blob/master/tutorials/10minTutorial.ipynb) and poke around the `ants.plot...` functionality.
+If we install from source, we can play with [this ipython notebook](https://github.com/ANTsX/ANTsPy/blob/master/tutorials/10minTutorial.ipynb) and poke around the `ants.plot...` functionality.
 
 
 ### Other information
